@@ -614,9 +614,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ---------- Оформление заказа (Sheets — блокирующе, backend — в фоне) ----------
-
-// ---------- Оформление заказа (Sheets через backend, без прямого доступа к Apps Script) ----------
+// ---------- Оформление заказа (через backend, без прямого доступа к Apps Script) ----------
 
 window.placeOrder = async function() {
   if (isPlacingOrder) return;
@@ -650,7 +648,7 @@ window.placeOrder = async function() {
   isPlacingOrder = true;
   showCartTab();
 
-  // обновляем товары
+  // обновление товаров перед заказом
   try {
     await fetchAndUpdateProducts(false);
   } catch (e) {
@@ -664,7 +662,7 @@ window.placeOrder = async function() {
     return;
   }
 
-  // актуализируем корзину
+  // проверка доступности корзины
   let hasUnavailable = false;
   cartItems = cartItems.map(item => {
     const exists = productsData.some(p => p.id === item.id && p.inStock);
@@ -701,11 +699,11 @@ window.placeOrder = async function() {
     user: tg?.initDataUnsafe?.user || null
   };
 
-  // сохраняем локально
+  // локально сохраняем историю
   previousOrders.push(order);
   saveOrdersToStorage();
 
-  // отправляем только на backend
+  // отправка только на backend
   try {
     const resp = await fetch(BACKEND_ORDER_URL, {
       method: 'POST',
@@ -741,6 +739,7 @@ window.placeOrder = async function() {
   isPlacingOrder = false;
   showCartTab();
 };
+
 
 
 // ---------- Обновление товаров вручную ----------

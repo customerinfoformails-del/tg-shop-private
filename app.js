@@ -1,7 +1,7 @@
 const tg = window.Telegram?.WebApp;
 try { tg?.ready(); tg?.expand(); } catch (e) {}
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbzA2nWx_CY9hP3SbkPcjRk1VxynlRde84PW1ht1wO_l5pQsE6Egb1ngcQdaFFaXZQ0d2Q/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxyKA2QcJBKim9ttOKHiJ_uTVYunBKhBnNFNf9BLGewzHpqqcY9ZY8smmvCwQZzOGs85Q/exec';
 const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbxr_WtXjtNelG9HRya2ngKaYkd-9dUrADnVG8H9_SJTHIheJ_eFFj3BCCdED22-3K5t5Q/exec';
 const BACKEND_ORDER_URL = 'https://tg-shop-test-backend.onrender.com/order';
 
@@ -391,7 +391,7 @@ function showCartTab() {
         '</div>' +
 
         '<div class="pt-3">' +
-          '<button onclick="placeOrder()"' +
+          '<button.onclick="placeOrder()"' +
                   ' class="w-full flex items-center justify-center gap-2 ' +
                     (!cartItems.some(i => !i.available) && !isPlacingOrder
                       ? 'bg-blue-500 hover:bg-blue-600'
@@ -425,7 +425,7 @@ function showSaleTab() {
       '</div>' +
       '<h2 class="text-2xl font-bold text-gray-800 mb-4">Распродажа</h2>' +
       '<p class="text-lg text-gray-600 mb-8">Скоро здесь будут скидки до 70%!</p>' +
-      '<button onclick="switchTab(\'shop\')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
+      '<button onclick="switchTab(\'shop\')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl.shadow-lg transition-all">' +
         'В магазин' +
       '</button>' +
     '</div>';
@@ -478,7 +478,7 @@ function showProfileTab() {
 
   const addressesHtml = savedAddresses.length
     ? savedAddresses.map((addr, idx) =>
-        '<div class="flex.items-center justify-between p-2 border rounded-xl mb-1">' +
+        '<div class="flex items-center justify-between p-2 border rounded-xl mb-1">' +
           '<span class="text-xs text-gray-700">' + escapeHtml(addr) + '</span>' +
           '<button class="text-xs text-red-500" onclick="removeAddress(' + idx + ')">Удалить</button>' +
         '</div>'
@@ -572,10 +572,10 @@ function showError(message) {
                 ' d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
         '</svg>' +
       '</div>' +
-      '<h2 class="text-2xl font-bold text-gray-800 mb-4">Ошибка загрузки</h2>' +
+      '<h2 class="text-2xl font-bold text-gray-800.mb-4">Ошибка загрузки</h2>' +
       '<p class="text-lg text-red-600 mb-2">' + escapeHtml(message) + '</p>' +
       '<button onclick="location.reload()"' +
-              ' class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
+              ' class="bg-blue-500 hover:bg-blue-600 text-white font-bold.py-3 px-8 rounded-2xl shadow-lg transition-all">' +
         'Попробовать снова' +
       '</button>' +
     '</div>';
@@ -692,7 +692,6 @@ window.placeOrder = async function() {
   previousOrders.push(order);
   saveOrdersToStorage();
 
-  // 1) Пишем в Google Sheets и ждём (блокирующе)
   try {
     const resp = await fetch(ORDERS_API_URL, {
       method: 'POST',
@@ -714,7 +713,6 @@ window.placeOrder = async function() {
     return;
   }
 
-  // 2) Backend/Telegram — в фоне, не блокирует UX
   try {
     fetch(BACKEND_ORDER_URL, {
       method: 'POST',
@@ -740,7 +738,7 @@ window.refreshProducts = async function() {
   isRefreshingProducts = true;
 
   root.innerHTML =
-    '<div class="flex flex-col.items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+    '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
       '<div class="w-20 h-20 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>' +
       '<div class="text-lg font-semibold text-gray-700 mb-2">Обновляю товары...</div>' +
     '</div>';
@@ -757,8 +755,8 @@ window.refreshProducts = async function() {
 async function fetchAndUpdateProducts(showLoader = false) {
   if (showLoader) {
     root.innerHTML =
-      '<div class="flex flex-col.items-center justify-center min-h-[400px]">' +
-        '<div class="w-20 h-20 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>' +
+      '<div class="flex flex-col items-center justify-center.min-h-[400px]">' +
+        '<div class="w-20 h-20 border-4 border-blue-200 border-t-blue-500 rounded-full.animate-spin mb-4"></div>' +
         '<div class="text-lg font-semibold text-gray-700 mb-2">Загрузка товаров...</div>' +
       '</div>';
   }
@@ -807,11 +805,11 @@ async function fetchAndUpdateProducts(showLoader = false) {
             '</svg>' +
           '</div>' +
           '<h2 class="text-xl font-bold text-gray-800 mb-2">Не удалось загрузить товары</h2>' +
-          '<p class="text-sm text-gray-500.mb-4 max-w-xs">' +
+          '<p class="text-sm text-gray-500 mb-4 max-w-xs">' +
             'Проверьте соединение и попробуйте обновить список товаров.' +
           '</p>' +
-          '<button.onclick="refreshProducts()"' +
-                  ' class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-2xl shadow-lg transition-all text-sm">' +
+          '<button onclick="refreshProducts()"' +
+                  ' class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold.py-3 px-8 rounded-2xl shadow-lg transition-all text-sm">' +
             '<span class="loader-circle"></span>' +
             '<span>Обновить товары</span>' +
           '</button>' +

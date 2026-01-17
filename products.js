@@ -11,23 +11,22 @@ const PLACEHOLDERS = {
 const FILTER_ORDER = ['simType', 'storage', 'color', 'region'];
 
 // нормализация ответа из Google Apps Script
+// нормализация ответа из Google Apps Script (плоский массив вариантов)
 function normalizeProducts(products) {
-  return products.flatMap(product =>
-    product.variants.map(variant => ({
-      id: variant.id,
-      name: product.name,
-      price: parseFloat(variant.price) || 0,
-      cat: product.category,
-      code: variant.id,
-      storage: variant.memory || '',
-      region: variant.region || '',
-      simType: variant.sim || '',
-      color: variant.color || '',
-      inStock: !!variant.inStock,
-      commonImage: product.commonImage || '',
-      images: Array.isArray(variant.images) ? variant.images : []
-    }))
-  );
+  return products.map(row => ({
+    id: row.id,
+    name: row.name,
+    price: parseFloat(row.price) || 0,
+    cat: row.cat,
+    code: row.id,
+    storage: row.memory || '',
+    region: row.region || '',
+    simType: row.sim || '',
+    color: row.color || '',
+    inStock: !!row.inStock,
+    commonImage: row.commonImage || '',
+    images: Array.isArray(row.images) ? row.images : []
+  }));
 }
 
 // все варианты по имени товара

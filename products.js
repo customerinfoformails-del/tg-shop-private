@@ -70,6 +70,40 @@ function getVisibleProducts() {
   return groupedVisible;
 }
 
+// карточка товара
+function productCard(product) {
+  const allVariants = getProductVariants(product.name);
+  const variants = allVariants.filter(v => v.inStock);
+  if (variants.length === 0) return '';
+
+  const commonImage = product.commonImage || variants[0]?.commonImage || '';
+  const fallbackByCategory = PLACEHOLDERS[product.cat] || PLACEHOLDERS['iPhone'];
+  const mainImage = commonImage || fallbackByCategory;
+
+  const cheapestVariant = variants.reduce(
+    (min, p) => (p.price < min.price ? p : min),
+    variants[0]
+  );
+
+  const carouselId = 'carousel_' + Math.random().toString(36).substr(2, 9);
+
+  return (
+    '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
+      ' data-product-name="' + escapeHtml(product.name) + '"' +
+      ' data-carousel-id="' + carouselId + '">' +
+      '<div class="w-full h-32 rounded-xl mb-3 image-carousel h-32 cursor-pointer">' +
+        '<div class="image-carousel-inner" data-carousel="' + carouselId + '" data-current="0">' +
+          '<img src="' + mainImage + '" class="carousel-img loaded" alt="Product" />' +
+        '</div>' +
+      '</div>' +
+      '<div class="font-bold text-base mb-1 truncate">' + escapeHtml(product.name) + '</div>' +
+      '<div class="text-blue-600 font-black text-xl mb-1">$' + cheapestVariant.price + '</div>' +
+      '<div class="text-xs text-gray-500 mb-4">' + variants.length + ' вариантов</div>' +
+    '</div>'
+  );
+}
+
+
 // renderShop без randomIds
 function renderShop() {
   if (!productsData || productsData.length === 0) {

@@ -1,8 +1,8 @@
 const tg = window.Telegram?.WebApp;
 try { tg?.ready(); tg?.expand(); } catch (e) {}
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbzp4E0zx1A5Jl-XD11IwUntT5cnF8lZQIdcdJQZcegXnUTy5dn23EhceyZ3P_MaC7ZZxQ/exec';
-const BACKEND_ORDER_URL = 'https://tg-shop-test-backend.onrender.com/order'; 
+const API_URL = 'https://script.google.com/macros/s/AKfycbziN4vXQmxVtsMuwazZCql_yy_LLHJqd8SJo5kCAVeQkx1zklSRF4ikKgQx4qCVoxf36g/exec';
+const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbxr_WtXjtNelG9HRya2ngKaYkd-9dUrADnVG8H9_SJTHIheJ_eFFj3BCCdED22-3K5t5Q/exec';
 
 let CATEGORIES = ['Все'];
 
@@ -296,7 +296,7 @@ function showCartTab() {
               '</div>' +
             '</div>' +
             '<div class="text-right">' +
-              '<div class="flex items-center justify-end gap-2 mb-1">' +
+              '<div class="flex.items-center justify-end gap-2 mb-1">' +
                 '<button class="px-2 py-1 rounded-full bg-gray-200 text-sm font-bold"' +
                         ' onclick="changeCartItemQuantity(' + idx + ', -1)">-</button>' +
                 '<span class="min-w-[24px] text-center text-sm font-semibold">' + item.quantity + '</span>' +
@@ -379,7 +379,7 @@ function showCartTab() {
             '<span>Сумма товаров</span>' +
             '<span>$' + subtotal + '</span>' +
           '</div>' +
-          '<div class="flex items-center justify-between">' +
+          '<div class="flex items-center.justify-between">' +
             '<span>Наценка за оплату картой</span>' +
             '<span>' + (paymentType === "card" ? "+ $" + commission : "$0") + '</span>' +
           '</div>' +
@@ -415,7 +415,7 @@ function showCartTab() {
 
 function showSaleTab() {
   root.innerHTML =
-    '<div class="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 pb-[65px]">' +
+    '<div class="flex flex-col items-center.justify-center min-h-[60vh] text-center p-8 pb-[65px]">' +
       '<div class="w-24 h-24 bg-orange-100 rounded-3xl flex items-center justify-center mb-6">' +
         '<svg class="w-16 h-16 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
           '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
@@ -424,7 +424,7 @@ function showSaleTab() {
       '</div>' +
       '<h2 class="text-2xl font-bold text-gray-800 mb-4">Распродажа</h2>' +
       '<p class="text-lg text-gray-600 mb-8">Скоро здесь будут скидки до 70%!</p>' +
-      '<button onclick="switchTab(\'shop\')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
+      '<button onclick="switchTab(\'shop\')" class="bg-blue-500 hover:bg-blue-600 text-white.font-bold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
         'В магазин' +
       '</button>' +
     '</div>';
@@ -500,7 +500,7 @@ function showProfileTab() {
       '</div>' +
 
       '<div class="space-y-4">' +
-        '<h3 class="text-lg.font-semibold">Сохранённые адреса</h3>' +
+        '<h3 class="text-lg font-semibold">Сохранённые адреса</h3>' +
         '<div id="addressesList">' + addressesHtml + '</div>' +
         '<div class="space-y-2">' +
           '<textarea id="newAddress" class="w-full bg-white border rounded-xl px-3 py-2 text-sm" rows="2" placeholder="Новый адрес..."></textarea>' +
@@ -565,7 +565,7 @@ function showAboutTab() {
 function showError(message) {
   root.innerHTML =
     '<div class="flex flex-col items-center justify-center min-h-screen text-center p-8 pb-[65px]">' +
-      '<div class="w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center mb-6">' +
+      '<div class="w-20 h-20 bg-red-100 rounded-2xl flex.items-center justify-center mb-6">' +
         '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
           '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                 ' d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
@@ -574,7 +574,7 @@ function showError(message) {
       '<h2 class="text-2xl font-bold text-gray-800 mb-4">Ошибка загрузки</h2>' +
       '<p class="text-lg text-red-600 mb-2">' + escapeHtml(message) + '</p>' +
       '<button onclick="location.reload()"' +
-              ' class="bg-blue-500 hover:bg-blue-600.text-white font-bold py-3 px-8 rounded-2xl shadow-lg.transition-all">' +
+              ' class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
         'Попробовать снова' +
       '</button>' +
     '</div>';
@@ -606,7 +606,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ---------- Оформление заказа (через backend, без sendData) ----------
+// ---------- Оформление заказа (в Orders Apps Script, fire-and-forget) ----------
 
 window.placeOrder = async function() {
   if (isPlacingOrder) return;
@@ -616,7 +616,6 @@ window.placeOrder = async function() {
     return;
   }
 
-  // 1) проверка полей
   let address = '';
   if (pickupMode) {
     if (!pickupLocation) {
@@ -637,7 +636,6 @@ window.placeOrder = async function() {
     }
   }
 
-  // 2) теперь проверка наличия
   isPlacingOrder = true;
   showCartTab();
 
@@ -693,23 +691,17 @@ window.placeOrder = async function() {
   previousOrders.push(order);
   saveOrdersToStorage();
 
-  // 3) отправляем заказ на backend
   try {
-    await fetch(BACKEND_ORDER_URL, {
+    fetch(ORDERS_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(order)
-    });
+    }).catch(e => console.error('order post error', e));
   } catch (e) {
-    console.error('backend order error', e);
-    tg?.showAlert?.('Не удалось отправить заказ на сервер. Попробуйте ещё раз.');
-    isPlacingOrder = false;
-    showCartTab();
-    return;
+    console.error('order post exception', e);
   }
 
-  tg?.showAlert?.('✅ Заказ отправлен продавцу!');
-
+  tg?.showAlert?.('✅ Заказ оформлен!');
   cartItems = [];
   saveCartToStorage();
   updateCartBadge();
@@ -724,7 +716,7 @@ window.refreshProducts = async function() {
   isRefreshingProducts = true;
 
   root.innerHTML =
-    '<div class="flex flex-col items-center justify-center.min-h-[70vh] text-center p-8 pb-[65px]">' +
+    '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
       '<div class="w-20 h-20 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>' +
       '<div class="text-lg font-semibold text-gray-700 mb-2">Обновляю товары...</div>' +
     '</div>';
@@ -742,7 +734,7 @@ async function fetchAndUpdateProducts(showLoader = false) {
   if (showLoader) {
     root.innerHTML =
       '<div class="flex flex-col items-center justify-center min-h-[400px]">' +
-        '<div class="w-20 h-20 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>' +
+        '<div class="w-20 h-20 border-4 border-blue-200 border-t-blue-500 rounded-full.animate-spin mb-4"></div>' +
         '<div class="text-lg font-semibold text-gray-700 mb-2">Загрузка товаров...</div>' +
       '</div>';
   }
@@ -783,9 +775,9 @@ async function fetchAndUpdateProducts(showLoader = false) {
     if (showLoader) {
       isRefreshingProducts = false;
       root.innerHTML =
-        '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
-          '<div class="w-24 h-24 bg-red-50 rounded-3xl flex items-center justify-center mb-4">' +
-            '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+        '<div class="flex flex-col items-center.justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+          '<div class="w-24 h-24 bg-red-50 rounded-3xl flex.items-center justify-center mb-4">' +
+            '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor".viewBox="0 0 24 24">' +
               '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                     ' d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
             '</svg>' +

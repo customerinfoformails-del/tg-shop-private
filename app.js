@@ -622,6 +622,8 @@ document.addEventListener('keydown', e => {
 
 // ---------- Оформление заказа (Sheets — блокирующе, backend — в фоне) ----------
 
+// ---------- Оформление заказа (Sheets — блокирующе, backend — в фоне) ----------
+
 window.placeOrder = async function() {
   if (isPlacingOrder) return;
 
@@ -719,24 +721,24 @@ window.placeOrder = async function() {
 
     const text = await resp.text();
     console.log('ORDERS_API_URL status:', resp.status);
-    console.log('ORDERS_API_URL body:', text);
+    console.log('ORDERS_API_URL raw body:', text);
 
-    let json;
+    let json = null;
     try {
       json = JSON.parse(text);
     } catch (e) {
-      json = null;
+      console.log('JSON parse error:', e);
     }
 
     if (!resp.ok || !json || json.ok !== true) {
-      tg?.showAlert?.('Ошибка сохранения: ' + (json && json.error ? json.error : resp.status));
+      tg?.showAlert?.('Ответ сервера: ' + text);
       isPlacingOrder = false;
       showCartTab();
       return;
     }
   } catch (e) {
     console.error('orders script error', e);
-    tg?.showAlert?.('Ошибка при сохранении заказа, попробуйте ещё раз.');
+    tg?.showAlert?.('fetch error: ' + e.message);
     isPlacingOrder = false;
     showCartTab();
     return;
@@ -760,6 +762,7 @@ window.placeOrder = async function() {
   isPlacingOrder = false;
   showCartTab();
 };
+
 
 
 

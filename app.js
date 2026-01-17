@@ -246,19 +246,22 @@ window.setPickupLocation = function(addr) {
 function showCartTab() {
   if (!cartItems.length) {
     root.innerHTML =
-    '<div class="relative min-h-[100vh] p-6 space-y-6 pb-[140px]">' +
-      '... контент корзины ...' +
-    '</div>' +
-    '<div class="cart-checkout-bar">' +
-      '<button onclick="placeOrder()"' +
-              ' class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition-all"' +
-              (cartItems.some(i => !i.available) ? ' disabled style="opacity:0.5;cursor:not-allowed;"' : '') +
-              '>' +
-        (cartItems.some(i => !i.available)
-          ? 'Удалите недоступные товары'
-          : 'Оформить заказ') +
-      '</button>' +
-    '</div>';
+      '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+        '<div class="w-28 h-28 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center mb-6">' +
+          '<svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+                  ' d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 2.5M7 13l-1.5 2.5m12.5-2.5L21 13m0 0l-1.5 2.5m1.5-2.5L21 21"/>' +
+          '</svg>' +
+        '</div>' +
+        '<h2 class="text-2xl font-bold text-gray-800 mb-2">Корзина пуста</h2>' +
+        '<p class="text-sm text-gray-500 mb-6 max-w-xs">' +
+          'Добавьте устройство в корзину, чтобы оформить заказ.' +
+        '</p>' +
+        '<button onclick="switchTab(\'shop\')"' +
+                ' class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
+          'Перейти в магазин' +
+        '</button>' +
+      '</div>';
     return;
   }
 
@@ -269,7 +272,7 @@ function showCartTab() {
   const total = subtotal + commission;
 
   root.innerHTML =
-    '<div class="relative min-h-[100vh] p-6 space-y-6 pb-[140px]">' +
+    '<div class="relative min-h-[100vh] p-6 space-y-6 pb-[80px]">' +
       '<h2 class="text-2xl font-bold text-gray-800 mb-4">Корзина</h2>' +
       '<div class="space-y-3">' +
         cartItems.map((item, idx) =>
@@ -380,17 +383,18 @@ function showCartTab() {
             '<span>$' + total + '</span>' +
           '</div>' +
         '</div>' +
+
+        '<div class="pt-4">' +
+          '<button onclick="placeOrder()"' +
+                  ' class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition-all"' +
+                  (cartItems.some(i => !i.available) ? ' disabled style="opacity:0.5;cursor:not-allowed;"' : '') +
+                  '>' +
+            (cartItems.some(i => !i.available)
+              ? 'Удалите недоступные товары'
+              : 'Оформить заказ') +
+          '</button>' +
+        '</div>' +
       '</div>' +
-    '</div>' +
-    '<div class="cart-checkout-bar">' +
-      '<button onclick="placeOrder()"' +
-              ' class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition-all"' +
-              (cartItems.some(i => !i.available) ? ' disabled style="opacity:0.5;cursor:not-allowed;"' : '') +
-              '>' +
-        (cartItems.some(i => !i.available)
-          ? 'Удалите недоступные товары'
-          : 'Оформить заказ') +
-      '</button>' +
     '</div>';
 }
 
@@ -591,10 +595,16 @@ document.addEventListener('keydown', e => {
 
 // ---------- Заказ ----------
 
-window.placeOrder = function() {
+window.placeOrder = async function() {
   if (cartItems.length === 0) {
     tg?.showAlert?.('Корзина пуста');
     return;
+  }
+
+  try {
+    await fetchAndUpdateProducts(false);
+  } catch (e) {
+    console.error('refresh before order failed', e);
   }
 
   if (!productsData) {
@@ -664,7 +674,9 @@ window.placeOrder = function() {
       type: 'order',
       order
     }));
-  } catch (e) {}
+  } catch (e) {
+    console.error('sendData error', e);
+  }
 
   tg?.showAlert?.('✅ Вы успешно оформили заказ!');
 

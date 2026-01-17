@@ -36,7 +36,7 @@ body {
   animation: none;
 }
 
-/* Если хочешь полностью отключить fadeIn везде, раскомментируй: */
+/* (опционально) можно вообще отключить fadeIn везде */
 /*
 img.loaded {
   animation: fadeIn 0.3s ease-in;
@@ -215,20 +215,6 @@ img,
 }
 #search::placeholder {
   color: #9ca3af;
-}
-
-/* Фиксированная кнопка заказа над таббаром */
-.cart-checkout-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--tabbar-height) + 4px); /* чуть выше таббара */
-  background: #ffffff;
-  border-top: 1px solid rgba(0,0,0,0.06);
-  padding: 12px 16px 12px;
-  z-index: 998;
-  max-width: 480px;
-  margin: 0 auto; /* чтобы совпадало с таббаром */
 }
 
 /* Таббар */

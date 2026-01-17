@@ -87,9 +87,20 @@ window.changeQuantity = function(delta) {
   if (newScrollContainer) newScrollContainer.scrollTop = prevScrollTop;
 };
 
-window.addToCartFromModal = function() {
+window.addToCartFromModal = async function() {
+  try {
+    await fetchAndUpdateProducts(false);
+  } catch (e) {
+    console.error('refresh before addToCart failed', e);
+  }
+
   if (!isCompleteSelection()) {
     tg?.showAlert?.('❌ Выберите все опции: SIM → Память → Цвет → Регион');
+    return;
+  }
+
+  if (!productsData) {
+    tg?.showAlert?.('Товары не загрузились, попробуйте позже');
     return;
   }
 

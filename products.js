@@ -10,7 +10,6 @@ const PLACEHOLDERS = {
 // порядок выбора опций в модалке
 const FILTER_ORDER = ['simType', 'storage', 'color', 'region'];
 
-// нормализация ответа из Google Apps Script
 // нормализация ответа из Google Apps Script (плоский массив вариантов)
 function normalizeProducts(products) {
   return products.map(row => ({
@@ -201,12 +200,10 @@ function productCard(product) {
   const variants = allVariants.filter(v => v.inStock);
   if (variants.length === 0) return '';
 
-  // используем только commonImage (из продукта), без вариативных картинок
   const commonImage = product.commonImage || variants[0]?.commonImage || '';
   const fallbackByCategory = PLACEHOLDERS[product.cat] || PLACEHOLDERS['iPhone'];
 
   const mainImage = commonImage || fallbackByCategory;
-  const images = [mainImage];
 
   const cheapestVariant = variants.reduce((min, p) => (p.price < min.price ? p : min), variants[0]);
   const carouselId = 'carousel_' + Math.random().toString(36).substr(2, 9);

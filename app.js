@@ -391,7 +391,7 @@ function showCartTab() {
         '</div>' +
 
         '<div class="pt-3">' +
-          '<button.onclick="placeOrder()"' +
+          '<button onclick="placeOrder()"' +
                   ' class="w-full flex items-center justify-center gap-2 ' +
                     (!cartItems.some(i => !i.available) && !isPlacingOrder
                       ? 'bg-blue-500 hover:bg-blue-600'
@@ -412,6 +412,7 @@ function showCartTab() {
     '</div>';
 }
 
+
 // ---------- Вкладка распродажи ----------
 
 function showSaleTab() {
@@ -425,7 +426,7 @@ function showSaleTab() {
       '</div>' +
       '<h2 class="text-2xl font-bold text-gray-800 mb-4">Распродажа</h2>' +
       '<p class="text-lg text-gray-600 mb-8">Скоро здесь будут скидки до 70%!</p>' +
-      '<button onclick="switchTab(\'shop\')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl.shadow-lg transition-all">' +
+      '<button onclick="switchTab(\'shop\')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
         'В магазин' +
       '</button>' +
     '</div>';
@@ -755,8 +756,8 @@ window.refreshProducts = async function() {
 async function fetchAndUpdateProducts(showLoader = false) {
   if (showLoader) {
     root.innerHTML =
-      '<div class="flex flex-col items-center justify-center.min-h-[400px]">' +
-        '<div class="w-20 h-20 border-4 border-blue-200 border-t-blue-500 rounded-full.animate-spin mb-4"></div>' +
+      '<div class="flex flex-col items-center justify-center min-h-[400px]">' +
+        '<div class="w-20 h-20 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>' +
         '<div class="text-lg font-semibold text-gray-700 mb-2">Загрузка товаров...</div>' +
       '</div>';
   }
@@ -809,7 +810,7 @@ async function fetchAndUpdateProducts(showLoader = false) {
             'Проверьте соединение и попробуйте обновить список товаров.' +
           '</p>' +
           '<button onclick="refreshProducts()"' +
-                  ' class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold.py-3 px-8 rounded-2xl shadow-lg transition-all text-sm">' +
+                  ' class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-2xl shadow-lg transition-all text-sm">' +
             '<span class="loader-circle"></span>' +
             '<span>Обновить товары</span>' +
           '</button>' +

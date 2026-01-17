@@ -705,6 +705,8 @@ window.placeOrder = async function() {
 
   // отправка только на backend
   try {
+    console.log('tg.initDataUnsafe.user:', tg?.initDataUnsafe?.user);
+    console.log('Order before send:', order);
     const resp = await fetch(BACKEND_ORDER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

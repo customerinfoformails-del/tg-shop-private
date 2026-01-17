@@ -616,13 +616,7 @@ document.addEventListener('keydown', e => {
 
 // ---------- Оформление заказа (Sheets — блокирующе, backend — в фоне) ----------
 
-// ---------- Оформление заказа (Sheets — блокирующе, backend — в фоне) ----------
-
-// ---------- Оформление заказа (Sheets — блокирующе, backend — в фоне) ----------
-
-// ---------- Оформление заказа (Sheets — блокирующе, backend — в фоне) ----------
-
-// ---------- Оформление заказа (Sheets — блокирующе, backend — в фоне) ----------
+// ---------- Оформление заказа (Sheets через backend, без прямого доступа к Apps Script) ----------
 
 window.placeOrder = async function() {
   if (isPlacingOrder) return;
@@ -656,7 +650,7 @@ window.placeOrder = async function() {
   isPlacingOrder = true;
   showCartTab();
 
-  // перед оформлением обновляем товары
+  // обновляем товары
   try {
     await fetchAndUpdateProducts(false);
   } catch (e) {
@@ -670,7 +664,7 @@ window.placeOrder = async function() {
     return;
   }
 
-  // проверяем доступность позиций в корзине
+  // актуализируем корзину
   let hasUnavailable = false;
   cartItems = cartItems.map(item => {
     const exists = productsData.some(p => p.id === item.id && p.inStock);
@@ -707,52 +701,37 @@ window.placeOrder = async function() {
     user: tg?.initDataUnsafe?.user || null
   };
 
-  // локально сохраняем историю
+  // сохраняем локально
   previousOrders.push(order);
   saveOrdersToStorage();
 
-  // --- основной запрос в Google Sheets (JSON, как в curl) ---
+  // отправляем только на backend
   try {
-    const resp = await fetch(ORDERS_API_URL, {
+    const resp = await fetch(BACKEND_ORDER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(order)
     });
 
     const text = await resp.text();
-    console.log('ORDERS_API_URL status:', resp.status);
-    console.log('ORDERS_API_URL raw body:', text);
+    console.log('BACKEND_ORDER_URL status:', resp.status);
+    console.log('BACKEND_ORDER_URL body:', text);
 
     let json = null;
-    try {
-      json = JSON.parse(text);
-    } catch (e) {
-      console.log('JSON parse error:', e);
-    }
+    try { json = JSON.parse(text); } catch (e) {}
 
     if (!resp.ok || !json || json.ok !== true) {
-      tg?.showAlert?.('Ответ сервера: ' + text);
+      tg?.showAlert?.('Заказ не сохранён, попробуйте ещё раз.');
       isPlacingOrder = false;
       showCartTab();
       return;
     }
   } catch (e) {
-    console.error('orders script error', e);
-    tg?.showAlert?.('fetch error: ' + e.message);
+    console.error('backend order error', e);
+    tg?.showAlert?.('Ошибка при отправке заказа, попробуйте ещё раз.');
     isPlacingOrder = false;
     showCartTab();
     return;
-  }
-
-  // --- отправка на backend (в фоне, без блокировки UX) ---
-  try {
-    fetch(BACKEND_ORDER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order)
-    }).catch(e => console.error('backend order error', e));
-  } catch (e) {
-    console.error('backend order exception', e);
   }
 
   tg?.showAlert?.('✅ Заказ оформлен!');
@@ -762,9 +741,6 @@ window.placeOrder = async function() {
   isPlacingOrder = false;
   showCartTab();
 };
-
-
-
 
 
 // ---------- Обновление товаров вручную ----------

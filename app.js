@@ -447,9 +447,14 @@ window.toggleOrderDetails = function(index) {
 };
 
 function showProfileTab() {
-  const user = tg?.initDataUnsafe?.user;
-  const username = user?.username || 'неизвестно';
-  const displayId = '@' + username;
+  const user = tg?.initDataUnsafe?.user || null;
+
+  const profileId = user?.id ? String(user.id) : 'неизвестно';
+  const profileName = user?.first_name || 'Без имени';
+  const profileUsername = user?.username ? '@' + user.username : '';
+  const idLine = profileUsername
+    ? profileName + ' • ' + profileId + ' ' + profileUsername
+    : profileName + ' • ' + profileId;
 
   const ordersHtml = previousOrders.length
     ? previousOrders.map((o, idx) =>
@@ -459,8 +464,8 @@ function showProfileTab() {
             '<span class="text-sm font-bold text-blue-600">$' + o.total + '</span>' +
           '</div>' +
           '<div class="text-xs text-gray-500 mb-1">' + new Date(o.date).toLocaleString() + '</div>' +
-          '<div class="text-xs text-gray-600 mb-1">Адрес: ' + escapeHtml(o.address) + '</div>' +
-          '<div class="text-xs text-gray-600 mb-1">Товаров: ' + o.items.length + '</div>' +
+          '<div class="text-xs.text-gray-600 mb-1">Адрес: ' + escapeHtml(o.address) + '</div>' +
+          '<div class="text-xs.text-gray-600 mb-1">Товаров: ' + o.items.length + '</div>' +
           '<div id="orderDetails_' + idx + '" class="hidden mt-2 text-xs text-gray-700 bg-gray-50 rounded-lg p-2">' +
             o.items.map(item =>
               '<div class="flex items-center justify-between mb-1">' +
@@ -485,7 +490,7 @@ function showProfileTab() {
 
   const addressesHtml = savedAddresses.length
     ? savedAddresses.map((addr, idx) =>
-        '<div class="flex items-center justify-between p-2 border rounded-xl mb-1">' +
+        '<div class="flex items-center justify-between p-2 border rounded-xl.mb-1">' +
           '<span class="text-xs text-gray-700">' + escapeHtml(addr) + '</span>' +
           '<button class="text-xs text-red-500" onclick="removeAddress(' + idx + ')">Удалить</button>' +
         '</div>'
@@ -493,7 +498,7 @@ function showProfileTab() {
     : '<p class="text-sm text-gray-500">Сохранённых адресов нет</p>';
 
   root.innerHTML =
-    '<div class="p-6 space-y-6 pb-[65px]">' +
+    '<div class="p-6.space-y-6 pb-[65px]">' +
       '<div class="flex items-center space-x-4">' +
         '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">' +
           '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
@@ -503,7 +508,7 @@ function showProfileTab() {
         '</div>' +
         '<div>' +
           '<h2 class="text-xl font-bold">Профиль</h2>' +
-          '<p class="text-gray-500 text-sm">ID: ' + escapeHtml(displayId) + '</p>' +
+          '<p class="text-gray-500 text-sm">' + escapeHtml(idLine) + '</p>' +
         '</div>' +
       '</div>' +
 
@@ -525,6 +530,7 @@ function showProfileTab() {
       '</div>' +
     '</div>';
 }
+
 
 window.addAddress = function() {
   const ta = document.getElementById('newAddress');

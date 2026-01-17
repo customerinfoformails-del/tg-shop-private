@@ -616,6 +616,8 @@ document.addEventListener('keydown', e => {
 
 // ---------- Оформление заказа (Sheets — блокирующе, backend — в фоне) ----------
 
+// ---------- Оформление заказа (Sheets — блокирующе, backend — в фоне) ----------
+
 window.placeOrder = async function() {
   if (isPlacingOrder) return;
 
@@ -624,6 +626,7 @@ window.placeOrder = async function() {
     return;
   }
 
+  // адрес
   let address = '';
   if (pickupMode) {
     if (!pickupLocation) {
@@ -647,6 +650,7 @@ window.placeOrder = async function() {
   isPlacingOrder = true;
   showCartTab();
 
+  // перед оформлением обновляем товары
   try {
     await fetchAndUpdateProducts(false);
   } catch (e) {
@@ -660,6 +664,7 @@ window.placeOrder = async function() {
     return;
   }
 
+  // проверяем доступность позиций в корзине
   let hasUnavailable = false;
   cartItems = cartItems.map(item => {
     const exists = productsData.some(p => p.id === item.id && p.inStock);
@@ -696,18 +701,31 @@ window.placeOrder = async function() {
     user: tg?.initDataUnsafe?.user || null
   };
 
+  // локально сохраняем историю
   previousOrders.push(order);
   saveOrdersToStorage();
 
+  // --- основной запрос в Google Sheets (блокирующий) ---
   try {
     const resp = await fetch(ORDERS_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(order)
     });
-    if (!resp.ok) {
-      console.error('orders script status', resp.status);
-      tg?.showAlert?.('Не удалось сохранить заказ, попробуйте ещё раз.');
+
+    const text = await resp.text();
+    console.log('ORDERS_API_URL status:', resp.status);
+    console.log('ORDERS_API_URL body:', text);
+
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch (e) {
+      json = null;
+    }
+
+    if (!resp.ok || !json || json.ok !== true) {
+      tg?.showAlert?.('Ошибка сохранения: ' + (json && json.error ? json.error : resp.status));
       isPlacingOrder = false;
       showCartTab();
       return;
@@ -720,6 +738,7 @@ window.placeOrder = async function() {
     return;
   }
 
+  // --- отправка на backend (в фоне, без блокировки UX) ---
   try {
     fetch(BACKEND_ORDER_URL, {
       method: 'POST',
@@ -737,6 +756,7 @@ window.placeOrder = async function() {
   isPlacingOrder = false;
   showCartTab();
 };
+
 
 // ---------- Обновление товаров вручную ----------
 

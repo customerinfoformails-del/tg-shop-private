@@ -618,6 +618,8 @@ document.addEventListener('keydown', e => {
 
 // ---------- Оформление заказа (Sheets — блокирующе, backend — в фоне) ----------
 
+// ---------- Оформление заказа (Sheets — блокирующе, backend — в фоне) ----------
+
 window.placeOrder = async function() {
   if (isPlacingOrder) return;
 
@@ -705,12 +707,14 @@ window.placeOrder = async function() {
   previousOrders.push(order);
   saveOrdersToStorage();
 
-  // --- основной запрос в Google Sheets (блокирующий) ---
+  // --- основной запрос в Google Sheets (x-www-form-urlencoded, без preflight) ---
   try {
+    const bodyStr = 'data=' + encodeURIComponent(JSON.stringify(order));
+
     const resp = await fetch(ORDERS_API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order)
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+      body: bodyStr
     });
 
     const text = await resp.text();
@@ -756,6 +760,7 @@ window.placeOrder = async function() {
   isPlacingOrder = false;
   showCartTab();
 };
+
 
 
 // ---------- Обновление товаров вручную ----------

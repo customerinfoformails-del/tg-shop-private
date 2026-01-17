@@ -1,5 +1,11 @@
 const tg = window.Telegram?.WebApp;
-try { tg?.ready(); tg?.expand(); } catch (e) {}
+try {
+  tg?.ready();
+  tg?.expand();
+  tg?.setBackgroundColor?.('#f3f4f6'); // это Tailwind bg-gray-100
+} catch (e) {}
+
+
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxyKA2QcJBKim9ttOKHiJ_uTVYunBKhBnNFNf9BLGewzHpqqcY9ZY8smmvCwQZzOGs85Q/exec';
 const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbxr_WtXjtNelG9HRya2ngKaYkd-9dUrADnVG8H9_SJTHIheJ_eFFj3BCCdED22-3K5t5Q/exec';

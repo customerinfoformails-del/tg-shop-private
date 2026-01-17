@@ -88,6 +88,10 @@ window.changeQuantity = function(delta) {
 };
 
 window.addToCartFromModal = async function() {
+  if (isAddingToCart) return;
+  isAddingToCart = true;
+  renderProductModal(currentProduct); // кнопка -> «Проверяю наличие...»
+
   try {
     await fetchAndUpdateProducts(false);
   } catch (e) {
@@ -96,11 +100,15 @@ window.addToCartFromModal = async function() {
 
   if (!isCompleteSelection()) {
     tg?.showAlert?.('❌ Выберите все опции: SIM → Память → Цвет → Регион');
+    isAddingToCart = false;
+    renderProductModal(currentProduct);
     return;
   }
 
   if (!productsData) {
     tg?.showAlert?.('Товары не загрузились, попробуйте позже');
+    isAddingToCart = false;
+    renderProductModal(currentProduct);
     return;
   }
 
@@ -111,6 +119,8 @@ window.addToCartFromModal = async function() {
 
   if (variants.length === 0) {
     tg?.showAlert?.('❌ Нет доступных вариантов');
+    isAddingToCart = false;
+    renderProductModal(currentProduct);
     return;
   }
 
@@ -124,6 +134,7 @@ window.addToCartFromModal = async function() {
     'Количество: ' + selectedQuantity + '\n$' +
     (selectedVariant.price * selectedQuantity)
   );
+  isAddingToCart = false;
   closeModal();
 };
 
@@ -325,19 +336,22 @@ function renderProductModal(product) {
 
       '<div class="modal-footer border-t bg-white">' +
         '<button onclick="addToCartFromModal()"' +
-                ' class="w-full ' +
-                  (complete && availableVariants.length > 0
+                ' class="w-full flex items-center justify-center gap-2 ' +
+                  (complete && availableVariants.length > 0 && !isAddingToCart
                     ? 'bg-blue-500 hover:bg-blue-600'
                     : 'bg-gray-400 cursor-not-allowed') +
                   ' text-white font-semibold px-4 rounded-2xl shadow-lg transition-all"' +
-                (complete && availableVariants.length > 0 ? '' : ' disabled') +
+                (complete && availableVariants.length > 0 && !isAddingToCart ? '' : ' disabled') +
                 '>' +
-          (complete && availableVariants.length > 0
-            ? '✅ В корзину $' +
-                (availableVariants[0] && availableVariants[0].price
-                  ? (availableVariants[0].price * selectedQuantity)
-                  : '')
-            : 'Выберите все опции') +
+          (isAddingToCart
+            ? '<span class="loader-circle"></span><span>Проверяю наличие...</span>'
+            : (complete && availableVariants.length > 0
+                ? '✅ В корзину $' +
+                    (availableVariants[0] && availableVariants[0].price
+                      ? (availableVariants[0].price * selectedQuantity)
+                      : '')
+                : 'Выберите все опции')
+          ) +
         '</button>' +
       '</div>' +
     '</div>';

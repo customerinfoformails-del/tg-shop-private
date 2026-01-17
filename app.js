@@ -30,6 +30,10 @@ const PICKUP_LOCATIONS = [
   'ТРЦ Dana Mall, ул. Петра Мстиславца, 11'
 ];
 
+let isAddingToCart = false;
+let isPlacingOrder = false;
+let isRefreshingProducts = false;
+
 const root = document.getElementById('root');
 const modal = document.getElementById('productModal');
 
@@ -384,14 +388,22 @@ function showCartTab() {
           '</div>' +
         '</div>' +
 
-        '<div class="pt-4">' +
+        '<div class="pt-3">' +
           '<button onclick="placeOrder()"' +
-                  ' class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition-all"' +
-                  (cartItems.some(i => !i.available) ? ' disabled style="opacity:0.5;cursor:not-allowed;"' : '') +
+                  ' class="w-full flex items-center justify-center gap-2 ' +
+                    (!cartItems.some(i => !i.available) && !isPlacingOrder
+                      ? 'bg-blue-500 hover:bg-blue-600'
+                      : 'bg-gray-400 cursor-not-allowed') +
+                    ' text-white font-semibold py-2.5 px-6 rounded-2xl shadow-lg transition-all text-sm"' +
+                  (cartItems.some(i => !i.available) || isPlacingOrder ? ' disabled' : '') +
                   '>' +
             (cartItems.some(i => !i.available)
               ? 'Удалите недоступные товары'
-              : 'Оформить заказ') +
+              : (isPlacingOrder
+                  ? '<span class="loader-circle"></span><span>Проверяю наличие...</span>'
+                  : 'Оформить заказ'
+                )
+            ) +
           '</button>' +
         '</div>' +
       '</div>' +
@@ -593,14 +605,20 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ---------- Заказ ----------
+// ---------- Заказ (порядок: сначала наличие, потом поля) ----------
 
 window.placeOrder = async function() {
+  if (isPlacingOrder) return;
+
   if (cartItems.length === 0) {
     tg?.showAlert?.('Корзина пуста');
     return;
   }
 
+  isPlacingOrder = true;
+  showCartTab(); // кнопка переключится в «Проверяю наличие...»
+
+  // 1) сначала обновляем товары и проверяем наличие
   try {
     await fetchAndUpdateProducts(false);
   } catch (e) {
@@ -609,6 +627,8 @@ window.placeOrder = async function() {
 
   if (!productsData) {
     tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
+    isPlacingOrder = false;
+    showCartTab();
     return;
   }
 
@@ -622,15 +642,19 @@ window.placeOrder = async function() {
   updateCartBadge();
 
   if (hasUnavailable) {
-    showCartTab();
     tg?.showAlert?.('Некоторые товары стали недоступны. Удалите их из корзины.');
+    isPlacingOrder = false;
+    showCartTab();
     return;
   }
 
+  // 2) только теперь проверяем адрес/поля
   let address = '';
   if (pickupMode) {
     if (!pickupLocation) {
       tg?.showAlert?.('Выберите пункт самовывоза');
+      isPlacingOrder = false;
+      showCartTab();
       return;
     }
     address = 'Самовывоз: ' + pickupLocation;
@@ -643,6 +667,8 @@ window.placeOrder = async function() {
     }
     if (!address) {
       tg?.showAlert?.('Введите или выберите адрес доставки');
+      isPlacingOrder = false;
+      showCartTab();
       return;
     }
   }
@@ -683,7 +709,27 @@ window.placeOrder = async function() {
   cartItems = [];
   saveCartToStorage();
   updateCartBadge();
+  isPlacingOrder = false;
   showCartTab();
+};
+
+// ---------- Обновление товаров вручную ----------
+
+window.refreshProducts = async function() {
+  if (isRefreshingProducts) return;
+  isRefreshingProducts = true;
+
+  root.innerHTML =
+    '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+      '<div class="w-20 h-20 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>' +
+      '<div class="text-lg font-semibold text-gray-700 mb-2">Обновляю товары...</div>' +
+    '</div>';
+
+  try {
+    await fetchAndUpdateProducts(true);
+  } finally {
+    isRefreshingProducts = false;
+  }
 };
 
 // ---------- Загрузка товаров с API ----------
@@ -730,7 +776,27 @@ async function fetchAndUpdateProducts(showLoader = false) {
     }
   } catch (error) {
     console.error('API error:', error);
-    if (showLoader) showError(error.message);
+    if (showLoader) {
+      isRefreshingProducts = false;
+      root.innerHTML =
+        '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+          '<div class="w-24 h-24 bg-red-50 rounded-3xl flex items-center justify-center mb-4">' +
+            '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+              '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+                    ' d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
+            '</svg>' +
+          '</div>' +
+          '<h2 class="text-xl font-bold text-gray-800 mb-2">Не удалось загрузить товары</h2>' +
+          '<p class="text-sm text-gray-500 mb-4 max-w-xs">' +
+            'Проверьте соединение и попробуйте обновить список товаров.' +
+          '</p>' +
+          '<button onclick="refreshProducts()"' +
+                  ' class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-2xl shadow-lg transition-all text-sm">' +
+            '<span class="loader-circle"></span>' +
+            '<span>Обновить товары</span>' +
+          '</button>' +
+        '</div>';
+    }
   }
 }
 

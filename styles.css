@@ -13,7 +13,7 @@ body {
   touch-action: manipulation;
 }
 
-/* Лоадер */
+/* Лоадер плейсхолдеров */
 .placeholder-shimmer {
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
@@ -24,24 +24,29 @@ body {
   100% { background-position: -200% 0; }
 }
 
+/* Мини-лоадер в кнопках */
+.loader-circle {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #ffffff;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Анимация появления (общая) */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-/* Отключаем fadeIn для картинок в карточках товаров,
-   чтобы при переключении вкладок не было "моргания" */
+/* Отключаем fadeIn для картинок в карточках товаров */
 .product-grid img.loaded {
   animation: none;
 }
-
-/* (опционально) можно вообще отключить fadeIn везде */
-/*
-img.loaded {
-  animation: fadeIn 0.3s ease-in;
-}
-*/
 
 /* Картинки */
 img,
@@ -163,7 +168,7 @@ img,
   padding-right: 8px;
 }
 
-/* Высота модалки задаётся в HTML через h-[85vh], здесь только для скролла */
+/* Высота модалки задаётся в HTML через h-[85vh] */
 #modalContent {
   min-height: 0;
 }

@@ -2,6 +2,7 @@ const tg = window.Telegram?.WebApp;
 try { tg?.ready(); tg?.expand(); } catch (e) {}
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbzp4E0zx1A5Jl-XD11IwUntT5cnF8lZQIdcdJQZcegXnUTy5dn23EhceyZ3P_MaC7ZZxQ/exec';
+const BACKEND_ORDER_URL = 'https://tg-shop-test-backend.onrender.com/order'; 
 
 let CATEGORIES = ['Все'];
 
@@ -499,7 +500,7 @@ function showProfileTab() {
       '</div>' +
 
       '<div class="space-y-4">' +
-        '<h3 class="text-lg font-semibold">Сохранённые адреса</h3>' +
+        '<h3 class="text-lg.font-semibold">Сохранённые адреса</h3>' +
         '<div id="addressesList">' + addressesHtml + '</div>' +
         '<div class="space-y-2">' +
           '<textarea id="newAddress" class="w-full bg-white border rounded-xl px-3 py-2 text-sm" rows="2" placeholder="Новый адрес..."></textarea>' +
@@ -573,7 +574,7 @@ function showError(message) {
       '<h2 class="text-2xl font-bold text-gray-800 mb-4">Ошибка загрузки</h2>' +
       '<p class="text-lg text-red-600 mb-2">' + escapeHtml(message) + '</p>' +
       '<button onclick="location.reload()"' +
-              ' class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
+              ' class="bg-blue-500 hover:bg-blue-600.text-white font-bold py-3 px-8 rounded-2xl shadow-lg.transition-all">' +
         'Попробовать снова' +
       '</button>' +
     '</div>';
@@ -605,7 +606,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ---------- Заказ (порядок: сначала наличие, потом поля) ----------
+// ---------- Оформление заказа (через backend, без sendData) ----------
 
 window.placeOrder = async function() {
   if (isPlacingOrder) return;
@@ -615,10 +616,31 @@ window.placeOrder = async function() {
     return;
   }
 
-  isPlacingOrder = true;
-  showCartTab(); // кнопка переключится в «Проверяю наличие...»
+  // 1) проверка полей
+  let address = '';
+  if (pickupMode) {
+    if (!pickupLocation) {
+      tg?.showAlert?.('Выберите пункт самовывоза');
+      return;
+    }
+    address = 'Самовывоз: ' + pickupLocation;
+  } else {
+    const select = document.getElementById('savedAddress');
+    const textarea = document.getElementById('deliveryAddress');
+    address = (textarea && textarea.value.trim()) || '';
+    if (!address && select && select.value) {
+      address = select.value;
+    }
+    if (!address) {
+      tg?.showAlert?.('Введите или выберите адрес доставки');
+      return;
+    }
+  }
 
-  // 1) сначала обновляем товары и проверяем наличие
+  // 2) теперь проверка наличия
+  isPlacingOrder = true;
+  showCartTab();
+
   try {
     await fetchAndUpdateProducts(false);
   } catch (e) {
@@ -648,31 +670,6 @@ window.placeOrder = async function() {
     return;
   }
 
-  // 2) только теперь проверяем адрес/поля
-  let address = '';
-  if (pickupMode) {
-    if (!pickupLocation) {
-      tg?.showAlert?.('Выберите пункт самовывоза');
-      isPlacingOrder = false;
-      showCartTab();
-      return;
-    }
-    address = 'Самовывоз: ' + pickupLocation;
-  } else {
-    const select = document.getElementById('savedAddress');
-    const textarea = document.getElementById('deliveryAddress');
-    address = (textarea && textarea.value.trim()) || '';
-    if (!address && select && select.value) {
-      address = select.value;
-    }
-    if (!address) {
-      tg?.showAlert?.('Введите или выберите адрес доставки');
-      isPlacingOrder = false;
-      showCartTab();
-      return;
-    }
-  }
-
   const subtotal = cartItems.reduce((sum, item) =>
     sum + item.price * item.quantity, 0
   );
@@ -689,22 +686,29 @@ window.placeOrder = async function() {
     address,
     paymentType,
     pickupMode,
-    pickupLocation: pickupMode ? pickupLocation : ''
+    pickupLocation: pickupMode ? pickupLocation : '',
+    user: tg?.initDataUnsafe?.user || null
   };
 
   previousOrders.push(order);
   saveOrdersToStorage();
 
+  // 3) отправляем заказ на backend
   try {
-    tg?.sendData?.(JSON.stringify({
-      type: 'order',
-      order
-    }));
+    await fetch(BACKEND_ORDER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order)
+    });
   } catch (e) {
-    console.error('sendData error', e);
+    console.error('backend order error', e);
+    tg?.showAlert?.('Не удалось отправить заказ на сервер. Попробуйте ещё раз.');
+    isPlacingOrder = false;
+    showCartTab();
+    return;
   }
 
-  tg?.showAlert?.('✅ Вы успешно оформили заказ!');
+  tg?.showAlert?.('✅ Заказ отправлен продавцу!');
 
   cartItems = [];
   saveCartToStorage();
@@ -720,7 +724,7 @@ window.refreshProducts = async function() {
   isRefreshingProducts = true;
 
   root.innerHTML =
-    '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+    '<div class="flex flex-col items-center justify-center.min-h-[70vh] text-center p-8 pb-[65px]">' +
       '<div class="w-20 h-20 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>' +
       '<div class="text-lg font-semibold text-gray-700 mb-2">Обновляю товары...</div>' +
     '</div>';

@@ -89,8 +89,14 @@ window.changeQuantity = function(delta) {
 
 window.addToCartFromModal = async function() {
   if (isAddingToCart) return;
+
+  const scrollContainer = document.querySelector('#modalContent .flex-1');
+  const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+
   isAddingToCart = true;
-  renderProductModal(currentProduct); // кнопка -> «Проверяю наличие...»
+  renderProductModal(currentProduct);
+  const sc2 = document.querySelector('#modalContent .flex-1');
+  if (sc2) sc2.scrollTop = prevScrollTop;
 
   try {
     await fetchAndUpdateProducts(false);
@@ -101,14 +107,22 @@ window.addToCartFromModal = async function() {
   if (!isCompleteSelection()) {
     tg?.showAlert?.('❌ Выберите все опции: SIM → Память → Цвет → Регион');
     isAddingToCart = false;
+    const scA = document.querySelector('#modalContent .flex-1');
+    const prevA = scA ? scA.scrollTop : 0;
     renderProductModal(currentProduct);
+    const scB = document.querySelector('#modalContent .flex-1');
+    if (scB) scB.scrollTop = prevA;
     return;
   }
 
   if (!productsData) {
     tg?.showAlert?.('Товары не загрузились, попробуйте позже');
     isAddingToCart = false;
+    const scA = document.querySelector('#modalContent .flex-1');
+    const prevA = scA ? scA.scrollTop : 0;
     renderProductModal(currentProduct);
+    const scB = document.querySelector('#modalContent .flex-1');
+    if (scB) scB.scrollTop = prevA;
     return;
   }
 
@@ -120,7 +134,11 @@ window.addToCartFromModal = async function() {
   if (variants.length === 0) {
     tg?.showAlert?.('❌ Нет доступных вариантов');
     isAddingToCart = false;
+    const scA = document.querySelector('#modalContent .flex-1');
+    const prevA = scA ? scA.scrollTop : 0;
     renderProductModal(currentProduct);
+    const scB = document.querySelector('#modalContent .flex-1');
+    if (scB) scB.scrollTop = prevA;
     return;
   }
 
@@ -223,11 +241,11 @@ function renderProductModal(product) {
 
       '<div class="flex-1 overflow-y-auto">' +
         '<div class="modal-image-section">' +
-          '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden mb-6" id="modalCarousel">' +
+          '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden.mb-6" id="modalCarousel">' +
             (complete && filteredImages.length > 0
               ? '<div class="image-carousel-inner" id="modalCarouselInner">' +
                   filteredImages.slice(0, 10).map(img =>
-                    '<img src="' + img + '" class="carousel-img loaded" alt="Product image" loading="lazy" />'
+                    '<img src="' + img + '" class="carousel-img.loaded" alt="Product.image" loading="lazy" />'
                   ).join('') +
                 '</div>' +
                 (filteredImages.length > 1
@@ -251,7 +269,7 @@ function renderProductModal(product) {
                         '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                               ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
                       '</svg>' +
-                      '<div class="text-center text-sm font-medium">Выберите все параметры для просмотра фото</div>' +
+                      '<div class="text-center text-sm.font-medium">Выберите все параметры для просмотра фото</div>' +
                     '</div>'
                 )
             ) +
@@ -307,7 +325,7 @@ function renderProductModal(product) {
           '<div class="quantity-section">' +
             '<label class="text-sm font-semibold text-gray-700 mb-2 block">Количество</label>' +
             '<div class="flex items-center gap-3">' +
-              '<button class="px-3 py-1.5 rounded-full bg-gray-200 text-lg font-bold"' +
+              '<button class="px-3 py-1.5 rounded-full bg-gray-200 text-lg.font-bold"' +
                       ' onclick="changeQuantity(-1); return false;">-</button>' +
               '<span id="quantityValue" class="min-w-[40px] text-center font-semibold">' + selectedQuantity + '</span>' +
               '<button class="px-3 py-1.5 rounded-full bg-gray-200 text-lg font-bold"' +

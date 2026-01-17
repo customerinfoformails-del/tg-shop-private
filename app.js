@@ -1,7 +1,7 @@
 const tg = window.Telegram?.WebApp;
 try { tg?.ready(); tg?.expand(); } catch (e) {}
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbziN4vXQmxVtsMuwazZCql_yy_LLHJqd8SJo5kCAVeQkx1zklSRF4ikKgQx4qCVoxf36g/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzA2nWx_CY9hP3SbkPcjRk1VxynlRde84PW1ht1wO_l5pQsE6Egb1ngcQdaFFaXZQ0d2Q/exec';
 const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbxr_WtXjtNelG9HRya2ngKaYkd-9dUrADnVG8H9_SJTHIheJ_eFFj3BCCdED22-3K5t5Q/exec';
 const BACKEND_ORDER_URL = 'https://tg-shop-test-backend.onrender.com/order';
 

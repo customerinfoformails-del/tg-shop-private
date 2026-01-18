@@ -164,6 +164,13 @@ img,
   pointer-events: auto;
 }
 
+.option-btn {
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Горизонтальный скролл опций */
 .scroll-carousel {
   overflow-x: auto;
@@ -258,6 +265,7 @@ img,
   justify-content: space-around;
   align-items: center;
   height: var(--tabbar-height);
+  transition: opacity 0.2s ease;
 }
 
 .tab-item {

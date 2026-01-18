@@ -404,6 +404,16 @@ async function fetchUserOrders() {
 
 // ---------- Инициализация ----------
 
+window.addEventListener('resize', () => {
+  const tabBar = document.getElementById('tabBar');
+  if (!tabBar) return;
+  if (document.activeElement === document.getElementById('search')) {
+    tabBar.style.opacity = '0';
+  } else {
+    tabBar.style.opacity = '1';
+  }
+});
+
 async function initApp() {
   const t0 = performance.now();
   try {

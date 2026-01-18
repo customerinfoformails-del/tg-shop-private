@@ -293,14 +293,14 @@ function showCartTab() {
 
   if (!cartItems.length) {
     root.innerHTML =
-      '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
-        '<div class="w-28 h-28 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center mb-6">' +
+      '<div class="flex flex-col.items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+        '<div class="w-28 h-28 bg-gradient-to-br from-blue-100.to-indigo-100 rounded-3xl flex items-center justify-center mb-6">' +
           '<svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
             ' d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 2.5M7 13l-1.5 2.5m12.5-2.5L21 13m0 0l-1.5 2.5m1.5-2.5L21 21"/>' +
           '</svg>' +
         '</div>' +
-        '<h2 class="text-2xl font-bold text-gray-800 mb-2">Корзина пуста</h2>' +
+        '<h2 class="text-2xl.font-bold text-gray-800 mb-2">Корзина пуста</h2>' +
         '<p class="text-sm text-gray-500 mb-6 max-w-xs">' +
           'Добавьте устройство в корзину, чтобы оформить заказ.' +
         '</p>' +
@@ -318,7 +318,7 @@ function showCartTab() {
 
   root.innerHTML =
     '<div class="relative min-h-[100vh] p-6 space-y-6 pb-[80px] max-w-md mx-auto">' +
-      '<div class="flex items-center justify-between mb-4">' +
+      '<div class="flex items-center justify-between.mb-4">' +
         '<h2 class="text-2xl font-bold text-gray-800">Корзина</h2>' +
         '<button onclick="refreshCartPricesAndCleanup()"' +
           ' class="inline-flex items-center justify-center text-[11px] font-semibold px-2.5 h-8 rounded-full ' +
@@ -360,7 +360,7 @@ function showCartTab() {
                       : 'Товар недоступен, удалите из корзины') +
                   '</div>' +
                 '</div>' +
-                '<div class="text-right flex flex-col items-end gap-1">' +
+                '<div class="text-right flex flex-col.items-end gap-1">' +
                   '<div class="flex items-center justify-end gap-2">' +
                     '<button class="px-2 py-1 rounded-full bg-gray-200 text-sm font-bold"' +
                       ' onclick="changeCartItemQuantity(' +
@@ -393,7 +393,7 @@ function showCartTab() {
       '<div class="pt-4 border-t space-y-4">' +
         '<div class="space-y-2">' +
           '<h3 class="text-sm font-semibold text-gray-700">Способ оплаты</h3>' +
-          '<div class="flex flex-col gap-2">' +
+          '<div class="flex flex-col.gap-2">' +
             '<label class="flex items-center gap-2 text-sm">' +
               '<input type="radio" name="paymentType" value="cash"' +
                 (paymentType === 'cash' ? ' checked' : '') +
@@ -475,11 +475,11 @@ function showCartTab() {
             ' class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
             ' placeholder="Имя">' +
           '<input id="contactPhone" type="tel"' +
-            ' class="w-full bg-white border.border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"' +
+            ' class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
             ' placeholder="Телефон">' +
         '</div>' +
         '<div class="space-y-1 text-sm text-gray-700">' +
-          '<div class="flex items-center justify-between">' +
+          '<div class="flex.items-center justify-between">' +
             '<span>Сумма товаров</span>' +
             '<span>$' +
               subtotal +
@@ -528,6 +528,21 @@ function showCartTab() {
 }
 
 // ---------- Оформление заказа ----------
+
+function scheduleDelayedOrdersSync(reason) {
+  console.log('[placeOrder] scheduleDelayedOrdersSync reason=', reason);
+  setTimeout(async () => {
+    try {
+      console.log('[placeOrder] delayed sync 2min after', reason);
+      await fetchUserOrders();
+      if (currentTab === 'profile') {
+        showProfileTab();
+      }
+    } catch (e) {
+      console.error('[placeOrder] fetchUserOrders delayed error', e);
+    }
+  }, 120000);
+}
 
 window.placeOrder = async function () {
   if (isPlacingOrder) return;
@@ -587,20 +602,10 @@ window.placeOrder = async function () {
 
     showCartTab();
     tg?.showAlert?.(
-      'Похоже, превышено время ожидания ответа сервера. Возможно большая нагрузка и заказ появится в профиле в течении 3 минут. Если не появился проверьте интернет и попробуйте ещё раз (либо сразу можете попробовать повторно оформить)'
+      'Превышено время ожидания ответа сервера. Возможно большая нагрузка и заказ появится в профиле в течении 3 минут. Если не появился проверьте интернет и попробуйте ещё раз (либо сразу можете попробовать повторно оформить заказ)'
     );
 
-    setTimeout(async () => {
-      try {
-        console.log('[placeOrder] delayed sync 2min after timeout');
-        await fetchUserOrders();
-        if (currentTab === 'profile') {
-          showProfileTab();
-        }
-      } catch (e) {
-        console.error('[placeOrder] fetchUserOrders delayed error', e);
-      }
-    }, 120000);
+    scheduleDelayedOrdersSync('timeout');
   }, 70000);
 
   try {
@@ -695,6 +700,10 @@ window.placeOrder = async function () {
     } catch (e) {
       console.error('[placeOrder] backend order network error', e);
       tg?.showAlert?.('Ошибка сети. Заказ не сохранён, попробуйте ещё раз.');
+
+      // 2‑минутная фоновая проверка после сетевой ошибки
+      scheduleDelayedOrdersSync('network-error');
+
       isPlacingOrder = false;
       showCartTab();
       return;
@@ -709,7 +718,11 @@ window.placeOrder = async function () {
 
     if (!resp.ok || !json || json.ok !== true) {
       console.log('[placeOrder] backend responded with error status:', resp.status, json);
-      tg?.showAlert?.('Заказ не сохранён, попробуйте ещё раз.');
+      tg?.showAlert?.('Заказ не сохранён, ошибка сервера, попробуйте ещё раз.');
+
+      // 2‑минутная фоновая проверка после плохого ответа сервера
+      scheduleDelayedOrdersSync('server-error');
+
       isPlacingOrder = false;
       showCartTab();
       return;

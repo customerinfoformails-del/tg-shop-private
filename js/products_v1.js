@@ -322,6 +322,17 @@ function setupHandlers() {
   const categoryEl = document.getElementById('category');
   const searchEl = document.getElementById('search');
 
+  document.addEventListener('click', function (e) {
+    const searchEl = document.getElementById('search');
+    if (!searchEl) return;
+    const wrapper = searchEl.closest('.w-44'); // контейнер поиска
+    if (wrapper && !wrapper.contains(e.target)) {
+      if (document.activeElement === searchEl) {
+        searchEl.blur();
+      }
+    }
+  });  
+
   if (categoryEl) {
     categoryEl.onchange = function (e) {
       selectedCategory = e.target.value;

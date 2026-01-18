@@ -275,7 +275,7 @@ function renderProductModal(product) {
           (
             complete && filteredImages.length > 0
               ? '<div class="h-4 mb-2"></div>'
-              : '<p class="px-2 text-xs text-gray-500 mb-2 text-center">' +
+              : '<p class="px-2 text-xs text-gray-500 mb-2 mb-1 text-center">' +
                   '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.' +
                 '</p>'
           ) +

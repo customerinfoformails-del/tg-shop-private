@@ -162,7 +162,7 @@ function showProfileTab() {
     '</div>' +
     '<div class="space-y-2">' +
     '<textarea id="newAddress" class="w-full bg-white border border-gray-300 rounded-2xl px-3 py-2 text-sm" rows="2" placeholder="Новый адрес..."></textarea>' +
-    '<button class="w-full bg-gray-900 hover:bg-black text-white font-bold.py-2 px-4 rounded-2xl transition-all text-sm"' +
+    '<button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2.5 px-4 rounded-2xl shadow-sm transition-all text-sm"' +
     ' onclick="addAddress()">' +
     'Сохранить адрес' +
     '</button>' +

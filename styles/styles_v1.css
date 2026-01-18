@@ -165,10 +165,8 @@ img,
 }
 
 .option-btn {
-  max-width: 150px;
+  min-width: 80px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* Горизонтальный скролл опций */

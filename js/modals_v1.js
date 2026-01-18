@@ -294,7 +294,7 @@ function renderProductModal(product) {
                   availableOptions[type].map(option => {
                     const isSelected = selectedOption[type] === option;
                     return (
-                      '<button class="option-btn px-3 py-1.5 text-xs font-medium rounded-full border scroll-item w-[96px] ' +
+                      '<button class="option-btn px-3 py-1.5 text-xs font-medium rounded-full border scroll-item ' +
                               (isSelected
                                 ? 'bg-blue-500 text-white border-blue-500 shadow-md font-bold'
                                 : 'bg-gray-100 border-gray-300 hover:bg-gray-200') +

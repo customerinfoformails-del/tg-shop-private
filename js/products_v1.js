@@ -1,503 +1,380 @@
-let modalCurrentIndex = 0;
-let modalImageCount = 0;
-let modalImageIndexBeforeFullscreen = 0;
-
-let modalTouchStartX = 0;
-let modalTouchStartY = 0;
-
-function getVariantCountText(count) {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-
-  if (mod10 === 1 && mod100 !== 11) {
-    return count + ' вариант';
-  }
-  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) {
-    return count + ' варианта';
-  }
-  return count + ' вариантов';
-}
-
-function selectOptionNoFocus(type, option) {
-  if (document.activeElement && document.activeElement.blur) {
-    document.activeElement.blur();
-  }
-
-  const scrollContainer = document.querySelector('#modalContent .flex-1');
-  const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
-
-  if (selectedOption[type] === option) {
-    const typeIndex = FILTER_ORDER.indexOf(type);
-    for (let i = typeIndex; i < FILTER_ORDER.length; i++) {
-      delete selectedOption[FILTER_ORDER[i]];
-    }
-  } else {
-    const typeIndex = FILTER_ORDER.indexOf(type);
-    for (let i = typeIndex + 1; i < FILTER_ORDER.length; i++) {
-      delete selectedOption[FILTER_ORDER[i]];
-    }
-    selectedOption[type] = option;
-  }
-
-  renderProductModal(currentProduct);
-
-  const newScrollContainer = document.querySelector('#modalContent .flex-1');
-  if (newScrollContainer) newScrollContainer.scrollTop = prevScrollTop;
-
-  tg?.HapticFeedback?.impactOccurred('light');
-}
-
-function clearOptionNoFocus(type) {
-  if (document.activeElement && document.activeElement.blur) {
-    document.activeElement.blur();
-  }
-
-  const scrollContainer = document.querySelector('#modalContent .flex-1');
-  const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
-
-  const typeIndex = FILTER_ORDER.indexOf(type);
-  for (let i = typeIndex; i < FILTER_ORDER.length; i++) {
-    delete selectedOption[FILTER_ORDER[i]];
-  }
-
-  renderProductModal(currentProduct);
-
-  const newScrollContainer = document.querySelector('#modalContent .flex-1');
-  if (newScrollContainer) newScrollContainer.scrollTop = prevScrollTop;
-
-  tg?.HapticFeedback?.impactOccurred('light');
-}
-
-window.selectOptionNoFocus = selectOptionNoFocus;
-window.clearOptionNoFocus = clearOptionNoFocus;
-
-window.changeQuantity = function (delta) {
-  const scrollContainer = document.querySelector('#modalContent .flex-1');
-  const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
-
-  let q = selectedQuantity + delta;
-  if (q < 1) q = 1;
-  if (q > 100) q = 100;
-  selectedQuantity = q;
-  const span = document.getElementById('quantityValue');
-  if (span) span.textContent = selectedQuantity;
-
-  if (currentProduct) {
-    renderProductModal(currentProduct);
-  }
-
-  const newScrollContainer = document.querySelector('#modalContent .flex-1');
-  if (newScrollContainer) newScrollContainer.scrollTop = prevScrollTop;
+// Плейсхолдеры по категориям
+const PLACEHOLDERS = {
+  iPhone: 'https://via.placeholder.com/300x300/007AFF/FFFFFF?text=iPhone',
+  iPad: 'https://via.placeholder.com/300x300/34C759/FFFFFF?text=iPad',
+  MacBook: 'https://via.placeholder.com/300x300/FFD60A/000000?text=MacBook',
+  'Apple Watch': 'https://via.placeholder.com/300x300/AF52DE/FFFFFF?text=Watch',
+  AirPods: 'https://via.placeholder.com/300x300/30D158/FFFFFF?text=AirPods'
 };
 
-window.addToCartFromModal = async function () {
-  if (isAddingToCart) return;
+// порядок выбора опций в модалке
+const FILTER_ORDER = ['simType', 'storage', 'color', 'region'];
 
-  const scrollContainer = document.querySelector('#modalContent .flex-1');
-  const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+// нормализация ответа из Google Apps Script (плоский массив вариантов)
+function normalizeProducts(products) {
+  return products.map(row => ({
+    id: row.id,
+    name: row.name,
+    price: parseFloat(row.price) || 0,
+    cat: row.cat,
+    code: row.id,
+    storage: row.memory || '',
+    region: row.region || '',
+    simType: row.sim || '',
+    color: row.color || '',
+    inStock: !!row.inStock,
+    commonImage: row.commonImage || '',
+    images: Array.isArray(row.images) ? row.images : []
+  }));
+}
 
-  isAddingToCart = true;
-  renderProductModal(currentProduct);
-  const sc2 = document.querySelector('#modalContent .flex-1');
-  if (sc2) sc2.scrollTop = prevScrollTop;
+// все варианты по имени товара
+function getProductVariants(productName) {
+  return productsData ? productsData.filter(p => p.name === productName) : [];
+}
 
-  if (!isCompleteSelection()) {
-    tg?.showAlert?.('❌ Выберите все опции: SIM → Память → Цвет → Регион');
-    isAddingToCart = false;
-    const scA = document.querySelector('#modalContent .flex-1');
-    const prevA = scA ? scA.scrollTop : 0;
-    renderProductModal(currentProduct);
-    const scB = document.querySelector('#modalContent .flex-1');
-    if (scB) scB.scrollTop = prevA;
-    return;
-  }
+// все картинки по вариантам
+function getFilteredProductImages(variants) {
+  const images = new Set();
+  variants.forEach(variant => {
+    if (variant.images && Array.isArray(variant.images)) {
+      variant.images.forEach(img => {
+        if (img && img.trim()) images.add(img);
+      });
+    }
+  });
+  return Array.from(images);
+}
 
-  if (!productsData) {
-    tg?.showAlert?.('Товары не загрузились, попробуйте позже');
-    isAddingToCart = false;
-    const scA = document.querySelector('#modalContent .flex-1');
-    const prevA = scA ? scA.scrollTop : 0;
-    renderProductModal(currentProduct);
-    const scB = document.querySelector('#modalContent .flex-1');
-    if (scB) scB.scrollTop = prevA;
-    return;
-  }
-
-  const allVariants = getFilteredVariants(
-    getProductVariants(currentProduct.name).filter(v => v.inStock)
+// текущие варианты по выбранным опциям
+function getFilteredVariants(variants) {
+  return variants.filter(variant =>
+    FILTER_ORDER.every(type => {
+      const selectedValue = selectedOption[type];
+      return !selectedValue || variant[type] === selectedValue;
+    })
   );
-  const variants = allVariants;
+}
 
-  if (variants.length === 0) {
-    tg?.showAlert?.('❌ Нет доступных вариантов');
-    isAddingToCart = false;
-    const scA = document.querySelector('#modalContent .flex-1');
-    const prevA = scA ? scA.scrollTop : 0;
-    renderProductModal(currentProduct);
-    const scB = document.querySelector('#modalContent .flex-1');
-    if (scB) scB.scrollTop = prevA;
-    return;
-  }
-
-  const selectedVariant = variants[0];
-  addToCart(selectedVariant, selectedQuantity);
-  tg?.showAlert?.(
-    '✅ ' +
-      selectedVariant.name +
-      '\n' +
-      selectedVariant.storage +
-      ' | ' +
-      selectedVariant.color +
-      ' | ' +
-      selectedVariant.region +
-      '\n' +
-      'Количество: ' +
-      selectedQuantity +
-      '\n$' +
-      selectedVariant.price * selectedQuantity
-  );
-  isAddingToCart = false;
-  closeModal();
-};
-
-function renderProductModal(product) {
-  currentProduct = product;
-
-  const allVariants = getProductVariants(product.name);
-  const variants = allVariants.filter(v => v.inStock);
-
-  if (variants.length === 0) {
-    document.getElementById('modalContent').innerHTML =
-      '<div class="flex flex-col h-full">' +
-      '<div class="p-6 pb-4 border-b border-gray-200">' +
-      '<div class="flex items-center justify-between mb-2">' +
-      '<h2 class="text-2xl font-bold">' +
-      escapeHtml(product.name) +
-      '</h2>' +
-      '<button onclick="closeModal()" class="p-2.hover:bg-gray-100.rounded-xl">' +
-      '<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>' +
-      '</svg>' +
-      '</button>' +
-      '</div>' +
-      '<div class="text-sm text-red-500">Нет доступных вариантов</div>' +
-      '</div>' +
-      '</div>';
-    return;
-  }
-
+// доступные значения для одного типа опции
+function getAvailableOptions(type, variants) {
   const filteredVariants = getFilteredVariants(variants);
-  const availableOptions = {};
+  const options = [...new Set(filteredVariants.map(v => v[type]).filter(Boolean))];
+  return options.sort();
+}
 
-  FILTER_ORDER.forEach(type => {
-    availableOptions[type] = getAvailableOptions(type, variants);
+// все ли опции выбраны
+function isCompleteSelection() {
+  return FILTER_ORDER.every(type => selectedOption[type]);
+}
+
+// индекс секции, до которой выбор сделан
+function getCurrentSectionIndex() {
+  for (let i = 0; i < FILTER_ORDER.length; i++) {
+    if (!selectedOption[FILTER_ORDER[i]]) return i;
+  }
+  return FILTER_ORDER.length;
+}
+
+// перемешивание массива
+function shuffleArray(items) {
+  const arr = items.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// список товаров для отображения в магазине
+function getVisibleProducts() {
+  if (!productsData) return [];
+
+  const groupedByName = {};
+  productsData.forEach(p => {
+    if (!groupedByName[p.name]) groupedByName[p.name] = [];
+    groupedByName[p.name].push(p);
   });
 
-  const complete = isCompleteSelection();
-  const availableVariants = filteredVariants;
-
-  const currentMinPrice = availableVariants.length
-    ? Math.min.apply(
-        null,
-        availableVariants.map(v => v.price)
-      )
-    : Math.min.apply(
-        null,
-        variants.map(v => v.price)
+  let groupedVisible = Object.values(groupedByName)
+    .filter(arr => arr.some(v => v.inStock))
+    .map(arr => {
+      const inStockVariants = arr.filter(v => v.inStock);
+      return inStockVariants.reduce(
+        (min, p) => (p.price < min.price ? p : min),
+        inStockVariants[0]
       );
+    });
 
-  let headerPriceText;
-  let headerSuffix = '';
-
-  if (!complete) {
-    headerPriceText = 'от $' + currentMinPrice;
-    headerSuffix = 'за единицу';
-  } else if (complete && availableVariants.length > 0) {
-    const priceToShow = availableVariants[0].price;
-    headerPriceText = '$' + priceToShow;
-    headerSuffix = 'за единицу';
+  if (selectedCategory !== 'Все') {
+    groupedVisible = groupedVisible.filter(p => p.cat === selectedCategory);
   } else {
-    headerPriceText = 'Нет вариантов';
-    headerSuffix = '';
+    groupedVisible = shuffleArray(groupedVisible);
   }
 
-  let filteredImages = [];
-  if (complete && availableVariants.length > 0) {
-    filteredImages = getFilteredProductImages(availableVariants);
-    if (filteredImages.length === 0 && variants[0].commonImage) {
-      filteredImages = [variants[0].commonImage];
-    }
+  if (query.trim()) {
+    const q = query.trim().toLowerCase();
+    groupedVisible = groupedVisible.filter(
+      p =>
+        (p.name && p.name.toLowerCase().includes(q)) ||
+        (p.cat && p.cat.toLowerCase().includes(q))
+    );
   }
 
-  const productCommonImage = variants[0].commonImage || product.commonImage || '';
+  return groupedVisible;
+}
 
-  modalImageIndexBeforeFullscreen = modalCurrentIndex;
+// предзагрузка картинок
+function preloadAllImages(products) {
+  products.forEach(product => {
+    const variants = getProductVariants(product.name).filter(v => v.inStock);
+    const allImages = getFilteredProductImages(variants);
+    allImages.forEach(imgSrc => {
+      if (!imageCache.has(imgSrc) && imgSrc) {
+        const img = new Image();
+        img.onload = () => imageCache.set(imgSrc, true);
+        img.onerror = () => imageCache.set(imgSrc, false);
+        img.src = imgSrc;
+      }
+    });
+  });
+}
 
-  document.getElementById('modalContent').innerHTML =
-    '<div class="flex flex-col h-full">' +
-    '<div class="p-6 pb-4 border-b border-gray-200">' +
-    '<div class="flex items-center justify-between mb-2">' +
-    '<h2 class="text-2xl font-bold">' +
-    escapeHtml(product.name) +
-    '</h2>' +
-    '<button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-xl">' +
-    '<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-    ' d="M6 18L18 6M6 6l12 12"/>' +
-    '</svg>' +
-    '</button>' +
-    '</div>' +
-    '<div class="flex items-center gap-2 text-sm text-gray-500">' +
-    '<span>' +
-    headerPriceText +
-    (headerSuffix ? ' ' + headerSuffix : '') +
-    '</span>' +
-    '<span>• ' +
-    getVariantCountText(availableVariants.length) +
-    '</span>' +
-    '</div>' +
-    '</div>' +
-    '<div class="flex-1 overflow-y-auto">' +
-    '<div class="modal-image-section">' +
-    '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden mb-6" id="modalCarousel">' +
-    (complete && filteredImages.length > 0
-      ? '<div class="image-carousel-inner" id="modalCarouselInner">' +
-        filteredImages
-          .slice(0, 10)
-          .map(
-            img =>
-              '<img src="' +
-              img +
-              '" class="carousel-img loaded w-full h-full object-contain" alt="Product image" loading="lazy" />'
-          )
-          .join('') +
-        '</div>' +
-        (filteredImages.length > 1
-          ? '<button class="nav-btn nav-prev" onclick="modalPrev(); event.stopPropagation()">‹</button>' +
-            '<button class="nav-btn nav-next" onclick="modalNext(); event.stopPropagation()">›</button>' +
-            '<div class="carousel-dots" id="modalDots">' +
-            filteredImages
-              .map(
-                (_, idx) =>
-                  '<div class="dot' +
-                  (idx === modalImageIndexBeforeFullscreen ? ' active' : '') +
-                  '" onclick="modalGoTo(' +
-                  idx +
-                  '); event.stopPropagation()"></div>'
-              )
-              .join('') +
-            '</div>'
-          : '')
-      : productCommonImage
-      ? '<div class="w-full h-64 rounded-xl overflow-hidden mb-6 flex items-center justify-center">' +
-        '<img src="' +
-        productCommonImage +
-        '" class="w-full h-full object-contain" alt="Product image" />' +
-        '</div>'
-      : '<div class="no-images h-64">' +
-        '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-        ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
-        '</svg>' +
-        '<div class="text-center text-sm font-medium">Выберите все параметры для просмотра фото</div>' +
-        '</div>') +
-    '</div>' +
-    (complete && filteredImages.length > 0
-      ? '<div class="h-4 mb-2"></div>'
-      : '<p class="px-2 text-xs text-gray-500 mb-2 text-center">' +
-        '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.' +
-        '</p>') +
-    '</div>' +
-    '<div class="px-4 pt-0 pb-4 space-y-4">' +
-    FILTER_ORDER.map((type, index) => {
-      const isLocked = index > getCurrentSectionIndex();
-      return (
-        '<div class="option-section ' +
-        (isLocked ? 'locked' : 'unlocked') +
-        '" data-section="' +
-        type +
-        '">' +
-        '<label class="text-sm font-semibold text-gray-700 capitalize mb-2 block">' +
-        getLabel(type) +
-        '</label>' +
-        '<div class="flex gap-2 scroll-carousel pb-1">' +
-        availableOptions[type]
-          .map(option => {
-            const isSelected = selectedOption[type] === option;
-            return (
-              '<button class="option-btn px-3 py-1.5 text-xs font-medium rounded-full border scroll-item w-[80px] ' +
-              (isSelected
-                ? 'bg-blue-500 text-white border-blue-500 shadow-md font-bold'
-                : 'bg-gray-100 border-gray-300 hover:bg-gray-200') +
-              ' transition-all"' +
-              ' data-type="' +
-              type +
-              '"' +
-              ' data-option="' +
-              escapeHtml(option) +
-              '"' +
-              ' onclick="selectOptionNoFocus(\'' +
-              type +
-              '\', \'' +
-              escapeHtml(option) +
-              '\'); return false;">' +
-              escapeHtml(option) +
-              '</button>'
-            );
-          })
-          .join('') +
-        (selectedOption[type]
-          ? '<button onclick="clearOptionNoFocus(\'' +
-            type +
-            '\'); return false;"' +
-            ' class="px-3 py-1.5 text-xs text-red-500 font-medium rounded-full border border-red-200 hover:bg-red-50 scroll-item w-12">✕</button>'
-          : '') +
-        '</div>' +
-        (!availableOptions[type].length
-          ? '<p class="text-xs text-gray-400 mt-1">Нет вариантов</p>'
-          : '') +
-        '</div>'
-      );
-    }).join('') +
-    '<div class="quantity-section">' +
-    '<label class="text-sm font-semibold text-gray-700 mb-2 block">Количество</label>' +
+// подписи к опциям
+function getLabel(type) {
+  const labels = { simType: 'SIM/eSIM', storage: 'Память', color: 'Цвет', region: 'Регион' };
+  return labels[type] || type;
+}
+
+// ---------- рендер магазина ----------
+
+function renderShopHeader(list, showCount) {
+  let optionsHtml = '';
+  for (let i = 0; i < CATEGORIES.length; i++) {
+    const c = CATEGORIES[i];
+    optionsHtml +=
+      '<option value="' +
+      c +
+      '"' +
+      (c === selectedCategory ? ' selected' : '') +
+      '>' +
+      c +
+      '</option>';
+  }
+
+  return (
+    '<div class="mb-5">' +
+    '<h1 class="text-3xl font-bold text-center mb-4">🛒 Магазин</h1>' +
     '<div class="flex items-center gap-3">' +
-    '<button class="px-3 py-1.5 rounded-full bg-gray-200 text-lg font-bold"' +
-    ' onclick="changeQuantity(-1); return false;">-</button>' +
-    '<span id="quantityValue" class="min-w-[40px] text-center.font-semibold">' +
-    selectedQuantity +
-    '</span>' +
-    '<button class="px-3 py-1.5 rounded-full bg-gray-200 text-lg font-bold"' +
-    ' onclick="changeQuantity(1); return false;">+</button>' +
+    '<div class="flex-1 bg-white rounded-2xl shadow px-3 py-2">' +
+    '<label class="text-xs text-gray-500 block mb-1">Категория</label>' +
+    '<select id="category" class="w-full bg-transparent border-none font-semibold text-base focus:outline-none appearance-none">' +
+    optionsHtml +
+    '</select>' +
     '</div>' +
-    '<p class="text-xs text-gray-400 mt-1">Максимум 100 шт.</p>' +
-    '</div>' +
-    '<div class="pt-4 border-t">' +
-    '<div class="text-center text-sm text-gray-500.mb-3">' +
-    'Доступно: <span id="variantCount" class="font-bold text-blue-600">' +
-    getVariantCountText(availableVariants.length) +
-    '</span>' +
-    (complete && availableVariants.length === 1
-      ? '<div class="text-xs mt-1 bg-blue-50 border border-blue-200 rounded-xl p-2">' +
-        '✅ Выбран: ' +
-        availableVariants[0].storage +
-        ' | ' +
-        availableVariants[0].color +
-        ' | ' +
-        availableVariants[0].region +
-        '</div>'
-      : '') +
+    '<div class="w-44 bg-white rounded-2xl shadow px-3 py-2">' +
+    '<label class="text-xs text-gray-500 block mb-1">Поиск</label>' +
+    '<div class="flex items-center">' +
+    '<svg class="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+    ' d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"/>' +
+    '</svg>' +
+    '<input id="search" value="' +
+    escapeHtml(query) +
+    '" placeholder="Поиск..."' +
+    ' class="w-full bg-transparent outline-none text-sm text-gray-900" />' +
     '</div>' +
     '</div>' +
     '</div>' +
+    '<div class="mt-3 text-xs text-gray-500">' +
+    'Показано: <span class="font-semibold">' +
+    showCount +
+    '</span> из ' +
+    list.length +
     '</div>' +
-    '<div class="modal-footer border-t bg-white">' +
-    '<button onclick="addToCartFromModal()"' +
-    ' class="w-full flex items-center justify-center gap-2 ' +
-    (complete && availableVariants.length > 0 && !isAddingToCart
-      ? 'bg-blue-500 hover:bg-blue-600'
-      : 'bg-gray-400 cursor-not-allowed') +
-    ' text-white font-semibold px-4 rounded-2xl shadow-lg transition-all"' +
-    (complete && availableVariants.length > 0 && !isAddingToCart ? '' : ' disabled') +
-    '>' +
-    (isAddingToCart
-      ? '<span class="loader-circle"></span><span>Проверяю наличие...</span>'
-      : complete && availableVariants.length > 0
-      ? '✅ В корзину $' +
-        (availableVariants[0] && availableVariants[0].price
-          ? availableVariants[0].price * selectedQuantity
-          : '')
-      : 'Выберите все опции') +
-    '</button>' +
+    '</div>'
+  );
+}
+
+function productCard(product) {
+  const allVariants = getProductVariants(product.name);
+  const variants = allVariants.filter(v => v.inStock);
+  if (variants.length === 0) return '';
+
+  const commonImage = product.commonImage || variants[0]?.commonImage || '';
+  const fallbackByCategory = PLACEHOLDERS[product.cat] || PLACEHOLDERS.iPhone;
+  const mainImage = commonImage || fallbackByCategory;
+
+  const cheapestVariant = variants.reduce(
+    (min, p) => (p.price < min.price ? p : min),
+    variants[0]
+  );
+  const carouselId = 'carousel_' + Math.random().toString(36).substr(2, 9);
+
+  return (
+    '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
+    ' data-product-name="' +
+    escapeHtml(product.name) +
+    '"' +
+    ' data-carousel-id="' +
+    carouselId +
+    '">' +
+    '<div class="w-full h-32 rounded-xl mb-3 image-carousel h-32 cursor-pointer overflow-hidden">' +
+    '<div class="image-carousel-inner" data-carousel="' +
+    carouselId +
+    '" data-current="0">' +
+    '<img src="' +
+    mainImage +
+    '" class="carousel-img loaded" alt="Product" />' +
+    '</div>' +
+    '</div>' +
+    '<div class="font-bold text-base mb-1 truncate">' +
+    escapeHtml(product.name) +
+    '</div>' +
+    '<div class="text-blue-600 font-black text-xl mb-1">$' +
+    cheapestVariant.price +
+    '</div>' +
+    '<div class="text-xs text-gray-500 mb-4">' +
+    variants.length +
+    ' вариантов</div>' +
+    '</div>'
+  );
+}
+
+function renderShopList(list, showCount) {
+  return list.slice(0, showCount).map(productCard).join('');
+}
+
+function renderShop() {
+  if (!productsData || productsData.length === 0) {
+    root.innerHTML = '<div class="text-center p-20 text-gray-500">Нет товаров</div>';
+    return;
+  }
+
+  const list = getVisibleProducts();
+  const showCount = Math.min(loadedCount, list.length);
+
+  root.innerHTML =
+    '<div class="pb-[65px] max-w-md mx-auto">' +
+    renderShopHeader(list, showCount) +
+    '<div class="product-grid" id="productGrid">' +
+    renderShopList(list, showCount) +
     '</div>' +
     '</div>';
 
-  if (complete && filteredImages.length > 0) {
-    modalCurrentIndex = modalImageIndexBeforeFullscreen;
-    initModalCarousel(filteredImages.length);
-    initModalSwipe();
-  }
+  setupHandlers();
+  preloadAllImages(list.slice(0, showCount));
+  setupImageCarousels();
 }
 
-function initModalCarousel(imageCount) {
-  if (imageCount <= 1) return;
-  modalImageCount = imageCount;
-  const inner = document.getElementById('modalCarouselInner');
-  if (!inner) return;
+// ---------- навешивание обработчиков ----------
 
-  function updateModalCarousel() {
-    inner.style.transform = 'translateX(-' + modalCurrentIndex * 100 + '%)';
-    document.querySelectorAll('#modalDots .dot').forEach((dot, idx) => {
-      dot.classList.toggle('active', idx === modalCurrentIndex);
-    });
+function setupHandlers() {
+  const categoryEl = document.getElementById('category');
+  const searchEl = document.getElementById('search');
+
+  if (categoryEl) {
+    categoryEl.onchange = function (e) {
+      selectedCategory = e.target.value;
+      loadedCount = 10;
+      renderShop();
+    };
   }
 
-  window.modalNext = function () {
-    modalCurrentIndex = (modalCurrentIndex + 1) % modalImageCount;
-    updateModalCarousel();
-    tg?.HapticFeedback?.selectionChanged();
-  };
+  if (searchEl) {
+    searchEl.oninput = function (e) {
+      query = e.target.value || '';
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(function () {
+        const list = getVisibleProducts();
+        const showCount = Math.min(loadedCount, list.length);
+        const grid = document.getElementById('productGrid');
+        if (grid) {
+          grid.innerHTML = renderShopList(list, showCount);
+          preloadAllImages(list.slice(0, showCount));
+          setupImageCarousels();
+          setupHandlers(); // чтобы модалки продолжали работать после поиска
+        }
+      }, 500);
+    };
 
-  window.modalPrev = function () {
-    modalCurrentIndex = modalCurrentIndex === 0 ? modalImageCount - 1 : modalCurrentIndex - 1;
-    updateModalCarousel();
-    tg?.HapticFeedback?.selectionChanged();
-  };
-
-  window.modalGoTo = function (i) {
-    modalCurrentIndex = i;
-    updateModalCarousel();
-    tg?.HapticFeedback?.selectionChanged();
-  };
-
-  updateModalCarousel();
-}
-
-function initModalSwipe() {
-  const carousel = document.getElementById('modalCarousel');
-  if (!carousel) return;
-
-  carousel.addEventListener(
-    'touchstart',
-    function (e) {
-      const touch = e.changedTouches[0];
-      modalTouchStartX = touch.clientX;
-      modalTouchStartY = touch.clientY;
-    },
-    { passive: true }
-  );
-
-  carousel.addEventListener(
-    'touchend',
-    function (e) {
-      const touch = e.changedTouches[0];
-      const dx = touch.clientX - modalTouchStartX;
-      const dy = Math.abs(touch.clientY - modalTouchStartY);
-
-      if (Math.abs(dx) < 40 || dy > 50) return;
-
-      if (dx < 0) {
-        window.modalNext && window.modalNext();
-      } else {
-        window.modalPrev && window.modalPrev();
+    searchEl.onkeydown = function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        searchEl.blur();
       }
-    },
-    { passive: true }
-  );
+    };
+  }
+
+  document.querySelectorAll('[data-product-name]').forEach(card => {
+    card.onclick = function (e) {
+      if (e.target.closest('button') || e.target.closest('.dot')) {
+        return;
+      }
+      const productName = card.dataset.productName;
+      const product = productsData.find(p => p.name === productName);
+      if (product) {
+        selectedOption = {};
+        selectedQuantity = 1;
+        showModal(product);
+        tg?.HapticFeedback?.impactOccurred('medium');
+      }
+    };
+  });
 }
 
-function showModal(product) {
-  renderProductModal(product);
-  modal.classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
-  tg?.expand();
+// ---------- карусели на карточках ----------
+
+function setupImageCarousels() {
+  document.querySelectorAll('.image-carousel-inner[data-carousel]').forEach(inner => {
+    const dots = inner.parentElement.querySelectorAll('.dot');
+    const carouselId = inner.dataset.carousel;
+    let currentIndex = 0;
+
+    function updateCarousel() {
+      inner.style.transform = 'translateX(-' + currentIndex * 100 + '%)';
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === currentIndex);
+      });
+    }
+
+    window['carouselNext_' + carouselId] = function () {
+      currentIndex = (currentIndex + 1) % inner.children.length;
+      updateCarousel();
+      tg?.HapticFeedback?.selectionChanged();
+    };
+
+    window['carouselPrev_' + carouselId] = function () {
+      currentIndex = currentIndex === 0 ? inner.children.length - 1 : currentIndex - 1;
+      updateCarousel();
+      tg?.HapticFeedback?.selectionChanged();
+    };
+
+    window['carouselGoTo_' + carouselId] = function (index) {
+      currentIndex = index;
+      updateCarousel();
+      tg?.HapticFeedback?.selectionChanged();
+    };
+
+    dots.forEach((dot, idx) => {
+      dot.onclick = function (e) {
+        e.stopPropagation();
+        currentIndex = idx;
+        updateCarousel();
+        tg?.HapticFeedback?.selectionChanged();
+      };
+    });
+
+    updateCarousel();
+  });
 }
 
-window.closeModal = function () {
-  modal.classList.add('hidden');
-  document.body.style.overflow = '';
-  selectedOption = {};
-  currentProduct = null;
-  selectedQuantity = 1;
-  tg?.HapticFeedback?.impactOccurred('light');
+window.carouselNext = function (id) {
+  if (window['carouselNext_' + id]) window['carouselNext_' + id]();
+};
+window.carouselPrev = function (id) {
+  if (window['carouselPrev_' + id]) window['carouselPrev_' + id]();
+};
+window.carouselGoTo = function (id, index) {
+  if (window['carouselGoTo_' + id]) window['carouselGoTo_' + id](index);
 };

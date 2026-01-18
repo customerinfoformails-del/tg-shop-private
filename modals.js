@@ -5,9 +5,6 @@ let modalImageIndexBeforeFullscreen = 0;
 let modalTouchStartX = 0;
 let modalTouchStartY = 0;
 
-// контейнер скролла внутри модалки (зона с опциями)
-let modalScrollContainer = null;
-
 function getVariantCountText(count) {
   const mod10 = count % 10;
   const mod100 = count % 100;
@@ -21,10 +18,15 @@ function getVariantCountText(count) {
   return count + ' вариантов';
 }
 
+// ----- выбор опций с сохранением скролла (как в старом коде) -----
+
 function selectOptionNoFocus(type, option) {
   if (document.activeElement && document.activeElement.blur) {
     document.activeElement.blur();
   }
+
+  const scrollContainer = document.querySelector('#modalContent .flex-1');
+  const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
 
   if (selectedOption[type] === option) {
     const typeIndex = FILTER_ORDER.indexOf(type);
@@ -40,6 +42,10 @@ function selectOptionNoFocus(type, option) {
   }
 
   renderProductModal(currentProduct);
+
+  const newScrollContainer = document.querySelector('#modalContent .flex-1');
+  if (newScrollContainer) newScrollContainer.scrollTop = prevScrollTop;
+
   tg?.HapticFeedback?.impactOccurred('light');
 }
 
@@ -48,12 +54,19 @@ function clearOptionNoFocus(type) {
     document.activeElement.blur();
   }
 
+  const scrollContainer = document.querySelector('#modalContent .flex-1');
+  const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+
   const typeIndex = FILTER_ORDER.indexOf(type);
   for (let i = typeIndex; i < FILTER_ORDER.length; i++) {
     delete selectedOption[FILTER_ORDER[i]];
   }
 
   renderProductModal(currentProduct);
+
+  const newScrollContainer = document.querySelector('#modalContent .flex-1');
+  if (newScrollContainer) newScrollContainer.scrollTop = prevScrollTop;
+
   tg?.HapticFeedback?.impactOccurred('light');
 }
 
@@ -61,6 +74,9 @@ window.selectOptionNoFocus = selectOptionNoFocus;
 window.clearOptionNoFocus = clearOptionNoFocus;
 
 window.changeQuantity = function(delta) {
+  const scrollContainer = document.querySelector('#modalContent .flex-1');
+  const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+
   let q = selectedQuantity + delta;
   if (q < 1) q = 1;
   if (q > 100) q = 100;
@@ -71,25 +87,43 @@ window.changeQuantity = function(delta) {
   if (currentProduct) {
     renderProductModal(currentProduct);
   }
+
+  const newScrollContainer = document.querySelector('#modalContent .flex-1');
+  if (newScrollContainer) newScrollContainer.scrollTop = prevScrollTop;
 };
+
+// ----- новая логика добавления в корзину с сохранением скролла -----
 
 window.addToCartFromModal = async function() {
   if (isAddingToCart) return;
 
+  const scrollContainer = document.querySelector('#modalContent .flex-1');
+  const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+
   isAddingToCart = true;
   renderProductModal(currentProduct);
+  const sc2 = document.querySelector('#modalContent .flex-1');
+  if (sc2) sc2.scrollTop = prevScrollTop;
 
   if (!isCompleteSelection()) {
     tg?.showAlert?.('❌ Выберите все опции: SIM → Память → Цвет → Регион');
     isAddingToCart = false;
+    const scA = document.querySelector('#modalContent .flex-1');
+    const prevA = scA ? scA.scrollTop : 0;
     renderProductModal(currentProduct);
+    const scB = document.querySelector('#modalContent .flex-1');
+    if (scB) scB.scrollTop = prevA;
     return;
   }
 
   if (!productsData) {
     tg?.showAlert?.('Товары не загрузились, попробуйте позже');
     isAddingToCart = false;
+    const scA = document.querySelector('#modalContent .flex-1');
+    const prevA = scA ? scA.scrollTop : 0;
     renderProductModal(currentProduct);
+    const scB = document.querySelector('#modalContent .flex-1');
+    if (scB) scB.scrollTop = prevA;
     return;
   }
 
@@ -101,7 +135,11 @@ window.addToCartFromModal = async function() {
   if (variants.length === 0) {
     tg?.showAlert?.('❌ Нет подходящих вариантов');
     isAddingToCart = false;
+    const scA = document.querySelector('#modalContent .flex-1');
+    const prevA = scA ? scA.scrollTop : 0;
     renderProductModal(currentProduct);
+    const scB = document.querySelector('#modalContent .flex-1');
+    if (scB) scB.scrollTop = prevA;
     return;
   }
 
@@ -119,11 +157,10 @@ window.addToCartFromModal = async function() {
   closeModal();
 };
 
+// ----- новая renderProductModal с каруселью и центрированием -----
+
 function renderProductModal(product) {
   currentProduct = product;
-
-  // сохраняем текущий скролл зоны с опциями ДО перерисовки
-  const prevScrollTop = modalScrollContainer ? modalScrollContainer.scrollTop : 0;
 
   const allVariants = getProductVariants(product.name);
   const variants = allVariants.filter(v => v.inStock);
@@ -143,13 +180,6 @@ function renderProductModal(product) {
           '<div class="text-sm text-red-500">Нет доступных вариантов</div>' +
         '</div>' +
       '</div>';
-
-    // обновляем контейнер и возвращаем скролл
-    setTimeout(function() {
-      modalScrollContainer = document.querySelector('#modalContent .px-4.pt-0.pb-4');
-      if (modalScrollContainer) modalScrollContainer.scrollTop = prevScrollTop;
-    }, 0);
-
     return;
   }
 
@@ -288,7 +318,7 @@ function renderProductModal(product) {
                   ) +
                 '</div>' +
                 (!opts.length
-                  ? '<p class="text-xs text-gray-400 mt-1">Нет вариантов</p>'
+                  ? '<p class="text-xs text-gray-400.mt-1">Нет вариантов</p>'
                   : ''
                 ) +
               '</div>'
@@ -347,20 +377,14 @@ function renderProductModal(product) {
       '</div>' +
     '</div>';
 
-  // после перерисовки находим контейнер с опциями и восстанавливаем скролл
-  setTimeout(function() {
-    modalScrollContainer = document.querySelector('#modalContent .px-4.pt-0.pb-4');
-    if (modalScrollContainer) {
-      modalScrollContainer.scrollTop = prevScrollTop;
-    }
-  }, 0);
-
   if (complete && filteredImages.length > 0) {
     modalCurrentIndex = modalImageIndexBeforeFullscreen;
     initModalCarousel(filteredImages.length);
     initModalSwipe();
   }
 }
+
+// ----- карусель и свайпы -----
 
 function initModalCarousel(imageCount) {
   if (imageCount <= 1) return;
@@ -421,6 +445,8 @@ function initModalSwipe() {
   }, { passive: true });
 }
 
+// ----- show / close -----
+
 function showModal(product) {
   renderProductModal(product);
   modal.classList.remove('hidden');
@@ -434,6 +460,5 @@ window.closeModal = function() {
   selectedOption = {};
   currentProduct = null;
   selectedQuantity = 1;
-  modalScrollContainer = null;
   tg?.HapticFeedback?.impactOccurred('light');
 };

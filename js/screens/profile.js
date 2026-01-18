@@ -38,6 +38,7 @@ window.toggleOrderDetails = function (index) {
 };
 
 function showProfileTab() {
+  console.log("isOrdersLoading on renderProfile", isOrdersLoading)
   if (isOrdersLoading) {
     renderProfileSkeleton();
     return;

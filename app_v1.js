@@ -5,11 +5,14 @@ try {
   tg?.setBackgroundColor?.('#f3f4f6'); // Tailwind bg-gray-100
 } catch (e) {}
 
+
 const API_URL = 'https://script.google.com/macros/s/AKfycbxyKA2QcJBKim9ttOKHiJ_uTVYunBKhBnNFNf9BLGewzHpqqcY9ZY8smmvCwQZzOGs85Q/exec';
 const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbxr_WtXjtNelG9HRya2ngKaYkd-9dUrADnVG8H9_SJTHIheJ_eFFj3BCCdED22-3K5t5Q/exec';
 const BACKEND_ORDER_URL = 'https://tg-shop-test-backend.onrender.com/order';
 
+
 let CATEGORIES = ['Все'];
+
 
 let selectedCategory = 'Все',
   query = '',
@@ -23,28 +26,36 @@ let selectedCategory = 'Все',
   searchTimeout = null,
   currentTab = 'shop';
 
+
 let cartItems = [];
 let savedAddresses = [];
 let previousOrders = [];
 
+
 let paymentType = 'cash';
 let pickupMode = false;
 let pickupLocation = '';
+
 
 const PICKUP_LOCATIONS = [
   'ТЦ Галерея, пр-т Победителей, 9',
   'ТРЦ Dana Mall, ул. Петра Мстиславца, 11'
 ];
 
+
 let isAddingToCart = false;
 let isPlacingOrder = false;
 let isRefreshingProducts = false;
 let isTabChanging = false;
+let placeOrderTimeoutId = null; // таймаут оформления заказа
+
 
 const root = document.getElementById('root');
 const modal = document.getElementById('productModal');
 
+
 // ---------- Глобальная обработка ошибок ----------
+
 
 window.onerror = function (message, source, lineno, colno, error) {
   console.error('Global error:', message, source, lineno, colno, error);
@@ -56,13 +67,16 @@ window.onerror = function (message, source, lineno, colno, error) {
   return true;
 };
 
+
 // ---------- localStorage ----------
+
 
 function saveCartToStorage() {
   try {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   } catch (e) {}
 }
+
 
 function loadCartFromStorage() {
   try {
@@ -74,11 +88,13 @@ function loadCartFromStorage() {
   updateCartBadge();
 }
 
+
 function saveAddressesToStorage() {
   try {
     localStorage.setItem('addresses', JSON.stringify(savedAddresses));
   } catch (e) {}
 }
+
 
 function loadAddressesFromStorage() {
   try {
@@ -89,11 +105,13 @@ function loadAddressesFromStorage() {
   }
 }
 
+
 function saveOrdersToStorage() {
   try {
     localStorage.setItem('orders', JSON.stringify(previousOrders));
   } catch (e) {}
 }
+
 
 function loadOrdersFromStorage() {
   try {
@@ -104,7 +122,9 @@ function loadOrdersFromStorage() {
   }
 }
 
+
 // ---------- Запрет зума ----------
+
 
 document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('gesturechange', e => e.preventDefault());
@@ -119,7 +139,9 @@ document.addEventListener('touchend', e => {
   lastTouchEnd = now;
 }, { passive: false });
 
+
 // ---------- Таббар ----------
+
 
 function setTabBarDisabled(disabled) {
   isTabChanging = disabled;
@@ -127,6 +149,7 @@ function setTabBarDisabled(disabled) {
     .querySelectorAll('#tabBar .tab-item')
     .forEach(t => t.classList.toggle('pointer-events-none', disabled));
 }
+
 
 function initTabBar() {
   document.querySelectorAll('#tabBar .tab-item').forEach(tab => {
@@ -138,17 +161,21 @@ function initTabBar() {
   updateCartBadge();
 }
 
+
 function switchTab(tabName) {
   if (isTabChanging) return;
   if (currentTab === tabName) return;
+
 
   if (typeof closeModal === 'function' && modal && !modal.classList.contains('hidden')) {
     closeModal();
   }
 
+
   const prevTab = currentTab;
   isTabChanging = true;
   setTabBarDisabled(true);
+
 
   Promise.resolve().then(() => {
     if (tabName === 'shop') {
@@ -175,7 +202,9 @@ function switchTab(tabName) {
   });
 }
 
+
 // ---------- Корзина и синхронизация ----------
+
 
 function updateCartBadge() {
   const badge = document.getElementById('cartBadge');
@@ -189,13 +218,16 @@ function updateCartBadge() {
   }
 }
 
+
 function addToCart(variant, quantity) {
   if (!productsData) {
     tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
     return;
   }
 
+
   const freshVariant = productsData.find(p => p.id === variant.id) || variant;
+
 
   const existing = cartItems.find(item => item.id === freshVariant.id);
   if (existing) {
@@ -213,10 +245,12 @@ function addToCart(variant, quantity) {
     });
   }
 
+
   saveCartToStorage();
   updateCartBadge();
   tg?.HapticFeedback?.notificationOccurred('success');
 }
+
 
 window.changeCartItemQuantity = function(index, delta) {
   const item = cartItems[index];
@@ -230,12 +264,74 @@ window.changeCartItemQuantity = function(index, delta) {
   showCartTab();
 };
 
+
 window.removeCartItem = function(index) {
   cartItems.splice(index, 1);
   saveCartToStorage();
   updateCartBadge();
   showCartTab();
 };
+
+
+// обновление цены одной позиции
+window.updateCartItemPrice = function(index) {
+  const item = cartItems[index];
+  if (!item || !item.newPrice) return;
+  item.price = item.newPrice;
+  item.available = true;
+  delete item.newPrice;
+  saveCartToStorage();
+  updateCartBadge();
+  showCartTab();
+  tg?.showAlert?.('Цена обновлена для выбранного товара');
+};
+
+
+// обновить цены всех и удалить недоступные
+window.refreshCartPricesAndCleanup = async function() {
+  try {
+    await fetchAndUpdateProducts(false);
+  } catch (e) {
+    console.error('refreshCartPricesAndCleanup error', e);
+  }
+
+  if (!productsData) {
+    tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
+    return;
+  }
+
+  let removedCount = 0;
+  let changedCount = 0;
+
+  cartItems = cartItems.map(item => {
+    const fresh = productsData.find(p => p.id === item.id && p.inStock);
+    if (!fresh) {
+      removedCount++;
+      return { ...item, available: false, deleted: true };
+    }
+    if (fresh.price !== item.price) {
+      changedCount++;
+      return { ...item, available: false, newPrice: fresh.price };
+    }
+    return { ...item, available: true, newPrice: undefined };
+  });
+
+  cartItems = cartItems.filter(i => !i.deleted);
+
+  saveCartToStorage();
+  updateCartBadge();
+  showCartTab();
+
+  if (!removedCount && !changedCount) {
+    tg?.showAlert?.('Все товары актуальны');
+  } else {
+    let msg = '';
+    if (removedCount) msg += 'Удалено недоступных: ' + removedCount + '. ';
+    if (changedCount) msg += 'У товаров с новой ценой появилась кнопка "Обновить".';
+    tg?.showAlert?.(msg.trim());
+  }
+};
+
 
 function syncCartWithProducts() {
   if (!productsData) return;
@@ -247,27 +343,33 @@ function syncCartWithProducts() {
   updateCartBadge();
 }
 
+
 function syncProductsAndCart() {
   syncCartWithProducts();
   if (currentTab === 'shop' && typeof renderShop === 'function') renderShop();
   if (currentTab === 'cart') showCartTab();
 }
 
+
 // ---------- Вкладка корзины ----------
+
 
 window.setPaymentType = function(type) {
   paymentType = type;
   showCartTab();
 };
 
+
 window.setPickupMode = function(mode) {
   pickupMode = !!mode;
   showCartTab();
 };
 
+
 window.setPickupLocation = function(addr) {
   pickupLocation = addr;
 };
+
 
 window.onSavedAddressChange = function() {
   const select = document.getElementById('savedAddress');
@@ -275,6 +377,7 @@ window.onSavedAddressChange = function() {
   if (!select || !wrapper) return;
   wrapper.style.display = select.value ? 'none' : 'block';
 };
+
 
 function showCartTab() {
   if (!cartItems.length) {
@@ -298,11 +401,13 @@ function showCartTab() {
     return;
   }
 
+
   const subtotal = cartItems.reduce((sum, item) =>
     sum + item.price * item.quantity, 0
   );
   const commission = paymentType === 'card' ? Math.round(subtotal * 0.15) : 0;
   const total = subtotal + commission;
+
 
   root.innerHTML =
     '<div class="relative min-h-[100vh] p-6 space-y-6 pb-[80px] max-w-md mx-auto">' +
@@ -310,7 +415,9 @@ function showCartTab() {
       '<div class="space-y-3">' +
         cartItems.map((item, idx) =>
           '<div class="flex items-center justify-between p-3 rounded-xl border ' +
-                 (item.available ? 'border-gray-200' : 'border-red-300 bg-red-50') +
+                 (item.available
+                    ? 'border-gray-200'
+                    : 'border-orange-300 bg-orange-50') +
                  '">' +
             '<div class="text-left flex-1 mr-3">' +
               '<div class="font-semibold text-sm break-words">' + escapeHtml(item.name) + '</div>' +
@@ -319,8 +426,16 @@ function showCartTab() {
                 escapeHtml(item.color) + ' | ' +
                 escapeHtml(item.region) +
               '</div>' +
-              '<div class="text-xs mt-1 ' + (item.available ? 'text-green-600' : 'text-red-600') + '">' +
-                (item.available ? 'В наличии' : 'Товар недоступен, удалите из корзины') +
+              '<div class="text-xs mt-1 ' +
+                    (item.available
+                      ? 'text-green-600'
+                      : (item.newPrice ? 'text-orange-600' : 'text-red-600')) +
+                    '">' +
+                (item.available
+                  ? 'В наличии'
+                  : (item.newPrice
+                      ? 'Цена обновилась: старая $' + item.price + ', новая $' + item.newPrice
+                      : 'Товар недоступен, удалите из корзины')) +
               '</div>' +
             '</div>' +
             '<div class="text-right flex flex-col items-end gap-1">' +
@@ -332,11 +447,15 @@ function showCartTab() {
                         ' onclick="changeCartItemQuantity(' + idx + ', 1)">+</button>' +
               '</div>' +
               '<div class="text-sm font-bold text-blue-600">$' + (item.price * item.quantity) + '</div>' +
+              (item.newPrice
+                ? '<button class="text-xs text-blue-500" onclick="updateCartItemPrice(' + idx + ')">Обновить цену</button>'
+                : '') +
               '<button class="text-xs text-red-500" onclick="removeCartItem(' + idx + ')">Удалить</button>' +
             '</div>' +
           '</div>'
         ).join('') +
       '</div>' +
+
 
       '<div class="pt-4 border-t space-y-4">' +
         '<div class="space-y-2">' +
@@ -357,6 +476,7 @@ function showCartTab() {
           '</div>' +
         '</div>' +
 
+
         '<div class="space-y-2">' +
           '<h3 class="text-sm font-semibold text-gray-700">Способ получения</h3>' +
           '<div class="flex flex-col gap-2 mb-2">' +
@@ -373,6 +493,7 @@ function showCartTab() {
               '<span>Самовывоз</span>' +
             '</label>' +
           '</div>' +
+
 
           (!pickupMode
             ? (
@@ -404,6 +525,7 @@ function showCartTab() {
           ) +
         '</div>' +
 
+
         '<div class="space-y-1 text-sm text-gray-700">' +
           '<div class="flex items-center justify-between">' +
             '<span>Сумма товаров</span>' +
@@ -419,8 +541,15 @@ function showCartTab() {
           '</div>' +
         '</div>' +
 
-        '<div class="pt-3">' +
+
+        '<div class="pt-3 space-y-2">' +
+          '<button onclick="refreshCartPricesAndCleanup()"' +
+                  ' class="w-full text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-2xl transition-all">' +
+            'Обновить цены и удалить недоступные товары' +
+          '</button>' +
+
           '<button onclick="placeOrder()"' +
+                  ' id="placeOrderButton"' +
                   ' class="w-full flex items-center justify-center gap-2 ' +
                     (!cartItems.some(i => !i.available) && !isPlacingOrder
                       ? 'bg-blue-500 hover:bg-blue-600'
@@ -429,7 +558,7 @@ function showCartTab() {
                   (cartItems.some(i => !i.available) || isPlacingOrder ? ' disabled' : '') +
                   '>' +
             (cartItems.some(i => !i.available)
-              ? 'Удалите недоступные товары'
+              ? 'Удалите недоступные товары или обновите цены'
               : (isPlacingOrder
                   ? '<span class="loader-circle"></span><span>Проверяю наличие...</span>'
                   : 'Оформить заказ'
@@ -440,13 +569,16 @@ function showCartTab() {
       '</div>' +
     '</div>';
 
+
   const savedSelect = document.getElementById('savedAddress');
   if (savedSelect) {
     onSavedAddressChange();
   }
 }
 
+
 // ---------- Вкладка распродажи ----------
+
 
 function showSaleTab() {
   root.innerHTML =
@@ -465,7 +597,9 @@ function showSaleTab() {
     '</div>';
 }
 
+
 // ---------- Профиль ----------
+
 
 window.toggleOrderDetails = function(index) {
   const block = document.getElementById('orderDetails_' + index);
@@ -473,10 +607,12 @@ window.toggleOrderDetails = function(index) {
   block.classList.toggle('hidden');
 };
 
+
 function showProfileTab() {
   const user = tg?.initDataUnsafe?.user;
   const username = user?.username || 'неизвестно';
   const displayId = '@' + username;
+
 
   const ordersHtml = previousOrders.length
     ? previousOrders.map((o, idx) =>
@@ -510,6 +646,7 @@ function showProfileTab() {
       ).join('')
     : '<p class="text-sm text-gray-500">Заказов пока нет</p>';
 
+
   const addressesHtml = savedAddresses.length
     ? savedAddresses.map((addr, idx) =>
         '<div class="flex items-center gap-2 p-2 border rounded-xl mb-1">' +
@@ -518,6 +655,7 @@ function showProfileTab() {
         '</div>'
       ).join('')
     : '<p class="text-sm text-gray-500">Сохранённых адресов нет</p>';
+
 
   root.innerHTML =
     '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto">' +
@@ -534,6 +672,7 @@ function showProfileTab() {
         '</div>' +
       '</div>' +
 
+
       '<div class="space-y-3">' +
         '<h3 class="text-lg font-semibold">Сохранённые адреса</h3>' +
         '<div id="addressesList">' + addressesHtml + '</div>' +
@@ -546,12 +685,14 @@ function showProfileTab() {
         '</div>' +
       '</div>' +
 
+
       '<div class="space-y-3">' +
         '<h3 class="text-lg font-semibold">Предыдущие заказы</h3>' +
         '<div>' + ordersHtml + '</div>' +
       '</div>' +
     '</div>';
 }
+
 
 window.addAddress = function() {
   const ta = document.getElementById('newAddress');
@@ -567,13 +708,16 @@ window.addAddress = function() {
   showProfileTab();
 };
 
+
 window.removeAddress = function(index) {
   savedAddresses.splice(index, 1);
   saveAddressesToStorage();
   showProfileTab();
 };
 
+
 // ---------- Вкладка "О нас" ----------
+
 
 function showAboutTab() {
   root.innerHTML =
@@ -595,7 +739,9 @@ function showAboutTab() {
     '</div>';
 }
 
+
 // ---------- Ошибка ----------
+
 
 function showError(message) {
   root.innerHTML =
@@ -607,7 +753,7 @@ function showError(message) {
         '</svg>' +
       '</div>' +
       '<h2 class="text-2xl font-bold text-gray-800 mb-4">Ошибка загрузки</h2>' +
-      '<p class="text-lg text-red-600 mb-2">' + escapeHtml(message) + '</p>' +
+      '<p class="text-lg text-red-600.mb-2">' + escapeHtml(message) + '</p>' +
       '<button onclick="location.reload()"' +
               ' class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
         'Попробовать снова' +
@@ -616,14 +762,18 @@ function showError(message) {
   tg?.showAlert?.('❌ ' + message);
 }
 
+
 // ---------- Утилита ----------
+
 
 function escapeHtml(s) {
   const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'};
   return String(s).replace(/[&<>"']/g, m => map[m]);
 }
 
+
 // ---------- Бэкдроп модалки ----------
+
 
 if (modal) {
   modal.addEventListener('click', e => {
@@ -631,7 +781,9 @@ if (modal) {
   });
 }
 
+
 // ---------- ESC ----------
+
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
@@ -641,14 +793,18 @@ document.addEventListener('keydown', e => {
   }
 });
 
+
 // ---------- Метрики ----------
+
 
 function logStage(label, startTime) {
   const now = performance.now();
   console.log(`[perf] ${label}: ${Math.round(now - startTime)} ms`);
 }
 
+
 // ---------- Оформление заказа ----------
+
 
 window.placeOrder = async function() {
   if (isPlacingOrder) return;
@@ -683,69 +839,101 @@ window.placeOrder = async function() {
   isPlacingOrder = true;
   showCartTab();
 
-  try {
-    await fetchAndUpdateProducts(false);
-  } catch (e) {
-    console.error('refresh before order failed', e);
-  }
-
-  if (!productsData) {
-    tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
+  placeOrderTimeoutId = setTimeout(() => {
+    if (!isPlacingOrder) return;
     isPlacingOrder = false;
     showCartTab();
-    return;
-  }
-
-  let hasUnavailable = false;
-  cartItems = cartItems.map(item => {
-    const exists = productsData.some(p => p.id === item.id && p.inStock);
-    if (!exists) hasUnavailable = true;
-    return { ...item, available: exists };
-  });
-  saveCartToStorage();
-  updateCartBadge();
-
-  if (hasUnavailable) {
-    tg?.showAlert?.('Некоторые товары стали недоступны. Удалите их из корзины.');
-    isPlacingOrder = false;
-    showCartTab();
-    return;
-  }
-
-  const subtotal = cartItems.reduce((sum, item) =>
-    sum + item.price * item.quantity, 0
-  );
-  const commission = paymentType === 'card' ? Math.round(subtotal * 0.15) : 0;
-  const total = subtotal + commission;
-
-  const order = {
-    id: Date.now(),
-    date: new Date().toISOString(),
-    items: cartItems.slice(),
-    subtotal,
-    commission,
-    total,
-    address,
-    paymentType,
-    pickupMode,
-    pickupLocation: pickupMode ? pickupLocation : '',
-    user: tg?.initDataUnsafe?.user || null,
-    clientClickTs: orderClickTs
-  };
-
-  previousOrders.push(order);
-  saveOrdersToStorage();
+    tg?.showAlert?.('Похоже, потеряно соединение. Проверьте интернет и попробуйте ещё раз.');
+  }, 20000);
 
   try {
-    const resp = await fetch(BACKEND_ORDER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order)
+    try {
+      await fetchAndUpdateProducts(false);
+    } catch (e) {
+      console.error('refresh before order failed', e);
+    }
+
+    if (!productsData) {
+      tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
+      isPlacingOrder = false;
+      showCartTab();
+      return;
+    }
+
+    let hasUnavailable = false;
+    let hasPriceChanged = false;
+
+    cartItems = cartItems.map(item => {
+      const fresh = productsData.find(p => p.id === item.id && p.inStock);
+      if (!fresh) {
+        hasUnavailable = true;
+        return { ...item, available: false };
+      }
+      if (fresh.price !== item.price) {
+        hasPriceChanged = true;
+        return { ...item, available: false, newPrice: fresh.price };
+      }
+      return { ...item, available: true, newPrice: undefined };
     });
+    saveCartToStorage();
+    updateCartBadge();
 
-    const text = await resp.text();
-    console.log('BACKEND_ORDER_URL status:', resp.status);
-    console.log('BACKEND_ORDER_URL body:', text);
+    if (hasUnavailable || hasPriceChanged) {
+      isPlacingOrder = false;
+      showCartTab();
+      if (hasUnavailable && hasPriceChanged) {
+        tg?.showAlert?.('Некоторые товары недоступны, а у других обновилась цена. Проверьте корзину.');
+      } else if (hasUnavailable) {
+        tg?.showAlert?.('Некоторые товары стали недоступны. Удалите их из корзины.');
+      } else {
+        tg?.showAlert?.('У некоторых товаров обновилась цена. Нажмите "Обновить" возле позиции.');
+      }
+      return;
+    }
+
+    const subtotal = cartItems.reduce((sum, item) =>
+      sum + item.price * item.quantity, 0
+    );
+    const commission = paymentType === 'card' ? Math.round(subtotal * 0.15) : 0;
+    const total = subtotal + commission;
+
+    const order = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      items: cartItems.slice(),
+      subtotal,
+      commission,
+      total,
+      address,
+      paymentType,
+      pickupMode,
+      pickupLocation: pickupMode ? pickupLocation : '',
+      user: tg?.initDataUnsafe?.user || null,
+      clientClickTs: orderClickTs
+    };
+
+    previousOrders.push(order);
+    saveOrdersToStorage();
+
+    let resp;
+    let text;
+    try {
+      resp = await fetch(BACKEND_ORDER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+      });
+
+      text = await resp.text();
+      console.log('BACKEND_ORDER_URL status:', resp.status);
+      console.log('BACKEND_ORDER_URL body:', text);
+    } catch (e) {
+      console.error('backend order error', e);
+      tg?.showAlert?.('Ошибка при отправке заказа, попробуйте ещё раз.');
+      isPlacingOrder = false;
+      showCartTab();
+      return;
+    }
 
     let json = null;
     try { json = JSON.parse(text); } catch (e) {}
@@ -760,27 +948,27 @@ window.placeOrder = async function() {
     const now = Date.now();
     const durationMs = now - orderClickTs;
     console.log('[perf] placeOrder duration:', durationMs, 'ms');
-  } catch (e) {
-    console.error('backend order error', e);
-    tg?.showAlert?.('Ошибка при отправке заказа, попробуйте ещё раз.');
+
+    tg?.showAlert?.('✅ Заказ оформлен!');
+    cartItems = [];
+    saveCartToStorage();
+    updateCartBadge();
     isPlacingOrder = false;
     showCartTab();
-    return;
+  } finally {
+    clearTimeout(placeOrderTimeoutId);
+    placeOrderTimeoutId = null;
   }
-
-  tg?.showAlert?.('✅ Заказ оформлен!');
-  cartItems = [];
-  saveCartToStorage();
-  updateCartBadge();
-  isPlacingOrder = false;
-  showCartTab();
 };
 
+
 // ---------- Обновление товаров вручную ----------
+
 
 window.refreshProducts = async function() {
   if (isRefreshingProducts) return;
   isRefreshingProducts = true;
+
 
   root.innerHTML =
     '<div class="pb-[65px] max-w-md mx-auto">' +
@@ -788,13 +976,14 @@ window.refreshProducts = async function() {
         Array.from({ length: 6 }).map(() =>
           '<div class="bg-white rounded-2xl p-4 shadow-lg">' +
             '<div class="h-32 mb-3 rounded-xl placeholder-shimmer"></div>' +
-            '<div class="h-4 w-3/4 mb-2 rounded placeholder-shimmer"></div>' +
+            '<div class="h-4 w-3/4 mb-2 rounded.placeholder-shimmer"></div>' +
             '<div class="h-5 w-1/2 mb-2 rounded.placeholder-shimmer"></div>' +
             '<div class="h-3 w-1/3 rounded.placeholder-shimmer"></div>' +
           '</div>'
         ).join('') +
       '</div>' +
     '</div>';
+
 
   try {
     await fetchAndUpdateProducts(true);
@@ -803,10 +992,13 @@ window.refreshProducts = async function() {
   }
 };
 
+
 // ---------- Загрузка товаров с API ----------
+
 
 async function fetchAndUpdateProducts(showLoader = false) {
   const t0 = performance.now();
+
 
   if (showLoader) {
     // Если активна не вкладка магазина – не показываем скелетон магазина
@@ -814,18 +1006,19 @@ async function fetchAndUpdateProducts(showLoader = false) {
       return;
     }
 
+
     root.innerHTML =
       '<div class="pb-[65px] max-w-md mx-auto">' +
         '<div class="mb-5">' +
-          '<div class="h-6 w-32 mb-4 rounded placeholder-shimmer"></div>' +
+          '<div class="h-6 w-32 mb-4 rounded.placeholder-shimmer"></div>' +
           '<div class="flex items-center gap-3">' +
             '<div class="flex-1 bg-white rounded-2xl px-3 py-2">' +
-              '<div class="h-3 w-20 mb-2 rounded placeholder-shimmer"></div>' +
-              '<div class="h-4 w-full rounded placeholder-shimmer"></div>' +
+              '<div class="h-3 w-20 mb-2 rounded.placeholder-shimmer"></div>' +
+              '<div class="h-4 w-full rounded.placeholder-shimmer"></div>' +
             '</div>' +
             '<div class="w-44 bg-white rounded-2xl px-3 py-2">' +
-              '<div class="h-3 w-16 mb-2 rounded placeholder-shimmer"></div>' +
-              '<div class="h-4 w-full rounded placeholder-shimmer"></div>' +
+              '<div class="h-3 w-16 mb-2 rounded.placeholder-shimmer"></div>' +
+              '<div class="h-4 w-full rounded.placeholder-shimmer"></div>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -835,47 +1028,58 @@ async function fetchAndUpdateProducts(showLoader = false) {
               '<div class="h-32 mb-3 rounded-xl overflow-hidden">' +
                 '<div class="w-full h-full rounded-xl placeholder-shimmer"></div>' +
               '</div>' +
-              '<div class="h-4 w-3/4 mb-2 rounded placeholder-shimmer"></div>' +
-              '<div class="h-5 w-1/2 mb-2 rounded placeholder-shimmer"></div>' +
-              '<div class="h-3 w-1/3 rounded placeholder-shimmer"></div>' +
+              '<div class="h-4 w-3/4 mb-2 rounded.placeholder-shimmer"></div>' +
+              '<div class="h-5 w-1/2 mb-2 rounded.placeholder-shimmer"></div>' +
+              '<div class="h-3 w-1/3 rounded.placeholder-shimmer"></div>' +
             '</div>'
           ).join('') +
         '</div>' +
       '</div>';
   }
 
+
   try {
     const response = await fetch(API_URL);
     logStage('products fetch', t0);
 
+
     if (!response.ok) throw new Error('HTTP ' + response.status);
+
 
     const products = await response.json();
     logStage('products json parse', t0);
 
+
     const normalized = normalizeProducts(products);
     logStage('normalizeProducts', t0);
+
 
     const inStockNames = new Set(
       normalized.filter(v => v.inStock).map(v => v.name)
     );
     const newProductsData = normalized.filter(v => inStockNames.has(v.name));
 
+
     const oldJson = JSON.stringify(productsData || []);
     const newJson = JSON.stringify(newProductsData);
+
 
     if (oldJson !== newJson) {
       productsData = newProductsData;
 
+
       const cats = Array.from(new Set(productsData.map(p => p.cat).filter(Boolean)));
       CATEGORIES = ['Все', ...cats];
+
 
       if (selectedCategory === 'Все') {
         randomIds = pickRandomIds(productsData, Math.min(20, productsData.length));
       }
 
+
       syncProductsAndCart();
     }
+
 
     logStage('update productsData + sync', t0);
   } catch (error) {
@@ -904,7 +1108,9 @@ async function fetchAndUpdateProducts(showLoader = false) {
   }
 }
 
+
 // ---------- Инициализация ----------
+
 
 async function initApp() {
   const t0 = performance.now();
@@ -914,15 +1120,18 @@ async function initApp() {
     console.log('initDataUnsafe object:', window.Telegram?.WebApp?.initDataUnsafe);
     console.log('initDataUnsafe.user:', window.Telegram?.WebApp?.initDataUnsafe?.user);
 
+
     if (typeof initTabBar === 'function') {
       initTabBar();
     }
     logStage('after initTabBar', t0);
 
+
     loadOrdersFromStorage();
     loadAddressesFromStorage();
     loadCartFromStorage();
     logStage('after localStorage', t0);
+
 
     if (typeof fetchAndUpdateProducts === 'function') {
       await fetchAndUpdateProducts(true);
@@ -930,6 +1139,7 @@ async function initApp() {
       throw new Error('Функция fetchAndUpdateProducts не найдена (products.js не загружен)');
     }
     logStage('after fetchAndUpdateProducts', t0);
+
 
     // ВАЖНО: рендерим текущую вкладку, а не всегда магазин
     if (currentTab === 'shop' && typeof renderShop === 'function') {
@@ -945,6 +1155,7 @@ async function initApp() {
     }
     logStage('after initial tab render', t0);
 
+
     setInterval(() => {
       try {
         if (typeof fetchAndUpdateProducts === 'function') {
@@ -959,5 +1170,6 @@ async function initApp() {
     showError(e.message || 'Ошибка инициализации приложения');
   }
 }
+
 
 initApp();

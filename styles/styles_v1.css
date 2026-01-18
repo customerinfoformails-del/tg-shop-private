@@ -165,8 +165,11 @@ img,
 }
 
 .option-btn {
-  min-width: 80px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 0.75rem;  /* ~px-3 */
+  padding-right: 0.75rem; /* ~px-3 */
 }
 
 /* Горизонтальный скролл опций */

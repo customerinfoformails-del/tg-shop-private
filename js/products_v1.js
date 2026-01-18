@@ -342,6 +342,8 @@ function setupHandlers() {
   }
 
   if (searchEl) {
+    searchEl.onfocus = () => hideTabBar();
+    searchEl.onblur  = () => showTabBar();
     searchEl.oninput = function (e) {
       query = e.target.value || '';
       clearTimeout(searchTimeout);

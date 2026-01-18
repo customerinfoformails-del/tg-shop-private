@@ -521,6 +521,14 @@ function showCartTab() {
     '</div>';
 
   restoreCartFormState();
+
+  ['deliveryAddress', 'deliveryComment', 'contactName', 'contactPhone'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('focus', hideTabBar);
+    el.addEventListener('blur', showTabBar);
+  });
+
   const savedSelect = document.getElementById('savedAddress');
   if (savedSelect) {
     onSavedAddressChange();

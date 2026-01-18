@@ -175,6 +175,12 @@ function showProfileTab() {
     '</div>' +
     '</div>' +
     '</div>';
+
+  const newAddressEl = document.getElementById('newAddress');
+  if (newAddressEl) {
+    newAddressEl.addEventListener('focus', hideTabBar);
+    newAddressEl.addEventListener('blur', showTabBar);
+  }
 }
 
 window.addAddress = function () {

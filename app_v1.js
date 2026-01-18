@@ -1090,7 +1090,7 @@ async function fetchAndUpdateProducts(showLoader = false) {
     if (currentTab !== 'shop') {
       return;
     }
-
+  
     root.innerHTML =
       '<div class="pb-[65px] max-w-md mx-auto">' +
         '<div class="mb-5">' +
@@ -1102,7 +1102,7 @@ async function fetchAndUpdateProducts(showLoader = false) {
             '</div>' +
             '<div class="w-44 bg-white rounded-2xl px-3 py-2">' +
               '<div class="h-3 w-16 mb-2 rounded placeholder-shimmer"></div>' +
-              '<div class="h-4 w-full rounded.placeholder-shimmer"></div>' +
+              '<div class="h-4 w-full rounded placeholder-shimmer"></div>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -1112,14 +1112,14 @@ async function fetchAndUpdateProducts(showLoader = false) {
               '<div class="h-32 mb-3 rounded-xl overflow-hidden">' +
                 '<div class="w-full h-full rounded-xl placeholder-shimmer"></div>' +
               '</div>' +
-              '<div class="h-4 w-3/4 mb-2 rounded.placeholder-shimmer"></div>' +
-              '<div class="h-5 w-1/2.mb-2 rounded.placeholder-shimmer"></div>' +
-              '<div class="h-3 w-1/3 rounded.placeholder-shimmer"></div>' +
+              '<div class="h-4 w-3/4 mb-2 rounded placeholder-shimmer"></div>' +
+              '<div class="h-5 w-1/2 mb-2 rounded placeholder-shimmer"></div>' +
+              '<div class="h-3 w-1/3 rounded placeholder-shimmer"></div>' +
             '</div>'
           ).join('') +
         '</div>' +
       '</div>';
-  }
+  }  
 
   try {
     const response = await fetch(API_URL);

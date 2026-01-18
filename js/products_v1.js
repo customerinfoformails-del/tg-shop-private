@@ -204,6 +204,7 @@ function productCard(product) {
   const commonImage = product.commonImage || variants[0]?.commonImage || '';
   const fallbackByCategory = PLACEHOLDERS[product.cat] || PLACEHOLDERS.iPhone;
   const mainImage = commonImage || fallbackByCategory;
+  const safeMainImage = mainImage.replace(/'/g, "\\'");
 
   const cheapestVariant = variants.reduce(
     (min, p) => (p.price < min.price ? p : min),
@@ -213,30 +214,33 @@ function productCard(product) {
 
   return (
     '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
-    ' data-product-name="' +
-    escapeHtml(product.name) +
-    '"' +
-    ' data-carousel-id="' +
-    carouselId +
-    '">' +
-    '<div class="w-full h-32 rounded-xl mb-3 image-carousel h-32 cursor-pointer overflow-hidden">' +
-    '<div class="image-carousel-inner" data-carousel="' +
-    carouselId +
-    '" data-current="0">' +
-    '<img src="' +
-    mainImage +
-    '" class="carousel-img loaded" alt="Product" />' +
-    '</div>' +
-    '</div>' +
-    '<div class="font-bold text-base mb-1 truncate">' +
-    escapeHtml(product.name) +
-    '</div>' +
-    '<div class="text-blue-600 font-black text-xl mb-1">$' +
-    cheapestVariant.price +
-    '</div>' +
-    '<div class="text-xs text-gray-500 mb-4">' +
-    variants.length +
-    ' вариантов</div>' +
+      ' data-product-name="' +
+      escapeHtml(product.name) +
+      '"' +
+      ' data-carousel-id="' +
+      carouselId +
+      '">' +
+      '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden">' +
+        '<div class="image-carousel-inner" data-carousel="' +
+          carouselId +
+          '" data-current="0">' +
+          '<img src="' +
+            mainImage +
+            '" ' +
+            'class="carousel-img product-image" ' +
+            'alt="Product" ' +
+            'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" />' +
+        '</div>' +
+      '</div>' +
+      '<div class="font-bold text-base mb-1 truncate">' +
+        escapeHtml(product.name) +
+      '</div>' +
+      '<div class="text-blue-600 font-black text-xl mb-1">$' +
+        cheapestVariant.price +
+      '</div>' +
+      '<div class="text-xs text-gray-500 mb-4">' +
+        variants.length +
+        ' вариантов</div>' +
     '</div>'
   );
 }

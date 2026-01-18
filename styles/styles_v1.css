@@ -49,6 +49,15 @@ body {
   animation: none;
 }
 
+.product-image {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.product-image.loaded {
+  opacity: 1;
+}
+
 /* Картинки */
 img,
 .image-carousel {

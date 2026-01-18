@@ -10,7 +10,7 @@ try {
 const API_URL =
   'https://script.google.com/macros/s/AKfycbxyKA2QcJBKim9ttOKHiJ_uTVYunBKhBnNFNf9BLGewzHpqqcY9ZY8smmvCwQZzOGs85Q/exec';
 const ORDERS_API_URL =
-  'https://script.google.com/macros/s/AKfycbxr_WtXjtNelG9HRya2ngKaYkd-9dUrADnVG8H9_SJTHIheJ_eFFj3BCCdED22-3K5t5Q/exec';
+  'https://tg-shop-test-backend.onrender.com/orders';
 const BACKEND_ORDER_URL = 'https://tg-shop-test-backend.onrender.com/order';
 
 let CATEGORIES = ['Все'];
@@ -316,6 +316,23 @@ async function fetchAndUpdateProducts(showLoader = false) {
   }
 }
 
+const loadedImageUrls = new Set();
+
+window.handleProductImageLoad = function (img, url) {
+  try {
+    if (!loadedImageUrls.has(url)) {
+      loadedImageUrls.add(url);
+      img.classList.add('loaded'); // плавный fade-in
+    } else {
+      // уже когда-то грузили этот URL — сразу показываем без анимации
+      img.style.opacity = '1';
+    }
+  } catch (e) {
+    console.log('[images] handleProductImageLoad error', e);
+    img.style.opacity = '1';
+  }
+};
+
 // ---------- Обновление товаров вручную ----------
 
 window.refreshProducts = async function () {
@@ -364,7 +381,12 @@ async function fetchUserOrders() {
     if (!resp.ok) return;
 
     const data = await resp.json();
-    console.log('[orders] data.ok=', data.ok, 'count=', Array.isArray(data.orders) ? data.orders.length : 'no array');
+    console.log(
+      '[orders] data.ok=',
+      data.ok,
+      'count=',
+      Array.isArray(data.orders) ? data.orders.length : 'no array'
+    );
     if (!data.ok || !Array.isArray(data.orders)) return;
 
     previousOrders = data.orders;

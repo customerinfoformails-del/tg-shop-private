@@ -5,7 +5,7 @@ let modalImageIndexBeforeFullscreen = 0;
 let modalTouchStartX = 0;
 let modalTouchStartY = 0;
 
-// контейнер скролла внутри модалки
+// контейнер скролла внутри модалки (зона с опциями)
 let modalScrollContainer = null;
 
 function getVariantCountText(count) {
@@ -122,7 +122,7 @@ window.addToCartFromModal = async function() {
 function renderProductModal(product) {
   currentProduct = product;
 
-  // сохраняем текущий скролл ДО перерисовки
+  // сохраняем текущий скролл зоны с опциями ДО перерисовки
   const prevScrollTop = modalScrollContainer ? modalScrollContainer.scrollTop : 0;
 
   const allVariants = getProductVariants(product.name);
@@ -144,8 +144,12 @@ function renderProductModal(product) {
         '</div>' +
       '</div>';
 
-    modalScrollContainer = document.querySelector('#modalContent .flex-1');
-    if (modalScrollContainer) modalScrollContainer.scrollTop = prevScrollTop;
+    // обновляем контейнер и возвращаем скролл
+    setTimeout(function() {
+      modalScrollContainer = document.querySelector('#modalContent .px-4.pt-0.pb-4');
+      if (modalScrollContainer) modalScrollContainer.scrollTop = prevScrollTop;
+    }, 0);
+
     return;
   }
 
@@ -267,7 +271,7 @@ function renderProductModal(product) {
                   opts.map(function(option) {
                     const isSelected = selectedOption[type] === option;
                     return (
-                      '<button class="option-btn px-3 py-1.5 text-xs font-medium rounded-full.border scroll-item w-[80px] ' +
+                      '<button class="option-btn px-3 py-1.5 text-xs font-medium rounded-full border scroll-item w-[80px] ' +
                               (isSelected
                                 ? 'bg-blue-500 text-white border-blue-500 shadow-md font-bold'
                                 : 'bg-gray-100 border-gray-300 hover:bg-gray-200') +
@@ -343,9 +347,13 @@ function renderProductModal(product) {
       '</div>' +
     '</div>';
 
-  // после перерисовки находим контейнер и восстанавливаем скролл
-  modalScrollContainer = document.querySelector('#modalContent .flex-1');
-  if (modalScrollContainer) modalScrollContainer.scrollTop = prevScrollTop;
+  // после перерисовки находим контейнер с опциями и восстанавливаем скролл
+  setTimeout(function() {
+    modalScrollContainer = document.querySelector('#modalContent .px-4.pt-0.pb-4');
+    if (modalScrollContainer) {
+      modalScrollContainer.scrollTop = prevScrollTop;
+    }
+  }, 0);
 
   if (complete && filteredImages.length > 0) {
     modalCurrentIndex = modalImageIndexBeforeFullscreen;

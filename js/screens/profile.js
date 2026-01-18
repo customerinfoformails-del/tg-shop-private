@@ -4,7 +4,46 @@ window.toggleOrderDetails = function (index) {
   block.classList.toggle('hidden');
 };
 
+function renderProfileSkeleton() {
+  root.innerHTML =
+    '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto bg-gray-50">' +
+      '<div class="flex items-center gap-4">' +
+        '<div class="w-16 h-16 bg-gray-200 rounded-2xl placeholder-shimmer"></div>' +
+        '<div class="flex-1 space-y-2">' +
+          '<div class="h-4 w-24 bg-gray-200 rounded placeholder-shimmer"></div>' +
+          '<div class="h-3 w-40 bg-gray-200 rounded placeholder-shimmer"></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="space-y-3">' +
+        '<div class="h-4 w-32 bg-gray-200 rounded placeholder-shimmer"></div>' +
+        '<div class="space-y-2">' +
+          Array.from({ length: 2 }).map(() =>
+            '<div class="h-10 w-full bg-white border border-gray-200 rounded-2xl flex items-center px-3">' +
+              '<div class="h-3 w-3/4 bg-gray-200 rounded placeholder-shimmer"></div>' +
+            '</div>'
+          ).join('') +
+        '</div>' +
+      '</div>' +
+      '<div class="space-y-3">' +
+        '<div class="h-4 w-40 bg-gray-200 rounded placeholder-shimmer"></div>' +
+        Array.from({ length: 3 }).map(() =>
+          '<div class="bg-white border border-gray-200 rounded-2xl p-3 space-y-2">' +
+            '<div class="h-3 w-1/2 bg-gray-200 rounded placeholder-shimmer"></div>' +
+            '<div class="h-3 w-1/3 bg-gray-200 rounded placeholder-shimmer"></div>' +
+            '<div class="h-3 w-1/4 bg-gray-200 rounded placeholder-shimmer"></div>' +
+          '</div>'
+        ).join('') +
+      '</div>' +
+    '</div>';
+}
+
+
 function showProfileTab() {
+  if (isOrdersLoading) {
+    renderProfileSkeleton();
+    return;
+  }
+  
   const user = tg?.initDataUnsafe?.user;
   const username = user?.username || 'неизвестно';
   const displayId = '@' + username;

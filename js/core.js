@@ -10,6 +10,7 @@ const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbxr_WtXjtNelG9HR
 const BACKEND_ORDER_URL = 'https://tg-shop-test-backend.onrender.com/order';
 
 let CATEGORIES = ['Все'];
+let isOrdersLoading = false;
 
 let selectedCategory = 'Все',
   query = '',
@@ -346,6 +347,11 @@ async function fetchUserOrders() {
     const userId = tg?.initDataUnsafe?.user?.id;
     if (!userId) return;
 
+    isOrdersLoading = true;
+    if (currentTab === 'profile') {
+      renderProfileSkeleton();
+    }
+
     const url = ORDERS_API_URL + '?userId=' + encodeURIComponent(userId);
     const resp = await fetch(url);
     if (!resp.ok) return;
@@ -354,9 +360,15 @@ async function fetchUserOrders() {
     if (!data.ok || !Array.isArray(data.orders)) return;
 
     previousOrders = data.orders;
-    saveOrdersToStorage(); // опционально, чтобы кешировать
+    saveOrdersToStorage();
+
+    if (currentTab === 'profile') {
+      showProfileTab();
+    }
   } catch (e) {
     console.error('fetchUserOrders error', e);
+  } finally {
+    isOrdersLoading = false;
   }
 }
 

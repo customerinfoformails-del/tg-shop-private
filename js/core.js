@@ -399,6 +399,8 @@ async function fetchUserOrders() {
     previousOrders = data.orders;
     console.log('[orders] previousOrders updated', previousOrders.length);
 
+    isOrdersLoading = false
+
     if (currentTab === 'profile') {
       showProfileTab();
     }

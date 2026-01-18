@@ -142,7 +142,6 @@ window.refreshCartPricesAndCleanup = async function () {
     console.log('[cart] refreshCartPricesAndCleanup removed=', removedCount, 'changed=', changedCount);
     saveCartToStorage();
     updateCartBadge();
-    showCartTab();
 
     if (!removedCount && !changedCount) {
       tg?.showAlert?.('Все товары актуальны');

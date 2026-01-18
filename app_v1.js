@@ -5,11 +5,14 @@ try {
   tg?.setBackgroundColor?.('#f3f4f6'); // bg-gray-100
 } catch (e) {}
 
+
 const API_URL = 'https://script.google.com/macros/s/AKfycbxyKA2QcJBKim9ttOKHiJ_uTVYunBKhBnNFNf9BLGewzHpqqcY9ZY8smmvCwQZzOGs85Q/exec';
 const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbxr_WtXjtNelG9HRya2ngKaYkd-9dUrADnVG8H9_SJTHIheJ_eFFj3BCCdED22-3K5t5Q/exec';
 const BACKEND_ORDER_URL = 'https://tg-shop-test-backend.onrender.com/order';
 
+
 let CATEGORIES = ['Все'];
+
 
 let selectedCategory = 'Все',
   query = '',
@@ -23,24 +26,29 @@ let selectedCategory = 'Все',
   searchTimeout = null,
   currentTab = 'shop';
 
+
 let cartItems = [];
 let savedAddresses = [];
 let previousOrders = [];
 
+
 let paymentType = 'cash';
 let pickupMode = false;
 let pickupLocation = '';
+
 
 const PICKUP_LOCATIONS = [
   'ТЦ Галерея, пр-т Победителей, 9',
   'ТРЦ Dana Mall, ул. Петра Мстиславца, 11'
 ];
 
+
 let isAddingToCart = false;
 let isPlacingOrder = false;
 let isRefreshingProducts = false;
 let isTabChanging = false;
 let placeOrderTimeoutId = null;
+
 
 // сохранение состояния формы корзины между рендерами
 let cartFormState = {
@@ -52,8 +60,10 @@ let cartFormState = {
   pickupLocationValue: ''
 };
 
+
 const root = document.getElementById('root');
 const modal = document.getElementById('productModal');
+
 
 // ---------- Глобальная обработка ошибок ----------
 
@@ -66,6 +76,7 @@ window.onerror = function (message, source, lineno, colno, error) {
   }
   return true;
 };
+
 
 // ---------- localStorage ----------
 
@@ -115,6 +126,7 @@ function loadOrdersFromStorage() {
   }
 }
 
+
 // ---------- Запрет зума ----------
 
 document.addEventListener('gesturestart', e => e.preventDefault());
@@ -129,6 +141,7 @@ document.addEventListener('touchend', e => {
   if (now - lastTouchEnd <= 300) e.preventDefault();
   lastTouchEnd = now;
 }, { passive: false });
+
 
 // ---------- Таббар ----------
 
@@ -185,6 +198,7 @@ function switchTab(tabName) {
     setTabBarDisabled(false);
   });
 }
+
 
 // ---------- Корзина и синхронизация ----------
 
@@ -260,6 +274,7 @@ window.updateCartItemPrice = function(index) {
   showCartTab();
   tg?.showAlert?.('Цена обновлена для выбранного товара');
 };
+
 
 // обновить цены всех и удалить неактуальные
 window.refreshCartPricesAndCleanup = async function() {
@@ -368,6 +383,7 @@ window.refreshCartPricesAndCleanup = async function() {
   }
 };
 
+
 function syncCartWithProducts() {
   if (!productsData) return;
   cartItems = cartItems.map(item => {
@@ -383,6 +399,7 @@ function syncProductsAndCart() {
   if (currentTab === 'shop' && typeof renderShop === 'function') renderShop();
   if (currentTab === 'cart') showCartTab();
 }
+
 
 // ---------- Сохранение/восстановление формы корзины ----------
 
@@ -429,6 +446,7 @@ function restoreCartFormState() {
     pickupLocationEl.value = cartFormState.pickupLocationValue;
   }
 }
+
 
 // ---------- Вкладка корзины ----------
 
@@ -489,11 +507,11 @@ function showCartTab() {
       '<div class="flex items-center justify-between mb-4">' +
         '<h2 class="text-2xl font-bold text-gray-800">Корзина</h2>' +
         '<button onclick="refreshCartPricesAndCleanup()"' +
-                ' class="inline-flex items-center justify-center text-[11px] font-semibold px-3 py-1.5 rounded-full ' +
-                ' bg-purple-500 hover:bg-purple-600 text-white shadow-md transition-all active:scale-[0.97]"' +
+                ' class="inline-flex items-center justify-center text-[11px] font-semibold px-2.5 py-1.5 rounded-full ' +
+                ' bg-purple-500 hover:bg-purple-600 text-white shadow-md transition-all active:scale-[0.97] max-w-[160px] text-center"' +
                 ' id="refreshCartButton">' +
           '<span class="loader-circle hidden mr-1" id="refreshCartLoader"></span>' +
-          '<span>Обновить цены и удалить неактуальные</span>' +
+          '<span class="leading-tight break-words">Обновить цены и удалить неактуальные</span>' +
         '</button>' +
       '</div>' +
       '<div class="space-y-3">' +
@@ -579,27 +597,27 @@ function showCartTab() {
           (!pickupMode
             ? (
               '<label class="text-sm font-semibold text-gray-700 block">Адрес доставки</label>' +
-              '<select id="savedAddress" class="w-full bg-white border rounded-xl px-3 py-2 text-sm mb-2" onchange="onSavedAddressChange()">' +
+              '<select id="savedAddress" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2" onchange="onSavedAddressChange()">' +
                 '<option value="">Выбрать сохранённый адрес</option>' +
                 (savedAddresses || []).map(addr =>
                   '<option value="' + escapeHtml(addr) + '">' + escapeHtml(addr) + '</option>'
                 ).join('') +
               '</select>' +
               '<div id="deliveryAddressWrapper" class="mb-2">' +
-                '<textarea id="deliveryAddress" class="w-full bg-white border rounded-xl px-3 py-2 text-sm"' +
+                '<textarea id="deliveryAddress" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm"' +
                           ' rows="3" placeholder="Введите адрес доставки..."></textarea>' +
               '</div>' +
               '<div class="mt-1">' +
-                '<label class="text-sm font-semibold text-gray-700 block.mb-1">Комментарий к доставке</label>' +
-                '<textarea id="deliveryComment" class="w-full bg-white border rounded-xl px-3 py-2 text-sm"' +
+                '<label class="text-sm font-semibold text-gray-700 block mb-1">Комментарий к доставке</label>' +
+                '<textarea id="deliveryComment" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm"' +
                           ' rows="2" placeholder="Например: позвонить за 10 минут, домофон не работает..."></textarea>' +
               '</div>'
             )
             : (
-              '<label class="text-sm font-semibold text-gray-700 block">Адрес.samовывоза</label>' +
-              '<select id="pickupLocation" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm.mb-2"' +
+              '<label class="text-sm font-semibold text-gray-700 block">Адрес самовывоза</label>' +
+              '<select id="pickupLocation" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2"' +
                       ' onchange="setPickupLocation(this.value)">' +
-                '<option value="">Выберите пункт.samовывоза</option>' +
+                '<option value="">Выберите пункт самовывоза</option>' +
                 PICKUP_LOCATIONS.map(addr =>
                   '<option value="' + escapeHtml(addr) + '"' +
                     (pickupLocation === addr ? ' selected' : '') + '>' +
@@ -608,8 +626,8 @@ function showCartTab() {
                 ).join('') +
               '</select>' +
               '<div class="mt-1">' +
-                '<label class="text-sm font-semibold text-gray-700 block.mb-1">Комментарий к заказу</label>' +
-                '<textarea id="deliveryComment" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm"' +
+                '<label class="text-sm font-semibold text-gray-700 block mb-1">Комментарий к заказу</label>' +
+                '<textarea id="deliveryComment" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm"' +
                           ' rows="2" placeholder="Например: приеду к 19:00, позвонить заранее..."></textarea>' +
               '</div>'
             )
@@ -618,9 +636,11 @@ function showCartTab() {
 
         '<div class="space-y-2">' +
           '<label class="text-sm font-semibold text-gray-700 block">Контактные данные (необязательно)</label>' +
-          '<input id="contactName" type="text" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm.mb-2"' +
+          '<input id="contactName" type="text"' +
+                 ' class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
                  ' placeholder="Имя">' +
-          '<input id="contactPhone" type="tel" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm"' +
+          '<input id="contactPhone" type="tel"' +
+                 ' class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"' +
                  ' placeholder="Телефон">' +
         '</div>' +
 
@@ -629,10 +649,15 @@ function showCartTab() {
             '<span>Сумма товаров</span>' +
             '<span>$' + subtotal + '</span>' +
           '</div>' +
-          '<div class="flex.items-center justify-between">' +
-            '<span>Наценка за оплату картой</span>' +
-            '<span>' + (paymentType === "card" ? "+ $" + commission : "$0") + '</span>' +
-          '</div>' +
+          (paymentType === "card"
+            ? (
+              '<div class="flex items-center justify-between">' +
+                '<span>Сервисный сбор (карта)</span>' +
+                '<span>+$' + commission + '</span>' +
+              '</div>'
+            )
+            : ''
+          ) +
           '<div class="flex items-center justify-between font-semibold mt-1">' +
             '<span>Итого к оплате</span>' +
             '<span>$' + total + '</span>' +
@@ -669,24 +694,26 @@ function showCartTab() {
   restoreCartFormState();
 }
 
+
 // ---------- Вкладка распродажи ----------
 
 function showSaleTab() {
   root.innerHTML =
-    '<div class="flex flex-col items-center.justify-center min-h-[60vh] text-center p-8 pb-[65px]">' +
-      '<div class="w-24 h-24 bg-orange-100 rounded-3xl flex.items-center.justify-center mb-6">' +
+    '<div class="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 pb-[65px] max-w-md mx-auto">' +
+      '<div class="w-24 h-24 bg-orange-100 rounded-3xl flex items-center justify-center mb-6">' +
         '<svg class="w-16 h-16 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
           '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                 ' d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
         '</svg>' +
       '</div>' +
       '<h2 class="text-2xl font-bold text-gray-800 mb-4">Распродажа</h2>' +
-      '<p class="text-lg text-gray-600 mb-8">Скоро здесь будут скидки до 70%!</p>' +
+      '<p class="text-lg text-gray-600 mb-8 max-w-xs">Скоро здесь будут скидки до 70%.</p>' +
       '<button onclick="switchTab(\'shop\')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
         'В магазин' +
       '</button>' +
     '</div>';
 }
+
 
 // ---------- Профиль ----------
 
@@ -703,44 +730,47 @@ function showProfileTab() {
 
   const ordersHtml = previousOrders.length
     ? previousOrders.map((o, idx) =>
-        '<div class="p-3 border.rounded-xl mb-2 cursor-pointer" onclick="toggleOrderDetails(' + idx + ')">' +
-          '<div class="flex.items-center.justify-between mb-1">' +
-            '<span class="text-sm font-semibold.break-all">Заказ #' + o.id + '</span>' +
-            '<span class="text-sm font-bold text-blue-600 ml-2 whitespace-nowrap">$' + o.total + '</span>' +
-          '</div>' +
-          '<div class="text-xs text-gray-500 mb-1">' + new Date(o.date).toLocaleString() + '</div>' +
-          '<div class="text-xs text-gray-600 mb-1.break-words">Адрес: ' + escapeHtml(o.address) + '</div>' +
-          (o.comment
-            ? '<div class="text-xs text-gray-500 mb-1.break-words">Комментарий: ' + escapeHtml(o.comment) + '</div>'
-            : ''
-          ) +
-          (o.contact && (o.contact.name || o.contact.phone)
-            ? '<div class="text-xs text-gray-600 mb-1.break-words">' +
-                'Контакт: ' +
-                (o.contact.name ? escapeHtml(o.contact.name) : '') +
-                (o.contact.name && o.contact.phone ? ', ' : '') +
-                (o.contact.phone ? escapeHtml(o.contact.phone) : '') +
-              '</div>'
-            : ''
-          ) +
-          '<div class="text-xs text-gray-600 mb-1">Товаров: ' + o.items.length + '</div>' +
-          '<div id="orderDetails_' + idx + '" class="hidden mt-2 text-xs text-gray-700 bg-gray-50 rounded-lg p-2">' +
-            o.items.map(item =>
-              '<div class="flex.items-center.justify-between mb-1 gap-2">' +
-                '<div class="flex-1 min-w-0">' +
-                  '<div class="font-semibold.break-words">' + escapeHtml(item.name) + '</div>' +
-                  '<div class="text-[11px] text-gray-500">' +
-                    escapeHtml(item.storage) + ' | ' +
-                    escapeHtml(item.color) + ' | ' +
-                    escapeHtml(item.region) +
+        '<div class="mb-3 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">' +
+          '<button type="button" class="w-full text-left px-3 py-2 flex items-center justify-between" onclick="toggleOrderDetails(' + idx + ')">' +
+            '<div class="flex flex-col min-w-0 mr-2">' +
+              '<span class="text-sm font-semibold text-gray-800 truncate">Заказ #' + o.id + '</span>' +
+              '<span class="text-[11px] text-gray-500">' + new Date(o.date).toLocaleString() + '</span>' +
+            '</div>' +
+            '<span class="text-sm font-bold text-blue-600 whitespace-nowrap">$' + o.total + '</span>' +
+          '</button>' +
+          '<div class="px-3 pb-2 border-t border-gray-100 text-xs text-gray-600">' +
+            '<div class="mt-1 break-words">Адрес: ' + escapeHtml(o.address) + '</div>' +
+            (o.comment
+              ? '<div class="mt-1 break-words text-gray-500">Комментарий: ' + escapeHtml(o.comment) + '</div>'
+              : ''
+            ) +
+            (o.contact && (o.contact.name || o.contact.phone)
+              ? '<div class="mt-1 break-words">Контакт: ' +
+                  (o.contact.name ? escapeHtml(o.contact.name) : '') +
+                  (o.contact.name && o.contact.phone ? ', ' : '') +
+                  (o.contact.phone ? escapeHtml(o.contact.phone) : '') +
+                '</div>'
+              : ''
+            ) +
+            '<div class="mt-1 text-gray-500">Товаров: ' + o.items.length + '</div>' +
+            '<div id="orderDetails_' + idx + '" class="hidden mt-2 pt-2 border-t border-dashed border-gray-200">' +
+              o.items.map(item =>
+                '<div class="flex items-center justify-between mb-1 gap-2">' +
+                  '<div class="flex-1 min-w-0">' +
+                    '<div class="font-semibold text-[11px] break-words">' + escapeHtml(item.name) + '</div>' +
+                    '<div class="text-[10px] text-gray-500">' +
+                      escapeHtml(item.storage) + ' | ' +
+                      escapeHtml(item.color) + ' | ' +
+                      escapeHtml(item.region) +
+                    '</div>' +
                   '</div>' +
-                '</div>' +
-                '<div class="text-right text-[11px] whitespace-nowrap">' +
-                  '<div>' + item.quantity + ' шт.</div>' +
-                  '<div>$' + (item.price * item.quantity) + '</div>' +
-                '</div>' +
-              '</div>'
-            ).join('') +
+                  '<div class="text-right text-[10px] whitespace-nowrap">' +
+                    '<div>' + item.quantity + ' шт.</div>' +
+                    '<div>$' + (item.price * item.quantity) + '</div>' +
+                  '</div>' +
+                '</div>'
+              ).join('') +
+            '</div>' +
           '</div>' +
         '</div>'
       ).join('')
@@ -748,34 +778,34 @@ function showProfileTab() {
 
   const addressesHtml = savedAddresses.length
     ? savedAddresses.map((addr, idx) =>
-        '<div class="flex.items-center gap-2 p-2 border.rounded-xl mb-1">' +
-          '<span class="flex-1 text-xs text-gray-700.break-words">' + escapeHtml(addr) + '</span>' +
+        '<div class="flex items-center gap-2 p-2 bg-white border border-gray-200 rounded-2xl mb-1">' +
+          '<span class="flex-1 text-xs text-gray-700 break-words">' + escapeHtml(addr) + '</span>' +
           '<button class="text-xs text-red-500 shrink-0" onclick="removeAddress(' + idx + ')">Удалить</button>' +
         '</div>'
       ).join('')
     : '<p class="text-sm text-gray-500">Сохранённых адресов нет</p>';
 
   root.innerHTML =
-    '<div class="p-6 space-y-6 pb-[65px] max-w-md.mx-auto">' +
-      '<div class="flex.items-center gap-4">' +
-        '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex.items-center.justify-center shrink-0">' +
+    '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto bg-gray-50">' +
+      '<div class="flex items-center gap-4">' +
+        '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shrink-0">' +
           '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                   ' d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>' +
           '</svg>' +
         '</div>' +
         '<div class="flex flex-col min-w-0">' +
-          '<h2 class="text-xl font-bold.leading-tight">Профиль</h2>' +
-          '<p class="text-gray-500 text-sm mt-1.break-all">ID: ' + escapeHtml(displayId) + '</p>' +
+          '<h2 class="text-xl font-bold leading-tight text-gray-900">Профиль</h2>' +
+          '<p class="text-gray-500 text-sm mt-1 break-all">ID: ' + escapeHtml(displayId) + '</p>' +
         '</div>' +
       '</div>' +
 
       '<div class="space-y-3">' +
-        '<h3 class="text-lg font-semibold">Сохранённые адреса</h3>' +
+        '<h3 class="text-lg font-semibold text-gray-800">Сохранённые адреса</h3>' +
         '<div id="addressesList">' + addressesHtml + '</div>' +
         '<div class="space-y-2">' +
-          '<textarea id="newAddress" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" rows="2" placeholder="Новый адрес..."></textarea>' +
-          '<button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-xl transition-all"' +
+          '<textarea id="newAddress" class="w-full bg-white border border-gray-300 rounded-2xl px-3 py-2 text-sm" rows="2" placeholder="Новый адрес..."></textarea>' +
+          '<button class="w-full bg-gray-900 hover:bg-black text-white font-bold py-2 px-4 rounded-2xl transition-all text-sm"' +
                   ' onclick="addAddress()">' +
             'Сохранить адрес' +
           '</button>' +
@@ -783,7 +813,7 @@ function showProfileTab() {
       '</div>' +
 
       '<div class="space-y-3">' +
-        '<h3 class="text-lg font-semibold">Предыдущие заказы</h3>' +
+        '<h3 class="text-lg font-semibold text-gray-800">Предыдущие заказы</h3>' +
         '<div>' + ordersHtml + '</div>' +
       '</div>' +
     '</div>';
@@ -809,11 +839,12 @@ window.removeAddress = function(index) {
   showProfileTab();
 };
 
+
 // ---------- Вкладка "О нас" ----------
 
 function showAboutTab() {
   root.innerHTML =
-    '<div class="p-6 space-y-6 pb-[65px] max-w-md.mx-auto">' +
+    '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto">' +
       '<h2 class="text-2xl font-bold text-gray-800 mb-4">О нас</h2>' +
       '<div class="space-y-4 text-gray-700">' +
         '<p>Магазин премиальной техники Apple с гарантией качества и лучшими ценами.</p>' +
@@ -823,7 +854,7 @@ function showAboutTab() {
             '<div class="text-sm text-gray-600">товаров</div>' +
           '</div>' +
           '<div class="text-center p-4 bg-green-50 rounded-xl">' +
-            '<div class="text-2xl.font-bold text-green-600">24/7</div>' +
+            '<div class="text-2xl font-bold text-green-600">24/7</div>' +
             '<div class="text-sm text-gray-600">поддержка</div>' +
           '</div>' +
         '</div>' +
@@ -831,12 +862,13 @@ function showAboutTab() {
     '</div>';
 }
 
+
 // ---------- Ошибка ----------
 
 function showError(message) {
   root.innerHTML =
-    '<div class="flex flex-col items-center.justify-center min-h-screen text-center p-8 pb-[65px]">' +
-      '<div class="w-20 h-20 bg-red-100 rounded-2xl flex.items-center.justify-center mb-6">' +
+    '<div class="flex flex-col items-center justify-center min-h-screen text-center p-8 pb-[65px]">' +
+      '<div class="w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center mb-6">' +
         '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
           '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                 ' d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
@@ -852,12 +884,14 @@ function showError(message) {
   tg?.showAlert?.('❌ ' + message);
 }
 
+
 // ---------- Утилита ----------
 
 function escapeHtml(s) {
   const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'};
   return String(s).replace(/[&<>"']/g, m => map[m]);
 }
+
 
 // ---------- Бэкдроп модалки ----------
 
@@ -866,6 +900,7 @@ if (modal) {
     if (e.target === modal) closeModal();
   });
 }
+
 
 // ---------- ESC ----------
 
@@ -877,12 +912,14 @@ document.addEventListener('keydown', e => {
   }
 });
 
+
 // ---------- Метрики ----------
 
 function logStage(label, startTime) {
   const now = performance.now();
   console.log(`[perf] ${label}: ${Math.round(now - startTime)} ms`);
 }
+
 
 // ---------- Оформление заказа ----------
 
@@ -1054,6 +1091,7 @@ window.placeOrder = async function() {
   }
 }
 
+
 // ---------- Обновление товаров вручную ----------
 
 window.refreshProducts = async function() {
@@ -1081,6 +1119,7 @@ window.refreshProducts = async function() {
   }
 };
 
+
 // ---------- Загрузка товаров с API ----------
 
 async function fetchAndUpdateProducts(showLoader = false) {
@@ -1090,7 +1129,7 @@ async function fetchAndUpdateProducts(showLoader = false) {
     if (currentTab !== 'shop') {
       return;
     }
-  
+
     root.innerHTML =
       '<div class="pb-[65px] max-w-md mx-auto">' +
         '<div class="mb-5">' +
@@ -1119,7 +1158,7 @@ async function fetchAndUpdateProducts(showLoader = false) {
           ).join('') +
         '</div>' +
       '</div>';
-  }  
+  }
 
   try {
     const response = await fetch(API_URL);
@@ -1160,8 +1199,8 @@ async function fetchAndUpdateProducts(showLoader = false) {
     if (showLoader) {
       isRefreshingProducts = false;
       root.innerHTML =
-        '<div class="flex flex-col items-center.justify-center min-h-[70vh] text-center p-8 pb-[65px] max-w-md.mx-auto">' +
-          '<div class="w-24 h-24 bg-red-50 rounded-3xl flex.items-center.justify-center mb-4">' +
+        '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px] max-w-md mx-auto">' +
+          '<div class="w-24 h-24 bg-red-50 rounded-3xl flex items-center justify-center mb-4">' +
             '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
               '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                     ' d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
@@ -1172,7 +1211,7 @@ async function fetchAndUpdateProducts(showLoader = false) {
             'Проверьте соединение и попробуйте обновить список товаров.' +
           '</p>' +
           '<button onclick="refreshProducts()"' +
-                  ' class="flex items-center.justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-2xl shadow-lg transition-all text-sm">' +
+                  ' class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-2xl shadow-lg transition-all text-sm">' +
             '<span class="loader-circle"></span>' +
             '<span>Обновить товары</span>' +
           '</button>' +
@@ -1180,6 +1219,7 @@ async function fetchAndUpdateProducts(showLoader = false) {
     }
   }
 }
+
 
 // ---------- Инициализация ----------
 

@@ -2,6 +2,9 @@ let modalCurrentIndex = 0;
 let modalImageCount = 0;
 let modalImageIndexBeforeFullscreen = 0;
 
+let modalTouchStartX = 0;
+let modalTouchStartY = 0;
+
 function getVariantCountText(count) {
   const mod10 = count % 10;
   const mod100 = count % 100;
@@ -87,6 +90,7 @@ window.changeQuantity = function(delta) {
   if (newScrollContainer) newScrollContainer.scrollTop = prevScrollTop;
 };
 
+// без дополнительного запроса за таблицей
 window.addToCartFromModal = async function() {
   if (isAddingToCart) return;
 
@@ -97,12 +101,6 @@ window.addToCartFromModal = async function() {
   renderProductModal(currentProduct);
   const sc2 = document.querySelector('#modalContent .flex-1');
   if (sc2) sc2.scrollTop = prevScrollTop;
-
-  try {
-    await fetchAndUpdateProducts(false);
-  } catch (e) {
-    console.error('refresh before addToCart failed', e);
-  }
 
   if (!isCompleteSelection()) {
     tg?.showAlert?.('❌ Выберите все опции: SIM → Память → Цвет → Регион');
@@ -245,7 +243,7 @@ function renderProductModal(product) {
             (complete && filteredImages.length > 0
               ? '<div class="image-carousel-inner" id="modalCarouselInner">' +
                   filteredImages.slice(0, 10).map(img =>
-                    '<img src="' + img + '" class="carousel-img loaded" alt="Product image" loading="lazy" />'
+                    '<img src="' + img + '" class="carousel-img loaded w-full h-full object-contain" alt="Product image" loading="lazy" />'
                   ).join('') +
                 '</div>' +
                 (filteredImages.length > 1
@@ -377,6 +375,7 @@ function renderProductModal(product) {
   if (complete && filteredImages.length > 0) {
     modalCurrentIndex = modalImageIndexBeforeFullscreen;
     initModalCarousel(filteredImages.length);
+    initModalSwipe();
   }
 }
 
@@ -412,6 +411,33 @@ function initModalCarousel(imageCount) {
   };
 
   updateModalCarousel();
+}
+
+// свайпы по карусели
+function initModalSwipe() {
+  const carousel = document.getElementById('modalCarousel');
+  if (!carousel) return;
+
+  carousel.addEventListener('touchstart', function(e) {
+    const touch = e.changedTouches[0];
+    modalTouchStartX = touch.clientX;
+    modalTouchStartY = touch.clientY;
+  }, { passive: true });
+
+  carousel.addEventListener('touchend', function(e) {
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - modalTouchStartX;
+    const dy = Math.abs(touch.clientY - modalTouchStartY);
+
+    // горизонтальный свайп, без вертикального скролла
+    if (Math.abs(dx) < 40 || dy > 50) return;
+
+    if (dx < 0) {
+      window.modalNext && window.modalNext();
+    } else {
+      window.modalPrev && window.modalPrev();
+    }
+  }, { passive: true });
 }
 
 function showModal(product) {

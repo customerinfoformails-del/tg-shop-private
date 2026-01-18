@@ -522,7 +522,7 @@ function showProfileTab() {
   root.innerHTML =
     '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto">' +
       '<div class="flex items-center gap-4">' +
-        '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex.items-center justify-center">' +
+        '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shrink-0">' +
           '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                   ' d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>' +
@@ -809,6 +809,11 @@ async function fetchAndUpdateProducts(showLoader = false) {
   const t0 = performance.now();
 
   if (showLoader) {
+    // Если активна не вкладка магазина – не показываем скелетон магазина
+    if (currentTab !== 'shop') {
+      return;
+    }
+
     root.innerHTML =
       '<div class="pb-[65px] max-w-md mx-auto">' +
         '<div class="mb-5">' +
@@ -816,21 +821,23 @@ async function fetchAndUpdateProducts(showLoader = false) {
           '<div class="flex items-center gap-3">' +
             '<div class="flex-1 bg-white rounded-2xl px-3 py-2">' +
               '<div class="h-3 w-20 mb-2 rounded placeholder-shimmer"></div>' +
-              '<div class="h-4 w-full rounded.placeholder-shimmer"></div>' +
+              '<div class="h-4 w-full rounded placeholder-shimmer"></div>' +
             '</div>' +
             '<div class="w-44 bg-white rounded-2xl px-3 py-2">' +
-              '<div class="h-3 w-16 mb-2 rounded.placeholder-shimmer"></div>' +
-              '<div class="h-4 w-full rounded.placeholder-shimmer"></div>' +
+              '<div class="h-3 w-16 mb-2 rounded placeholder-shimmer"></div>' +
+              '<div class="h-4 w-full rounded placeholder-shimmer"></div>' +
             '</div>' +
           '</div>' +
         '</div>' +
         '<div class="product-grid">' +
           Array.from({ length: 6 }).map(() =>
             '<div class="bg-white rounded-2xl p-4 shadow-lg">' +
-              '<div class="h-32 mb-3 rounded-xl placeholder-shimmer"></div>' +
-              '<div class="h-4 w-3/4 mb-2 rounded.placeholder-shimmer"></div>' +
-              '<div class="h-5 w-1/2 mb-2 rounded.placeholder-shimmer"></div>' +
-              '<div class="h-3 w-1/3 rounded.placeholder-shimmer"></div>' +
+              '<div class="h-32 mb-3 rounded-xl overflow-hidden">' +
+                '<div class="w-full h-full rounded-xl placeholder-shimmer"></div>' +
+              '</div>' +
+              '<div class="h-4 w-3/4 mb-2 rounded placeholder-shimmer"></div>' +
+              '<div class="h-5 w-1/2 mb-2 rounded placeholder-shimmer"></div>' +
+              '<div class="h-3 w-1/3 rounded placeholder-shimmer"></div>' +
             '</div>'
           ).join('') +
         '</div>' +
@@ -924,12 +931,19 @@ async function initApp() {
     }
     logStage('after fetchAndUpdateProducts', t0);
 
-    if (typeof renderShop === 'function') {
+    // ВАЖНО: рендерим текущую вкладку, а не всегда магазин
+    if (currentTab === 'shop' && typeof renderShop === 'function') {
       renderShop();
-    } else {
-      throw new Error('Функция renderShop не найдена (products.js не загружен)');
+    } else if (currentTab === 'cart') {
+      showCartTab();
+    } else if (currentTab === 'sale') {
+      showSaleTab();
+    } else if (currentTab === 'profile') {
+      showProfileTab();
+    } else if (currentTab === 'about') {
+      showAboutTab();
     }
-    logStage('after renderShop', t0);
+    logStage('after initial tab render', t0);
 
     setInterval(() => {
       try {

@@ -271,13 +271,14 @@ function renderProductModal(product) {
                 )
             ) +
           '</div>' +
-          (
-            complete && filteredImages.length > 0
-              ? '<div class="h-4 mb-2"></div>'
-              : '<p class="px-2 text-xs text-gray-500 mb-2 text-center">' +
+          '<div class="h-10 flex items-center justify-center mb-2 px-2">' +
+            (complete && filteredImages.length > 0
+              ? ''
+              : '<p class="text-xs text-gray-500 text-center">' +
                   '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.' +
                 '</p>'
-          ) +
+            ) +
+          '</div>' +
         '</div>' +
 
         '<div class="px-4 pt-0 pb-4 space-y-4">' +
@@ -298,8 +299,6 @@ function renderProductModal(product) {
                                 ? 'bg-blue-500 text-white border-blue-500 shadow-md font-bold'
                                 : 'bg-gray-100 border-gray-300 hover:bg-gray-200') +
                               ' transition-all"' +
-                              ' data-type="' + type + '"' +
-                              ' data-option="' + escapeHtml(option) + '"' +
                               ' onclick="selectOptionNoFocus(\'' + type + '\', \'' + escapeHtml(option) + '\'); return false;">' +
                         escapeHtml(option) +
                       '</button>'

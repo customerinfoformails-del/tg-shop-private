@@ -341,6 +341,26 @@ window.refreshProducts = async function () {
   }
 };
 
+async function fetchUserOrders() {
+  try {
+    const userId = tg?.initDataUnsafe?.user?.id;
+    if (!userId) return;
+
+    const url = ORDERS_API_URL + '?userId=' + encodeURIComponent(userId);
+    const resp = await fetch(url);
+    if (!resp.ok) return;
+
+    const data = await resp.json();
+    if (!data.ok || !Array.isArray(data.orders)) return;
+
+    previousOrders = data.orders;
+    saveOrdersToStorage(); // опционально, чтобы кешировать
+  } catch (e) {
+    console.error('fetchUserOrders error', e);
+  }
+}
+
+
 // ---------- Инициализация ----------
 
 async function initApp() {
@@ -355,6 +375,7 @@ async function initApp() {
     logStage('after initTabBar', t0);
 
     loadOrdersFromStorage();
+    await fetchUserOrders();
     loadAddressesFromStorage();
     loadCartFromStorage();
     logStage('after localStorage', t0);

@@ -506,13 +506,13 @@ function showCartTab() {
     '<div class="relative min-h-[100vh] p-6 space-y-6 pb-[80px] max-w-md mx-auto">' +
       '<div class="flex items-center justify-between mb-4">' +
         '<h2 class="text-2xl font-bold text-gray-800">Корзина</h2>' +
-        '<button onclick="refreshCartPricesAndCleanup()"' +
-                ' class="inline-flex items-center justify-center text-[11px] font-semibold px-2.5 py-1.5 rounded-full ' +
-                ' bg-purple-500 hover:bg-purple-600 text-white shadow-md transition-all active:scale-[0.97] max-w-[160px] text-center"' +
-                ' id="refreshCartButton">' +
-          '<span class="loader-circle hidden mr-1" id="refreshCartLoader"></span>' +
-          '<span class="leading-tight break-words">Обновить цены и удалить неактуальные</span>' +
-        '</button>' +
+'<button onclick="refreshCartPricesAndCleanup()"' +
+  ' class="inline-flex items-center justify-center text-[11px] font-semibold px-2.5 h-8 rounded-full ' +
+  ' bg-purple-500 hover:bg-purple-600 text-white shadow-md transition-all active:scale-[0.97] max-w-[180px] whitespace-nowrap"' +
+  ' id="refreshCartButton">' +
+  '<span class="loader-circle hidden mr-1" id="refreshCartLoader"></span>' +
+  '<span class="leading-tight">Обновить цены и удалить неактуальные</span>' +
+'</button>' +
       '</div>' +
       '<div class="space-y-3">' +
         cartItems.map((item, idx) =>

@@ -277,7 +277,7 @@ function showCartTab() {
 
   if (!cartItems.length) {
     root.innerHTML =
-      '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+      '<div class="flex flex-col items-center justify-center.min-h-[70vh] text-center p-8 pb-[65px]">' +
       '<div class="w-28 h-28 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center mb-6">' +
       '<svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
       '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
@@ -344,7 +344,7 @@ function showCartTab() {
             : 'Товар недоступен, удалите из корзины') +
           '</div>' +
           '</div>' +
-          '<div class="text-right flex flex-col items-end gap-1">' +
+          '<div class="text-right flex flex.col items-end gap-1">' +
           '<div class="flex items-center justify-end gap-2">' +
           '<button class="px-2 py-1 rounded-full bg-gray-200 text-sm font-bold"' +
           ' onclick="changeCartItemQuantity(' +
@@ -353,7 +353,7 @@ function showCartTab() {
           '<span class="min-w-[24px] text-center text-sm font-semibold">' +
           item.quantity +
           '</span>' +
-          '<button class="px-2 py-1 rounded-full bg-gray-200 text-sm font-bold"' +
+          '<button class="px-2 py-1.rounded-full bg-gray-200 text-sm font-bold"' +
           ' onclick="changeCartItemQuantity(' +
           idx +
           ', 1)">+</button>' +
@@ -378,7 +378,7 @@ function showCartTab() {
     '<div class="space-y-2">' +
     '<h3 class="text-sm font-semibold text-gray-700">Способ оплаты</h3>' +
     '<div class="flex flex-col gap-2">' +
-    '<label class="flex items-center gap-2 text-sm">' +
+    '<label class="flex items-center.gap-2 text-sm">' +
     '<input type="radio" name="paymentType" value="cash"' +
     (paymentType === 'cash' ? ' checked' : '') +
     ' onchange="setPaymentType(\'cash\')">' +
@@ -401,7 +401,7 @@ function showCartTab() {
     ' onchange="setPickupMode(false)">' +
     '<span>Доставка</span>' +
     '</label>' +
-    '<label class="flex items-center gap-2 text-sm">' +
+    '<label class="flex items.center gap-2 text-sm">' +
     '<input type="radio" name="pickupMode" value="pickup"' +
     (pickupMode ? ' checked' : '') +
     ' onchange="setPickupMode(true)">' +
@@ -410,7 +410,7 @@ function showCartTab() {
     '</div>' +
     (!pickupMode
       ? '<label class="text-sm font-semibold text-gray-700 block">Адрес доставки</label>' +
-        '<select id="savedAddress" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2" onchange="onSavedAddressChange()">' +
+        '<select id="savedAddress" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm.mb-2" onchange="onSavedAddressChange()">' +
         '<option value="">Выбрать сохранённый адрес</option>' +
         (savedAddresses || [])
           .map(
@@ -432,7 +432,7 @@ function showCartTab() {
         '<textarea id="deliveryComment" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm"' +
         ' rows="2" placeholder="Например: позвонить за 10 минут, домофон не работает..."></textarea>' +
         '</div>'
-      : '<label class="text-sm font-semibold text-gray-700 block">Адрес самовывоза</label>' +
+      : '<label class="text-sm.font-semibold text-gray-700 block">Адрес самовывоза</label>' +
         '<select id="pickupLocation" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2"' +
         ' onchange="setPickupLocation(this.value)">' +
         '<option value="">Выберите пункт самовывоза</option>' +
@@ -449,12 +449,12 @@ function showCartTab() {
         '</select>' +
         '<div class="mt-1">' +
         '<label class="text-sm font-semibold text-gray-700 block mb-1">Комментарий к заказу</label>' +
-        '<textarea id="deliveryComment" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm"' +
+        '<textarea id="deliveryComment" class="w-full bg-white border border-gray-300 rounded-xl px-3.py-2 text-sm"' +
         ' rows="2" placeholder="Например: приеду к 19:00, позвонить заранее..."></textarea>' +
         '</div>') +
     '</div>' +
     '<div class="space-y-2">' +
-    '<label class="text-sm font-semibold text-gray-700 block">Контактные данные (необязательно)</label>' +
+    '<label class="text-sm.font-semibold text-gray-700 block">Контактные данные (необязательно)</label>' +
     '<input id="contactName" type="text"' +
     ' class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
     ' placeholder="Имя">' +
@@ -470,7 +470,7 @@ function showCartTab() {
     '</span>' +
     '</div>' +
     (paymentType === 'card'
-      ? '<div class="flex items-center justify-between">' +
+      ? '<div class="flex items-center.justify-between">' +
         '<span>Сервисный сбор (карта)</span>' +
         '<span>+$' +
         commission +
@@ -487,7 +487,7 @@ function showCartTab() {
     '<div class="pt-3">' +
     '<button onclick="placeOrder()"' +
     ' id="placeOrderButton"' +
-    ' class="w-full flex items-center justify-center gap-2 ' +
+    ' class="w-full flex items-center.justify-center gap-2 ' +
     (!cartItems.some(i => !i.available) && !isPlacingOrder
       ? 'bg-blue-500 hover:bg-blue-600'
       : 'bg-gray-400 cursor-not-allowed') +
@@ -497,7 +497,7 @@ function showCartTab() {
     (cartItems.some(i => !i.available)
       ? 'Удалите недоступные товары или обновите цены'
       : isPlacingOrder
-      ? '<span class="loader-circle"></span><span>Проверяю наличие...</span>'
+      ? '<span class="loader-circle"></span><span>Проверяю наличие (до 70 сек)...</span>'
       : 'Оформить заказ') +
     '</button>' +
     '</div>' +
@@ -556,10 +556,11 @@ window.placeOrder = async function () {
 
   placeOrderTimeoutId = setTimeout(() => {
     if (!isPlacingOrder) return;
+    console.log('[placeOrder] client-side timeout 70s');
     isPlacingOrder = false;
     showCartTab();
-    tg?.showAlert?.('Похоже, потеряно соединение. Проверьте интернет и попробуйте ещё раз.');
-  }, 30000);
+    tg?.showAlert?.('Похоже, превышено время ожидания ответа сервера. Возможно большая нагрузка и заказ появится в профиле в течении 3 минут. Если не появился проверьте интернет и попробуйте ещё раз (либо сразу можете попробовать повторно оформить)');
+  }, 70000);
 
   try {
     try {
@@ -644,7 +645,7 @@ window.placeOrder = async function () {
       console.log('BACKEND_ORDER_URL body:', text);
     } catch (e) {
       console.error('backend order error', e);
-      tg?.showAlert?.('Ошибка сети. Заказ не сохранён, попробуйте ещё раз.');
+      tg?.showAlert?.('Ошибка сети. Заказ не оформлен, попробуйте ещё раз.');
       isPlacingOrder = false;
       showCartTab();
       return;
@@ -656,7 +657,8 @@ window.placeOrder = async function () {
     } catch (e) {}
 
     if (!resp.ok || !json || json.ok !== true) {
-      tg?.showAlert?.('Заказ не сохранён, попробуйте ещё раз.');
+      console.log('[placeOrder] backend responded with error status:', resp.status, json);
+      tg?.showAlert?.('Заказ не оформлен, попробуйте ещё раз.');
       isPlacingOrder = false;
       showCartTab();
       return;

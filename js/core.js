@@ -106,6 +106,7 @@ function saveOrdersToStorage() {
   } catch (e) {}
 }
 
+// если хочешь чисто серверную историю — можно эту функцию вообще не вызывать
 function loadOrdersFromStorage() {
   try {
     const raw = localStorage.getItem('orders');
@@ -229,11 +230,7 @@ function logStage(label, startTime) {
 async function fetchAndUpdateProducts(showLoader = false) {
   const t0 = performance.now();
 
-  if (showLoader) {
-    if (currentTab !== 'shop') {
-      return;
-    }
-
+  if (showLoader && currentTab === 'shop') {
     root.innerHTML =
       '<div class="pb-[65px] max-w-md mx-auto">' +
       '<div class="mb-5">' +
@@ -288,11 +285,11 @@ async function fetchAndUpdateProducts(showLoader = false) {
     logStage('update productsData + sync', t0);
   } catch (error) {
     console.error('API error:', error);
-    if (showLoader) {
+    if (showLoader && currentTab === 'shop') {
       isRefreshingProducts = false;
       root.innerHTML =
-        '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px] max-w-md mx-auto">' +
-        '<div class="w-24 h-24 bg-red-50 rounded-3xl flex.items-center justify-center.mb-4">' +
+        '<div class="flex flex-col items-center justify-center.min-h-[70vh] text-center p-8 pb-[65px] max-w-md mx-auto">' +
+        '<div class="w-24 h-24 bg-red-50 rounded-3xl flex items-center justify-center mb-4">' +
         '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
         '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
         ' d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
@@ -303,7 +300,7 @@ async function fetchAndUpdateProducts(showLoader = false) {
         'Проверьте соединение и попробуйте обновить список товаров.' +
         '</p>' +
         '<button onclick="refreshProducts()"' +
-        ' class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-2xl shadow-lg transition-all text-sm">' +
+        ' class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold.py-3 px-8 rounded-2xl shadow-lg transition-all text-sm">' +
         '<span class="loader-circle"></span>' +
         '<span>Обновить товары</span>' +
         '</button>' +
@@ -342,6 +339,8 @@ window.refreshProducts = async function () {
   }
 };
 
+// ---------- История заказов с Google Sheets ----------
+
 async function fetchUserOrders() {
   try {
     const userId = tg?.initDataUnsafe?.user?.id;
@@ -360,7 +359,8 @@ async function fetchUserOrders() {
     if (!data.ok || !Array.isArray(data.orders)) return;
 
     previousOrders = data.orders;
-    
+    saveOrdersToStorage();
+
     if (currentTab === 'profile') {
       showProfileTab();
     }
@@ -370,7 +370,6 @@ async function fetchUserOrders() {
     isOrdersLoading = false;
   }
 }
-
 
 // ---------- Инициализация ----------
 
@@ -385,13 +384,17 @@ async function initApp() {
     initTabBar();
     logStage('after initTabBar', t0);
 
-    await fetchUserOrders();
+    // если хочешь, можешь убрать загрузку из localStorage
+    loadOrdersFromStorage();
     loadAddressesFromStorage();
     loadCartFromStorage();
     logStage('after localStorage', t0);
 
     await fetchAndUpdateProducts(true);
-    logStage('after fetchAndUpdateProducts', t0);
+    logStage('after.fetchAndUpdateProducts', t0);
+
+    // история заказов — асинхронно, чтобы не тормозить старт магазина
+    fetchUserOrders().catch(e => console.error('fetchUserOrders init error', e));
 
     if (currentTab === 'shop') {
       renderShop();

@@ -2,9 +2,6 @@ let modalCurrentIndex = 0;
 let modalImageCount = 0;
 let modalImageIndexBeforeFullscreen = 0;
 
-let modalTouchStartX = 0;
-let modalTouchStartY = 0;
-
 function getVariantCountText(count) {
   const mod10 = count % 10;
   const mod100 = count % 100;
@@ -17,8 +14,6 @@ function getVariantCountText(count) {
   }
   return count + ' вариантов';
 }
-
-// ----- выбор опций с сохранением скролла (как в старом коде) -----
 
 function selectOptionNoFocus(type, option) {
   if (document.activeElement && document.activeElement.blur) {
@@ -92,8 +87,6 @@ window.changeQuantity = function(delta) {
   if (newScrollContainer) newScrollContainer.scrollTop = prevScrollTop;
 };
 
-// ----- новая логика добавления в корзину с сохранением скролла -----
-
 window.addToCartFromModal = async function() {
   if (isAddingToCart) return;
 
@@ -104,6 +97,12 @@ window.addToCartFromModal = async function() {
   renderProductModal(currentProduct);
   const sc2 = document.querySelector('#modalContent .flex-1');
   if (sc2) sc2.scrollTop = prevScrollTop;
+
+  try {
+    await fetchAndUpdateProducts(false);
+  } catch (e) {
+    console.error('refresh before addToCart failed', e);
+  }
 
   if (!isCompleteSelection()) {
     tg?.showAlert?.('❌ Выберите все опции: SIM → Память → Цвет → Регион');
@@ -128,12 +127,12 @@ window.addToCartFromModal = async function() {
   }
 
   const allVariants = getFilteredVariants(
-    getProductVariants(currentProduct.name)
+    getProductVariants(currentProduct.name).filter(v => v.inStock)
   );
   const variants = allVariants;
 
   if (variants.length === 0) {
-    tg?.showAlert?.('❌ Нет подходящих вариантов');
+    tg?.showAlert?.('❌ Нет доступных вариантов');
     isAddingToCart = false;
     const scA = document.querySelector('#modalContent .flex-1');
     const prevA = scA ? scA.scrollTop : 0;
@@ -157,8 +156,6 @@ window.addToCartFromModal = async function() {
   closeModal();
 };
 
-// ----- новая renderProductModal с каруселью и центрированием -----
-
 function renderProductModal(product) {
   currentProduct = product;
 
@@ -169,9 +166,9 @@ function renderProductModal(product) {
     document.getElementById('modalContent').innerHTML =
       '<div class="flex flex-col h-full">' +
         '<div class="p-6 pb-4 border-b border-gray-200">' +
-          '<div class="flex items-start justify-between gap-2 mb-2">' +
-            '<h2 class="text-2xl font-bold leading-tight flex-1 break-words">' + escapeHtml(product.name) + '</h2>' +
-            '<button onclick="closeModal()" class="p-2 -mr-2 -mt-2 hover:bg-gray-100 rounded-xl shrink-0">' +
+          '<div class="flex items-center justify-between mb-2">' +
+            '<h2 class="text-2xl font-bold">' + escapeHtml(product.name) + '</h2>' +
+            '<button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-xl">' +
               '<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
                 '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>' +
               '</svg>' +
@@ -186,7 +183,7 @@ function renderProductModal(product) {
   const filteredVariants = getFilteredVariants(variants);
   const availableOptions = {};
 
-  FILTER_ORDER.forEach(function(type) {
+  FILTER_ORDER.forEach(type => {
     availableOptions[type] = getAvailableOptions(type, variants);
   });
 
@@ -194,8 +191,8 @@ function renderProductModal(product) {
   const availableVariants = filteredVariants;
 
   const currentMinPrice = availableVariants.length
-    ? Math.min.apply(null, availableVariants.map(function(v) { return v.price; }))
-    : Math.min.apply(null, variants.map(function(v) { return v.price; }));
+    ? Math.min.apply(null, availableVariants.map(v => v.price))
+    : Math.min.apply(null, variants.map(v => v.price));
 
   let headerPriceText;
   let headerSuffix = '';
@@ -227,9 +224,9 @@ function renderProductModal(product) {
   document.getElementById('modalContent').innerHTML =
     '<div class="flex flex-col h-full">' +
       '<div class="p-6 pb-4 border-b border-gray-200">' +
-        '<div class="flex items-start justify-between gap-2 mb-2">' +
-          '<h2 class="text-2xl font-bold leading-tight flex-1 break-words">' + escapeHtml(product.name) + '</h2>' +
-          '<button onclick="closeModal()" class="p-2 -mr-2 -mt-2 hover:bg-gray-100 rounded-xl shrink-0">' +
+        '<div class="flex items-center justify-between mb-2">' +
+          '<h2 class="text-2xl font-bold">' + escapeHtml(product.name) + '</h2>' +
+          '<button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-xl">' +
             '<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
               '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                     ' d="M6 18L18 6M6 6l12 12"/>' +
@@ -247,25 +244,25 @@ function renderProductModal(product) {
           '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden mb-6" id="modalCarousel">' +
             (complete && filteredImages.length > 0
               ? '<div class="image-carousel-inner" id="modalCarouselInner">' +
-                  filteredImages.slice(0, 10).map(function(img) {
-                    return '<img src="' + img + '" class="carousel-img loaded" alt="Product image" loading="lazy" />';
-                  }).join('') +
+                  filteredImages.slice(0, 10).map(img =>
+                    '<img src="' + img + '" class="carousel-img loaded" alt="Product image" loading="lazy" />'
+                  ).join('') +
                 '</div>' +
                 (filteredImages.length > 1
                   ? '<button class="nav-btn nav-prev" onclick="modalPrev(); event.stopPropagation()">‹</button>' +
                     '<button class="nav-btn nav-next" onclick="modalNext(); event.stopPropagation()">›</button>' +
                     '<div class="carousel-dots" id="modalDots">' +
-                      filteredImages.map(function(_, idx) {
-                        return '<div class="dot' +
+                      filteredImages.map((_, idx) =>
+                        '<div class="dot' +
                                (idx === modalImageIndexBeforeFullscreen ? ' active' : '') +
-                               '" onclick="modalGoTo(' + idx + '); event.stopPropagation()"></div>';
-                      }).join('') +
+                               '" onclick="modalGoTo(' + idx + '); event.stopPropagation()"></div>'
+                      ).join('') +
                     '</div>'
                   : ''
                 )
               : (productCommonImage
-                  ? '<div class="w-full h-64 rounded-xl overflow-hidden mb-6 flex items-center justify-center">' +
-                      '<img src="' + productCommonImage + '" class="w-full h-full object-contain" alt="Product image" />' +
+                  ? '<div class="w-full h-64 rounded-xl overflow-hidden mb-6">' +
+                      '<img src="' + productCommonImage + '" class="w-full h-full object-cover" alt="Product image" />' +
                     '</div>'
                   : '<div class="no-images h-64">' +
                       '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
@@ -277,20 +274,18 @@ function renderProductModal(product) {
                 )
             ) +
           '</div>' +
-          '<div class="h-10 flex items-center justify-center mb-2 px-2">' +
-            (complete && filteredImages.length > 0
-              ? ''
-              : '<p class="text-xs text-gray-500 text-center">' +
+          (
+            complete && filteredImages.length > 0
+              ? '<div class="h-4 mb-2"></div>'
+              : '<p class="px-2 text-xs text-gray-500 mb-2 text-center">' +
                   '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.' +
                 '</p>'
-            ) +
-          '</div>' +
+          ) +
         '</div>' +
 
         '<div class="px-4 pt-0 pb-4 space-y-4">' +
-          FILTER_ORDER.map(function(type, index) {
+          FILTER_ORDER.map((type, index) => {
             const isLocked = index > getCurrentSectionIndex();
-            const opts = availableOptions[type] || [];
             return (
               '<div class="option-section ' + (isLocked ? 'locked' : 'unlocked') +
                    '" data-section="' + type + '">' +
@@ -298,7 +293,7 @@ function renderProductModal(product) {
                   getLabel(type) +
                 '</label>' +
                 '<div class="flex gap-2 scroll-carousel pb-1">' +
-                  opts.map(function(option) {
+                  availableOptions[type].map(option => {
                     const isSelected = selectedOption[type] === option;
                     return (
                       '<button class="option-btn px-3 py-1.5 text-xs font-medium rounded-full border scroll-item w-[80px] ' +
@@ -306,6 +301,8 @@ function renderProductModal(product) {
                                 ? 'bg-blue-500 text-white border-blue-500 shadow-md font-bold'
                                 : 'bg-gray-100 border-gray-300 hover:bg-gray-200') +
                               ' transition-all"' +
+                              ' data-type="' + type + '"' +
+                              ' data-option="' + escapeHtml(option) + '"' +
                               ' onclick="selectOptionNoFocus(\'' + type + '\', \'' + escapeHtml(option) + '\'); return false;">' +
                         escapeHtml(option) +
                       '</button>'
@@ -317,8 +314,8 @@ function renderProductModal(product) {
                     : ''
                   ) +
                 '</div>' +
-                (!opts.length
-                  ? '<p class="text-xs text-gray-400.mt-1">Нет вариантов</p>'
+                (!availableOptions[type].length
+                  ? '<p class="text-xs text-gray-400 mt-1">Нет вариантов</p>'
                   : ''
                 ) +
               '</div>'
@@ -380,11 +377,8 @@ function renderProductModal(product) {
   if (complete && filteredImages.length > 0) {
     modalCurrentIndex = modalImageIndexBeforeFullscreen;
     initModalCarousel(filteredImages.length);
-    initModalSwipe();
   }
 }
-
-// ----- карусель и свайпы -----
 
 function initModalCarousel(imageCount) {
   if (imageCount <= 1) return;
@@ -394,7 +388,7 @@ function initModalCarousel(imageCount) {
 
   function updateModalCarousel() {
     inner.style.transform = 'translateX(-' + (modalCurrentIndex * 100) + '%)';
-    document.querySelectorAll('#modalDots .dot').forEach(function(dot, idx) {
+    document.querySelectorAll('#modalDots .dot').forEach((dot, idx) => {
       dot.classList.toggle('active', idx === modalCurrentIndex);
     });
   }
@@ -419,33 +413,6 @@ function initModalCarousel(imageCount) {
 
   updateModalCarousel();
 }
-
-function initModalSwipe() {
-  const carousel = document.getElementById('modalCarousel');
-  if (!carousel) return;
-
-  carousel.addEventListener('touchstart', function(e) {
-    const touch = e.changedTouches[0];
-    modalTouchStartX = touch.clientX;
-    modalTouchStartY = touch.clientY;
-  }, { passive: true });
-
-  carousel.addEventListener('touchend', function(e) {
-    const touch = e.changedTouches[0];
-    const dx = touch.clientX - modalTouchStartX;
-    const dy = Math.abs(touch.clientY - modalTouchStartY);
-
-    if (Math.abs(dx) < 40 || dy > 50) return;
-
-    if (dx < 0) {
-      window.modalNext && window.modalNext();
-    } else {
-      window.modalPrev && window.modalPrev();
-    }
-  }, { passive: true });
-}
-
-// ----- show / close -----
 
 function showModal(product) {
   renderProductModal(product);

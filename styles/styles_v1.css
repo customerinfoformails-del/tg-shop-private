@@ -265,7 +265,7 @@ img,
   justify-content: space-around;
   align-items: center;
   height: var(--tabbar-height);
-  transition: opacity 0.2s ease;
+  transition: opacity 0s ease;
 }
 
 .tab-item {

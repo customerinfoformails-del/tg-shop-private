@@ -202,7 +202,12 @@ window.refreshCartPricesAndCleanup = async function () {
     if (loader) {
       loader.classList.add('hidden');
     }
-  }
+  
+    // рисуем корзину только если пользователь всё ещё на вкладке "cart"
+    if (currentTab === 'cart') {
+      showCartTab();
+    }
+  }  
 };
 
 // ---------- Сохранение/восстановление формы корзины ----------

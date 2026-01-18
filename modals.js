@@ -26,8 +26,6 @@ function selectOptionNoFocus(type, option) {
     document.activeElement.blur();
   }
 
-  const prevScrollTop = modalScrollContainer ? modalScrollContainer.scrollTop : 0;
-
   if (selectedOption[type] === option) {
     const typeIndex = FILTER_ORDER.indexOf(type);
     for (let i = typeIndex; i < FILTER_ORDER.length; i++) {
@@ -42,9 +40,6 @@ function selectOptionNoFocus(type, option) {
   }
 
   renderProductModal(currentProduct);
-
-  if (modalScrollContainer) modalScrollContainer.scrollTop = prevScrollTop;
-
   tg?.HapticFeedback?.impactOccurred('light');
 }
 
@@ -53,17 +48,12 @@ function clearOptionNoFocus(type) {
     document.activeElement.blur();
   }
 
-  const prevScrollTop = modalScrollContainer ? modalScrollContainer.scrollTop : 0;
-
   const typeIndex = FILTER_ORDER.indexOf(type);
   for (let i = typeIndex; i < FILTER_ORDER.length; i++) {
     delete selectedOption[FILTER_ORDER[i]];
   }
 
   renderProductModal(currentProduct);
-
-  if (modalScrollContainer) modalScrollContainer.scrollTop = prevScrollTop;
-
   tg?.HapticFeedback?.impactOccurred('light');
 }
 
@@ -71,8 +61,6 @@ window.selectOptionNoFocus = selectOptionNoFocus;
 window.clearOptionNoFocus = clearOptionNoFocus;
 
 window.changeQuantity = function(delta) {
-  const prevScrollTop = modalScrollContainer ? modalScrollContainer.scrollTop : 0;
-
   let q = selectedQuantity + delta;
   if (q < 1) q = 1;
   if (q > 100) q = 100;
@@ -83,34 +71,25 @@ window.changeQuantity = function(delta) {
   if (currentProduct) {
     renderProductModal(currentProduct);
   }
-
-  if (modalScrollContainer) modalScrollContainer.scrollTop = prevScrollTop;
 };
 
 window.addToCartFromModal = async function() {
   if (isAddingToCart) return;
 
-  const prevScrollTop = modalScrollContainer ? modalScrollContainer.scrollTop : 0;
-
   isAddingToCart = true;
   renderProductModal(currentProduct);
-  if (modalScrollContainer) modalScrollContainer.scrollTop = prevScrollTop;
 
   if (!isCompleteSelection()) {
     tg?.showAlert?.('❌ Выберите все опции: SIM → Память → Цвет → Регион');
     isAddingToCart = false;
-    const prevA = modalScrollContainer ? modalScrollContainer.scrollTop : 0;
     renderProductModal(currentProduct);
-    if (modalScrollContainer) modalScrollContainer.scrollTop = prevA;
     return;
   }
 
   if (!productsData) {
     tg?.showAlert?.('Товары не загрузились, попробуйте позже');
     isAddingToCart = false;
-    const prevA = modalScrollContainer ? modalScrollContainer.scrollTop : 0;
     renderProductModal(currentProduct);
-    if (modalScrollContainer) modalScrollContainer.scrollTop = prevA;
     return;
   }
 
@@ -122,9 +101,7 @@ window.addToCartFromModal = async function() {
   if (variants.length === 0) {
     tg?.showAlert?.('❌ Нет подходящих вариантов');
     isAddingToCart = false;
-    const prevA = modalScrollContainer ? modalScrollContainer.scrollTop : 0;
     renderProductModal(currentProduct);
-    if (modalScrollContainer) modalScrollContainer.scrollTop = prevA;
     return;
   }
 
@@ -145,6 +122,9 @@ window.addToCartFromModal = async function() {
 function renderProductModal(product) {
   currentProduct = product;
 
+  // сохраняем текущий скролл ДО перерисовки
+  const prevScrollTop = modalScrollContainer ? modalScrollContainer.scrollTop : 0;
+
   const allVariants = getProductVariants(product.name);
   const variants = allVariants.filter(v => v.inStock);
 
@@ -163,14 +143,16 @@ function renderProductModal(product) {
           '<div class="text-sm text-red-500">Нет доступных вариантов</div>' +
         '</div>' +
       '</div>';
+
     modalScrollContainer = document.querySelector('#modalContent .flex-1');
+    if (modalScrollContainer) modalScrollContainer.scrollTop = prevScrollTop;
     return;
   }
 
   const filteredVariants = getFilteredVariants(variants);
   const availableOptions = {};
 
-  FILTER_ORDER.forEach(type => {
+  FILTER_ORDER.forEach(function(type) {
     availableOptions[type] = getAvailableOptions(type, variants);
   });
 
@@ -178,8 +160,8 @@ function renderProductModal(product) {
   const availableVariants = filteredVariants;
 
   const currentMinPrice = availableVariants.length
-    ? Math.min.apply(null, availableVariants.map(v => v.price))
-    : Math.min.apply(null, variants.map(v => v.price));
+    ? Math.min.apply(null, availableVariants.map(function(v) { return v.price; }))
+    : Math.min.apply(null, variants.map(function(v) { return v.price; }));
 
   let headerPriceText;
   let headerSuffix = '';
@@ -250,8 +232,7 @@ function renderProductModal(product) {
               : (productCommonImage
                   ? '<div class="w-full h-64 rounded-xl overflow-hidden mb-6 flex items-center justify-center">' +
                       '<img src="' + productCommonImage + '" class="w-full h-full object-contain" alt="Product image" />' +
-                    '</div>' +
-                    ''
+                    '</div>'
                   : '<div class="no-images h-64">' +
                       '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
                         '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
@@ -279,14 +260,14 @@ function renderProductModal(product) {
             return (
               '<div class="option-section ' + (isLocked ? 'locked' : 'unlocked') +
                    '" data-section="' + type + '">' +
-                '<label class="text-sm font-semibold text-gray-700.capitalize mb-2 block">' +
+                '<label class="text-sm font-semibold text-gray-700 capitalize mb-2 block">' +
                   getLabel(type) +
                 '</label>' +
                 '<div class="flex gap-2 scroll-carousel pb-1">' +
                   opts.map(function(option) {
                     const isSelected = selectedOption[type] === option;
                     return (
-                      '<button class="option-btn px-3 py-1.5 text-xs font-medium rounded-full border scroll-item w-[80px] ' +
+                      '<button class="option-btn px-3 py-1.5 text-xs font-medium rounded-full.border scroll-item w-[80px] ' +
                               (isSelected
                                 ? 'bg-blue-500 text-white border-blue-500 shadow-md font-bold'
                                 : 'bg-gray-100 border-gray-300 hover:bg-gray-200') +
@@ -362,7 +343,9 @@ function renderProductModal(product) {
       '</div>' +
     '</div>';
 
+  // после перерисовки находим контейнер и восстанавливаем скролл
   modalScrollContainer = document.querySelector('#modalContent .flex-1');
+  if (modalScrollContainer) modalScrollContainer.scrollTop = prevScrollTop;
 
   if (complete && filteredImages.length > 0) {
     modalCurrentIndex = modalImageIndexBeforeFullscreen;

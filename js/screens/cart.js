@@ -10,9 +10,11 @@ function updateCartBadge() {
   } else {
     badge.style.display = 'none';
   }
+  console.log('[cart] updateCartBadge count =', count);
 }
 
 function addToCart(variant, quantity) {
+  console.log('[cart] addToCart', variant, quantity);
   if (!productsData) {
     tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
     return;
@@ -48,12 +50,14 @@ window.changeCartItemQuantity = function (index, delta) {
   if (q < 1) q = 1;
   if (q > 100) q = 100;
   item.quantity = q;
+  console.log('[cart] changeCartItemQuantity index=', index, 'quantity=', q);
   saveCartToStorage();
   updateCartBadge();
   showCartTab();
 };
 
 window.removeCartItem = function (index) {
+  console.log('[cart] removeCartItem index=', index);
   cartItems.splice(index, 1);
   saveCartToStorage();
   updateCartBadge();
@@ -64,6 +68,7 @@ window.removeCartItem = function (index) {
 window.updateCartItemPrice = function (index) {
   const item = cartItems[index];
   if (!item || !item.newPrice) return;
+  console.log('[cart] updateCartItemPrice index=', index, 'old=', item.price, 'new=', item.newPrice);
   item.price = item.newPrice;
   item.available = true;
   delete item.newPrice;
@@ -75,6 +80,7 @@ window.updateCartItemPrice = function (index) {
 
 // обновить цены всех и удалить неактуальные
 window.refreshCartPricesAndCleanup = async function () {
+  console.log('[cart] refreshCartPricesAndCleanup start');
   const btn = document.getElementById('refreshCartButton');
   const loader = document.getElementById('refreshCartLoader');
 
@@ -90,7 +96,7 @@ window.refreshCartPricesAndCleanup = async function () {
     try {
       await fetchAndUpdateProducts(false);
     } catch (e) {
-      console.error('refreshCartPricesAndCleanup error', e);
+      console.error('[cart] refreshCartPricesAndCleanup fetch error', e);
     }
 
     if (!productsData) {
@@ -133,6 +139,7 @@ window.refreshCartPricesAndCleanup = async function () {
 
     cartItems = cartItems.filter(i => !i.deleted);
 
+    console.log('[cart] refreshCartPricesAndCleanup removed=', removedCount, 'changed=', changedCount);
     saveCartToStorage();
     updateCartBadge();
     showCartTab();
@@ -218,6 +225,8 @@ function saveCartFormState() {
   cartFormState.pickupLocationValue = pickupLocationEl
     ? pickupLocationEl.value
     : cartFormState.pickupLocationValue;
+
+  console.log('[cart] saveCartFormState', cartFormState);
 }
 
 function restoreCartFormState() {
@@ -246,22 +255,27 @@ function restoreCartFormState() {
   if (pickupLocationEl && cartFormState.pickupLocationValue) {
     pickupLocationEl.value = cartFormState.pickupLocationValue;
   }
+
+  console.log('[cart] restoreCartFormState applied');
 }
 
 // ---------- Вкладка корзины ----------
 
 window.setPaymentType = function (type) {
   paymentType = type;
+  console.log('[cart] setPaymentType', type);
   showCartTab();
 };
 
 window.setPickupMode = function (mode) {
   pickupMode = !!mode;
+  console.log('[cart] setPickupMode', pickupMode);
   showCartTab();
 };
 
 window.setPickupLocation = function (addr) {
   pickupLocation = addr;
+  console.log('[cart] setPickupLocation', pickupLocation);
 };
 
 window.onSavedAddressChange = function () {
@@ -269,29 +283,31 @@ window.onSavedAddressChange = function () {
   const wrapper = document.getElementById('deliveryAddressWrapper');
   if (!select || !wrapper) return;
   wrapper.style.display = select.value ? 'none' : 'block';
+  console.log('[cart] onSavedAddressChange value=', select.value);
 };
 
 function showCartTab() {
+  console.log('[cart] showCartTab, items=', cartItems.length, 'isPlacingOrder=', isPlacingOrder);
   // сохранить текущие значения полей перед перерисовкой
   saveCartFormState();
 
   if (!cartItems.length) {
     root.innerHTML =
-      '<div class="flex flex-col items-center.justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
-      '<div class="w-28 h-28 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center.justify-center mb-6">' +
-      '<svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-      ' d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 2.5M7 13l-1.5 2.5m12.5-2.5L21 13m0 0l-1.5 2.5m1.5-2.5L21 21"/>' +
-      '</svg>' +
-      '</div>' +
-      '<h2 class="text-2xl.font-bold text-gray-800 mb-2">Корзина пуста</h2>' +
-      '<p class="text-sm text-gray-500 mb-6 max-w-xs">' +
-      'Добавьте устройство в корзину, чтобы оформить заказ.' +
-      '</p>' +
-      '<button onclick="switchTab(\'shop\')"' +
-      ' class="bg-blue-500 hover:bg-blue-600 text-white font-semibold.py-3 px-8 rounded-2xl shadow-lg transition-all">' +
-      'Перейти в магазин' +
-      '</button>' +
+      '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+        '<div class="w-28 h-28 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center mb-6">' +
+          '<svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+            ' d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 2.5M7 13l-1.5 2.5m12.5-2.5L21 13m0 0l-1.5 2.5m1.5-2.5L21 21"/>' +
+          '</svg>' +
+        '</div>' +
+        '<h2 class="text-2xl font-bold text-gray-800 mb-2">Корзина пуста</h2>' +
+        '<p class="text-sm text-gray-500 mb-6 max-w-xs">' +
+          'Добавьте устройство в корзину, чтобы оформить заказ.' +
+        '</p>' +
+        '<button onclick="switchTab(\'shop\')"' +
+          ' class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
+          'Перейти в магазин' +
+        '</button>' +
       '</div>';
     return;
   }
@@ -302,206 +318,206 @@ function showCartTab() {
 
   root.innerHTML =
     '<div class="relative min-h-[100vh] p-6 space-y-6 pb-[80px] max-w-md mx-auto">' +
-    '<div class="flex items-center.justify-between mb-4">' +
-    '<h2 class="text-2xl font-bold text-gray-800">Корзина</h2>' +
-    '<button onclick="refreshCartPricesAndCleanup()"' +
-    ' class="inline-flex items-center.justify-center text-[11px] font-semibold px-2.5 h-8 rounded-full ' +
-    ' bg-purple-500 hover:bg-purple-600 text-white shadow-md transition-all active:scale-[0.97] max-w-[180px] whitespace-nowrap"' +
-    ' id="refreshCartButton">' +
-    '<span class="loader-circle.hidden mr-1" id="refreshCartLoader"></span>' +
-    '<span class="leading-tight">Актуализировать корзину</span>' +
-    '</button>' +
-    '</div>' +
-    '<div class="space-y-3">' +
-    cartItems
-      .map(
-        (item, idx) =>
-          '<div class="flex items-center.justify-between p-3 rounded-xl border ' +
-          (item.available ? 'border-gray-200' : 'border-orange-300 bg-orange-50') +
-          '">' +
-          '<div class="text-left flex-1 mr-3">' +
-          '<div class="font-semibold text-sm break-words">' +
-          escapeHtml(item.name) +
-          '</div>' +
-          '<div class="text-xs text-gray-500">' +
-          escapeHtml(item.storage) +
-          ' | ' +
-          escapeHtml(item.color) +
-          ' | ' +
-          escapeHtml(item.region) +
-          '</div>' +
-          '<div class="text-xs mt-1 ' +
-          (item.available
-            ? 'text-green-600'
-            : item.newPrice
-            ? 'text-orange-600'
-            : 'text-red-600') +
-          '">' +
-          (item.available
-            ? 'В наличии'
-            : item.newPrice
-            ? 'Цена обновилась: старая $' + item.price + ', новая $' + item.newPrice
-            : 'Товар недоступен, удалите из корзины') +
-          '</div>' +
-          '</div>' +
-          '<div class="text-right flex.flex-col items-end gap-1">' +
-          '<div class="flex items-center.justify-end gap-2">' +
-          '<button class="px-2 py-1.rounded-full bg-gray-200 text-sm font-bold"' +
-          ' onclick="changeCartItemQuantity(' +
-          idx +
-          ', -1)">-</button>' +
-          '<span class="min-w-[24px] text-center text-sm font-semibold">' +
-          item.quantity +
-          '</span>' +
-          '<button class="px-2 py-1.rounded-full bg-gray-200 text-sm font-bold"' +
-          ' onclick="changeCartItemQuantity(' +
-          idx +
-          ', 1)">+</button>' +
-          '</div>' +
-          '<div class="text-sm font-bold text-blue-600">$' +
-          item.price * item.quantity +
-          '</div>' +
-          (item.newPrice
-            ? '<button class="text-xs text-blue-500" onclick="updateCartItemPrice(' +
-              idx +
-              ')">Обновить цену</button>'
-            : '') +
-          '<button class="text-xs text-red-500" onclick="removeCartItem(' +
-          idx +
-          ')">Удалить</button>' +
-          '</div>' +
-          '</div>'
-      )
-      .join('') +
-    '</div>' +
-    '<div class="pt-4 border-t space-y-4">' +
-    '<div class="space-y-2">' +
-    '<h3 class="text-sm font-semibold text-gray-700">Способ оплаты</h3>' +
-    '<div class="flex flex-col gap-2">' +
-    '<label class="flex items-center.gap-2 text-sm">' +
-    '<input type="radio" name="paymentType" value="cash"' +
-    (paymentType === 'cash' ? ' checked' : '') +
-    ' onchange="setPaymentType(\'cash\')">' +
-    '<span>Наличными (0%)</span>' +
-    '</label>' +
-    '<label class="flex items-center gap-2 text-sm">' +
-    '<input type="radio" name="paymentType" value="card"' +
-    (paymentType === 'card' ? ' checked' : '') +
-    ' onchange="setPaymentType(\'card\')">' +
-    '<span>Картой (+15%)</span>' +
-    '</label>' +
-    '</div>' +
-    '</div>' +
-    '<div class="space-y-2">' +
-    '<h3 class="text-sm font-semibold text-gray-700">Способ получения</h3>' +
-    '<div class="flex flex-col gap-2 mb-2">' +
-    '<label class="flex items-center.gap-2 text-sm">' +
-    '<input type="radio" name="pickupMode" value="delivery"' +
-    (!pickupMode ? ' checked' : '') +
-    ' onchange="setPickupMode(false)">' +
-    '<span>Доставка</span>' +
-    '</label>' +
-    '<label class="flex items-center gap-2 text-sm">' +
-    '<input type="radio" name="pickupMode" value="pickup"' +
-    (pickupMode ? ' checked' : '') +
-    ' onchange="setPickupMode(true)">' +
-    '<span>Самовывоз</span>' +
-    '</label>' +
-    '</div>' +
-    (!pickupMode
-      ? '<label class="text-sm.font-semibold text-gray-700 block">Адрес доставки</label>' +
-        '<select id="savedAddress" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2" onchange="onSavedAddressChange()">' +
-        '<option value="">Выбрать сохранённый адрес</option>' +
-        (savedAddresses || [])
+      '<div class="flex items-center justify-between mb-4">' +
+        '<h2 class="text-2xl font-bold text-gray-800">Корзина</h2>' +
+        '<button onclick="refreshCartPricesAndCleanup()"' +
+          ' class="inline-flex items-center justify-center text-[11px] font-semibold px-2.5 h-8 rounded-full ' +
+            'bg-purple-500 hover:bg-purple-600 text-white shadow-md transition-all active:scale-[0.97] max-w-[180px] whitespace-nowrap"' +
+          ' id="refreshCartButton">' +
+          '<span class="loader-circle hidden mr-1" id="refreshCartLoader"></span>' +
+          '<span class="leading-tight">Актуализировать корзину</span>' +
+        '</button>' +
+      '</div>' +
+      '<div class="space-y-3">' +
+        cartItems
           .map(
-            addr =>
-              '<option value="' +
-              escapeHtml(addr) +
+            (item, idx) =>
+              '<div class="flex items-center justify-between p-3 rounded-xl border ' +
+              (item.available ? 'border-gray-200' : 'border-orange-300 bg-orange-50') +
               '">' +
-              escapeHtml(addr) +
-              '</option>'
+                '<div class="text-left flex-1 mr-3">' +
+                  '<div class="font-semibold text-sm break-words">' +
+                    escapeHtml(item.name) +
+                  '</div>' +
+                  '<div class="text-xs text-gray-500">' +
+                    escapeHtml(item.storage) +
+                    ' | ' +
+                    escapeHtml(item.color) +
+                    ' | ' +
+                    escapeHtml(item.region) +
+                  '</div>' +
+                  '<div class="text-xs mt-1 ' +
+                    (item.available
+                      ? 'text-green-600'
+                      : item.newPrice
+                      ? 'text-orange-600'
+                      : 'text-red-600') +
+                  '">' +
+                    (item.available
+                      ? 'В наличии'
+                      : item.newPrice
+                      ? 'Цена обновилась: старая $' + item.price + ', новая $' + item.newPrice
+                      : 'Товар недоступен, удалите из корзины') +
+                  '</div>' +
+                '</div>' +
+                '<div class="text-right flex flex-col items-end gap-1">' +
+                  '<div class="flex items-center justify-end gap-2">' +
+                    '<button class="px-2 py-1 rounded-full bg-gray-200 text-sm font-bold"' +
+                      ' onclick="changeCartItemQuantity(' +
+                      idx +
+                      ', -1)">-</button>' +
+                    '<span class="min-w-[24px] text-center text-sm font-semibold">' +
+                      item.quantity +
+                    '</span>' +
+                    '<button class="px-2 py-1 rounded-full bg-gray-200 text-sm font-bold"' +
+                      ' onclick="changeCartItemQuantity(' +
+                      idx +
+                      ', 1)">+</button>' +
+                  '</div>' +
+                  '<div class="text-sm font-bold text-blue-600">$' +
+                    item.price * item.quantity +
+                  '</div>' +
+                  (item.newPrice
+                    ? '<button class="text-xs text-blue-500" onclick="updateCartItemPrice(' +
+                      idx +
+                      ')">Обновить цену</button>'
+                    : '') +
+                  '<button class="text-xs text-red-500" onclick="removeCartItem(' +
+                    idx +
+                    ')">Удалить</button>' +
+                '</div>' +
+              '</div>'
           )
           .join('') +
-        '</select>' +
-        '<div id="deliveryAddressWrapper" class="mb-2">' +
-        '<textarea id="deliveryAddress" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm"' +
-        ' rows="3" placeholder="Введите адрес доставки..."></textarea>' +
+      '</div>' +
+      '<div class="pt-4 border-t space-y-4">' +
+        '<div class="space-y-2">' +
+          '<h3 class="text-sm font-semibold text-gray-700">Способ оплаты</h3>' +
+          '<div class="flex flex-col gap-2">' +
+            '<label class="flex items-center gap-2 text-sm">' +
+              '<input type="radio" name="paymentType" value="cash"' +
+                (paymentType === 'cash' ? ' checked' : '') +
+                ' onchange="setPaymentType(\'cash\')">' +
+              '<span>Наличными (0%)</span>' +
+            '</label>' +
+            '<label class="flex items-center gap-2 text-sm">' +
+              '<input type="radio" name="paymentType" value="card"' +
+                (paymentType === 'card' ? ' checked' : '') +
+                ' onchange="setPaymentType(\'card\')">' +
+              '<span>Картой (+15%)</span>' +
+            '</label>' +
+          '</div>' +
         '</div>' +
-        '<div class="mt-1">' +
-        '<label class="text-sm.font-semibold text-gray-700 block mb-1">Комментарий к доставке</label>' +
-        '<textarea id="deliveryComment" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm"' +
-        ' rows="2" placeholder="Например: позвонить за 10 минут, домофон не работает..."></textarea>' +
-        '</div>'
-      : '<label class="text-sm font-semibold text-gray-700 block">Адрес самовывоза</label>' +
-        '<select id="pickupLocation" class="w-full bg-white.border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2"' +
-        ' onchange="setPickupLocation(this.value)">' +
-        '<option value="">Выберите пункт самовывоза</option>' +
-        PICKUP_LOCATIONS.map(
-          addr =>
-            '<option value="' +
-            escapeHtml(addr) +
-            '"' +
-            (pickupLocation === addr ? ' selected' : '') +
-            '>' +
-            escapeHtml(addr) +
-            '</option>'
-        ).join('') +
-        '</select>' +
-        '<div class="mt-1">' +
-        '<label class="text-sm font-semibold text-gray-700 block mb-1">Комментарий к заказу</label>' +
-        '<textarea id="deliveryComment" class="w-full bg-white border.border-gray-300 rounded-xl px-3 py-2 text-sm"' +
-        ' rows="2" placeholder="Например: приеду к 19:00, позвонить заранее..."></textarea>' +
-        '</div>') +
-    '</div>' +
-    '<div class="space-y-2">' +
-    '<label class="text-sm.font-semibold text-gray-700 block">Контактные данные (необязательно)</label>' +
-    '<input id="contactName" type="text"' +
-    ' class="w-full bg-white border.border-gray-300 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
-    ' placeholder="Имя">' +
-    '<input id="contactPhone" type="tel"' +
-    ' class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"' +
-    ' placeholder="Телефон">' +
-    '</div>' +
-    '<div class="space-y-1 text-sm text-gray-700">' +
-    '<div class="flex items-center.justify-between">' +
-    '<span>Сумма товаров</span>' +
-    '<span>$' +
-    subtotal +
-    '</span>' +
-    '</div>' +
-    (paymentType === 'card'
-      ? '<div class="flex.items-center justify-between">' +
-        '<span>Сервисный сбор (карта)</span>' +
-        '<span>+$' +
-        commission +
-        '</span>' +
-        '</div>'
-      : '') +
-    '<div class="flex items-center.justify-between font-semibold mt-1">' +
-    '<span>Итого к оплате</span>' +
-    '<span>$' +
-    total +
-    '</span>' +
-    '</div>' +
-    '</div>' +
-    '<div class="pt-3">' +
-    '<button onclick="placeOrder()"' +
-    ' id="placeOrderButton"' +
-    ' class="w-full flex.items-center justify-center gap-2 ' +
-    (!cartItems.some(i => !i.available) && !isPlacingOrder
-      ? 'bg-blue-500 hover:bg-blue-600'
-      : 'bg-gray-400 cursor-not-allowed') +
-    ' text-white font-semibold py-2.5 px-6 rounded-2xl.shadow-lg transition-all text-sm"' +
-    (cartItems.some(i => !i.available) || isPlacingOrder ? ' disabled' : '') +
-    '>' +
-    (cartItems.some(i => !i.available)
-      ? 'Удалите недоступные товары или обновите цены'
-      : isPlacingOrder
-      ? '<span class="loader-circle"></span><span>Проверяю наличие (до 70 сек)...</span>'
-      : 'Оформить заказ') +
-    '</button>' +
-    '</div>' +
-    '</div>' +
+        '<div class="space-y-2">' +
+          '<h3 class="text-sm font-semibold text-gray-700">Способ получения</h3>' +
+          '<div class="flex flex-col gap-2 mb-2">' +
+            '<label class="flex items-center gap-2 text-sm">' +
+              '<input type="radio" name="pickupMode" value="delivery"' +
+                (!pickupMode ? ' checked' : '') +
+                ' onchange="setPickupMode(false)">' +
+              '<span>Доставка</span>' +
+            '</label>' +
+            '<label class="flex items-center gap-2 text-sm">' +
+              '<input type="radio" name="pickupMode" value="pickup"' +
+                (pickupMode ? ' checked' : '') +
+                ' onchange="setPickupMode(true)">' +
+              '<span>Самовывоз</span>' +
+            '</label>' +
+          '</div>' +
+          (!pickupMode
+            ? '<label class="text-sm font-semibold text-gray-700 block">Адрес доставки</label>' +
+              '<select id="savedAddress" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2" onchange="onSavedAddressChange()">' +
+                '<option value="">Выбрать сохранённый адрес</option>' +
+                (savedAddresses || [])
+                  .map(
+                    addr =>
+                      '<option value="' +
+                      escapeHtml(addr) +
+                      '">' +
+                      escapeHtml(addr) +
+                      '</option>'
+                  )
+                  .join('') +
+              '</select>' +
+              '<div id="deliveryAddressWrapper" class="mb-2">' +
+                '<textarea id="deliveryAddress" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm"' +
+                  ' rows="3" placeholder="Введите адрес доставки..."></textarea>' +
+              '</div>' +
+              '<div class="mt-1">' +
+                '<label class="text-sm font-semibold text-gray-700 block.mb-1">Комментарий к доставке</label>' +
+                '<textarea id="deliveryComment" class="w-full bg-white.border border-gray-300 rounded-xl px-3 py-2 text-sm"' +
+                  ' rows="2" placeholder="Например: позвонить за 10 минут, домофон не работает..."></textarea>' +
+              '</div>'
+            : '<label class="text-sm font-semibold text-gray-700 block">Адрес самовывоза</label>' +
+              '<select id="pickupLocation" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2"' +
+                ' onchange="setPickupLocation(this.value)">' +
+                '<option value="">Выберите пункт самовывоза</option>' +
+                PICKUP_LOCATIONS.map(
+                  addr =>
+                    '<option value="' +
+                    escapeHtml(addr) +
+                    '"' +
+                    (pickupLocation === addr ? ' selected' : '') +
+                    '>' +
+                    escapeHtml(addr) +
+                    '</option>'
+                ).join('') +
+              '</select>' +
+              '<div class="mt-1">' +
+                '<label class="text-sm font-semibold text-gray-700 block mb-1">Комментарий к заказу</label>' +
+                '<textarea id="deliveryComment" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm"' +
+                  ' rows="2" placeholder="Например: приеду к 19:00, позвонить заранее..."></textarea>' +
+              '</div>') +
+        '</div>' +
+        '<div class="space-y-2">' +
+          '<label class="text-sm font-semibold text-gray-700 block">Контактные данные (необязательно)</label>' +
+          '<input id="contactName" type="text"' +
+            ' class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
+            ' placeholder="Имя">' +
+          '<input id="contactPhone" type="tel"' +
+            ' class="w-full bg-white border.border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"' +
+            ' placeholder="Телефон">' +
+        '</div>' +
+        '<div class="space-y-1 text-sm text-gray-700">' +
+          '<div class="flex items-center justify-between">' +
+            '<span>Сумма товаров</span>' +
+            '<span>$' +
+              subtotal +
+            '</span>' +
+          '</div>' +
+          (paymentType === 'card'
+            ? '<div class="flex items-center justify-between">' +
+                '<span>Сервисный сбор (карта)</span>' +
+                '<span>+$' +
+                  commission +
+                '</span>' +
+              '</div>'
+            : '') +
+          '<div class="flex items-center justify-between font-semibold mt-1">' +
+            '<span>Итого к оплате</span>' +
+            '<span>$' +
+              total +
+            '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="pt-3">' +
+          '<button onclick="placeOrder()"' +
+            ' id="placeOrderButton"' +
+            ' class="w-full flex items-center justify-center gap-2 ' +
+              (!cartItems.some(i => !i.available) && !isPlacingOrder
+                ? 'bg-blue-500 hover:bg-blue-600'
+                : 'bg-gray-400 cursor-not-allowed') +
+              ' text-white font-semibold py-2.5 px-6 rounded-2xl shadow-lg transition-all text-sm"' +
+            (cartItems.some(i => !i.available) || isPlacingOrder ? ' disabled' : '') +
+          '>' +
+            (cartItems.some(i => !i.available)
+              ? 'Удалите недоступные товары или обновите цены'
+              : isPlacingOrder
+              ? '<span class="loader-circle"></span><span>Проверяю наличие (до 70 сек)...</span>'
+              : 'Оформить заказ') +
+          '</button>' +
+        '</div>' +
+      '</div>' +
     '</div>';
 
   restoreCartFormState();
@@ -517,6 +533,7 @@ window.placeOrder = async function () {
   if (isPlacingOrder) return;
 
   const orderClickTs = Date.now();
+  console.log('[placeOrder] start at', orderClickTs, 'items=', cartItems.length);
 
   if (cartItems.length === 0) {
     tg?.showAlert?.('Корзина пуста');
@@ -551,6 +568,9 @@ window.placeOrder = async function () {
   const contactName = contactNameEl ? contactNameEl.value.trim() || '' : '';
   const contactPhone = contactPhoneEl ? contactPhoneEl.value.trim() || '' : '';
 
+  console.log('[placeOrder] address=', address, 'pickupMode=', pickupMode);
+  console.log('[placeOrder] comment=', deliveryComment, 'contact=', contactName, contactPhone);
+
   isPlacingOrder = true;
   showCartTab();
 
@@ -559,20 +579,17 @@ window.placeOrder = async function () {
     console.log('[placeOrder] client-side timeout 70s');
     isPlacingOrder = false;
 
-    // сразу пробуем подтянуть, вдруг заказ уже записан
     try {
       await fetchUserOrders();
     } catch (e) {
-      console.error('fetchUserOrders after timeout error', e);
+      console.error('[placeOrder] fetchUserOrders after timeout error', e);
     }
 
     showCartTab();
     tg?.showAlert?.(
-      'Похоже, превышено время ожидания ответа сервера. ' +
-        'Проверьте профиль или попробуйте ещё раз.'
+      'Похоже, превышено время ожидания ответа сервера. Возможно большая нагрузка и заказ появится в профиле в течении 3 минут. Если не появился проверьте интернет и попробуйте ещё раз (либо сразу можете попробовать повторно оформить)'
     );
 
-    // через 2 минуты — дополнительная фоновая синхронизация
     setTimeout(async () => {
       try {
         console.log('[placeOrder] delayed sync 2min after timeout');
@@ -581,7 +598,7 @@ window.placeOrder = async function () {
           showProfileTab();
         }
       } catch (e) {
-        console.error('fetchUserOrders delayed error', e);
+        console.error('[placeOrder] fetchUserOrders delayed error', e);
       }
     }, 120000);
   }, 70000);
@@ -590,7 +607,7 @@ window.placeOrder = async function () {
     try {
       await fetchAndUpdateProducts(false);
     } catch (e) {
-      console.error('refresh before order failed', e);
+      console.error('[placeOrder] refresh before order failed', e);
     }
 
     if (!productsData) {
@@ -615,6 +632,12 @@ window.placeOrder = async function () {
       }
       return { ...item, available: true, newPrice: undefined };
     });
+    console.log(
+      '[placeOrder] after sync products: hasUnavailable=',
+      hasUnavailable,
+      'hasPriceChanged=',
+      hasPriceChanged
+    );
     saveCartToStorage();
     updateCartBadge();
 
@@ -655,6 +678,8 @@ window.placeOrder = async function () {
       }
     };
 
+    console.log('[placeOrder] order payload', order);
+
     let resp;
     let text;
     try {
@@ -665,10 +690,10 @@ window.placeOrder = async function () {
       });
 
       text = await resp.text();
-      console.log('BACKEND_ORDER_URL status:', resp.status);
-      console.log('BACKEND_ORDER_URL body:', text);
+      console.log('[placeOrder] BACKEND_ORDER_URL status:', resp.status);
+      console.log('[placeOrder] BACKEND_ORDER_URL body:', text);
     } catch (e) {
-      console.error('backend order error', e);
+      console.error('[placeOrder] backend order network error', e);
       tg?.showAlert?.('Ошибка сети. Заказ не сохранён, попробуйте ещё раз.');
       isPlacingOrder = false;
       showCartTab();
@@ -678,7 +703,9 @@ window.placeOrder = async function () {
     let json = null;
     try {
       json = JSON.parse(text);
-    } catch (e) {}
+    } catch (e) {
+      console.log('[placeOrder] response is not valid JSON');
+    }
 
     if (!resp.ok || !json || json.ok !== true) {
       console.log('[placeOrder] backend responded with error status:', resp.status, json);
@@ -688,11 +715,11 @@ window.placeOrder = async function () {
       return;
     }
 
-    // только серверная история
     try {
+      console.log('[placeOrder] fetching orders after success');
       await fetchUserOrders();
     } catch (e) {
-      console.error('fetchUserOrders after success error', e);
+      console.error('[placeOrder] fetchUserOrders after success error', e);
     }
 
     const now = Date.now();

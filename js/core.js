@@ -360,8 +360,7 @@ async function fetchUserOrders() {
     if (!data.ok || !Array.isArray(data.orders)) return;
 
     previousOrders = data.orders;
-    saveOrdersToStorage();
-
+    
     if (currentTab === 'profile') {
       showProfileTab();
     }
@@ -386,7 +385,6 @@ async function initApp() {
     initTabBar();
     logStage('after initTabBar', t0);
 
-    loadOrdersFromStorage();
     await fetchUserOrders();
     loadAddressesFromStorage();
     loadCartFromStorage();

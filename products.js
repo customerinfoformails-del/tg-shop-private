@@ -148,6 +148,15 @@ function getLabel(type) {
 // рендер частей магазина
 
 function renderShopHeader(list, showCount) {
+  var optionsHtml = '';
+  for (var i = 0; i < CATEGORIES.length; i++) {
+    var c = CATEGORIES[i];
+    optionsHtml +=
+      '<option value="' + c + '"' +
+        (c === selectedCategory ? ' selected' : '') +
+      '>' + c + '</option>';
+  }
+
   return (
     '<div class="mb-5">' +
       '<h1 class="text-3xl font-bold text-center mb-4">🛒 Магазин</h1>' +
@@ -155,9 +164,7 @@ function renderShopHeader(list, showCount) {
         '<div class="flex-1 bg-white rounded-2xl shadow px-3 py-2">' +
           '<label class="text-xs text-gray-500 block mb-1">Категория</label>' +
           '<select id="category" class="w-full bg-transparent border-none font-semibold text-base focus:outline-none appearance-none">' +
-            CATEGORIES.map(c => (
-              '<option value="' + c + '"' + (c === selectedCategory ? ' selected' : '') + '>' + c + '</option>'
-            )).join('') +
+            optionsHtml +
           '</select>' +
         '</div>' +
         '<div class="w-44 bg-white rounded-2xl shadow px-3 py-2">' +

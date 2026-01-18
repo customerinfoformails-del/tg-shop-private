@@ -77,21 +77,29 @@ img,
   display: flex;
   height: 100%;
   transition: transform 0.3s ease;
+  justify-content: center;
+  align-items: center;
 }
 .carousel-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   flex-shrink: 0;
 }
 
-/* Центровка изображений в модалке */
 #modalCarousel .image-carousel-inner {
-  justify-content: center;
+  display: flex;
+  height: 100%;
+  transition: transform 0.3s ease;
+  /* убираем центровку, оставляем только flex-ряд */
+  justify-content: flex-start;
   align-items: center;
 }
 #modalCarousel .carousel-img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  flex-shrink: 0;
 }
 
 /* Кнопки навигации карусели */

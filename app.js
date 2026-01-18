@@ -5,8 +5,6 @@ try {
   tg?.setBackgroundColor?.('#f3f4f6'); // это Tailwind bg-gray-100
 } catch (e) {}
 
-
-
 const API_URL = 'https://script.google.com/macros/s/AKfycbxyKA2QcJBKim9ttOKHiJ_uTVYunBKhBnNFNf9BLGewzHpqqcY9ZY8smmvCwQZzOGs85Q/exec';
 const ORDERS_API_URL = 'https://script.google.com/macros/s/AKfycbxr_WtXjtNelG9HRya2ngKaYkd-9dUrADnVG8H9_SJTHIheJ_eFFj3BCCdED22-3K5t5Q/exec';
 const BACKEND_ORDER_URL = 'https://tg-shop-test-backend.onrender.com/order';
@@ -14,16 +12,16 @@ const BACKEND_ORDER_URL = 'https://tg-shop-test-backend.onrender.com/order';
 let CATEGORIES = ['Все'];
 
 let selectedCategory = 'Все',
-    query = '',
-    randomIds = [],
-    loadedCount = 10,
-    imageCache = new Map(),
-    productsData = null,
-    currentProduct = null,
-    selectedOption = {},
-    selectedQuantity = 1,
-    searchTimeout = null,
-    currentTab = 'shop';
+  query = '',
+  randomIds = [],
+  loadedCount = 10,
+  imageCache = new Map(),
+  productsData = null,
+  currentProduct = null,
+  selectedOption = {},
+  selectedQuantity = 1,
+  searchTimeout = null,
+  currentTab = 'shop';
 
 let cartItems = [];
 let savedAddresses = [];
@@ -41,6 +39,7 @@ const PICKUP_LOCATIONS = [
 let isAddingToCart = false;
 let isPlacingOrder = false;
 let isRefreshingProducts = false;
+let isTabChanging = false;
 
 const root = document.getElementById('root');
 const modal = document.getElementById('productModal');
@@ -122,6 +121,13 @@ document.addEventListener('touchend', e => {
 
 // ---------- Таббар ----------
 
+function setTabBarDisabled(disabled) {
+  isTabChanging = disabled;
+  document
+    .querySelectorAll('#tabBar .tab-item')
+    .forEach(t => t.classList.toggle('pointer-events-none', disabled));
+}
+
 function initTabBar() {
   document.querySelectorAll('#tabBar .tab-item').forEach(tab => {
     tab.onclick = (e) => {
@@ -133,6 +139,7 @@ function initTabBar() {
 }
 
 function switchTab(tabName) {
+  if (isTabChanging) return;
   if (currentTab === tabName) return;
 
   if (typeof closeModal === 'function' && modal && !modal.classList.contains('hidden')) {
@@ -144,17 +151,21 @@ function switchTab(tabName) {
   const currentEl = document.querySelector('[data-tab="' + tabName + '"]');
   if (currentEl) currentEl.classList.add('active');
 
-  if (tabName === 'shop') {
-    if (typeof renderShop === 'function') renderShop();
-  } else if (tabName === 'cart') {
-    showCartTab();
-  } else if (tabName === 'sale') {
-    showSaleTab();
-  } else if (tabName === 'profile') {
-    showProfileTab();
-  } else if (tabName === 'about') {
-    showAboutTab();
-  }
+  setTabBarDisabled(true);
+
+  Promise.resolve().then(() => {
+    if (tabName === 'shop') {
+      if (typeof renderShop === 'function') renderShop();
+    } else if (tabName === 'cart') {
+      showCartTab();
+    } else if (tabName === 'sale') {
+      showSaleTab();
+    } else if (tabName === 'profile') {
+      showProfileTab();
+    } else if (tabName === 'about') {
+      showAboutTab();
+    }
+  }).finally(() => setTabBarDisabled(false));
 }
 
 // ---------- Корзина и синхронизация ----------
@@ -176,12 +187,9 @@ function addToCart(variant, quantity) {
     tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
     return;
   }
-  const freshVariant = productsData.find(p => p.id === variant.id && p.inStock);
-  if (!freshVariant) {
-    syncProductsAndCart();
-    tg?.showAlert?.('Этот вариант больше недоступен');
-    return;
-  }
+
+  // без проверки inStock — проверка наличия только при оформлении заказа
+  const freshVariant = productsData.find(p => p.id === variant.id) || variant;
 
   const existing = cartItems.find(item => item.id === freshVariant.id);
   if (existing) {
@@ -255,10 +263,17 @@ window.setPickupLocation = function(addr) {
   pickupLocation = addr;
 };
 
+window.onSavedAddressChange = function() {
+  const select = document.getElementById('savedAddress');
+  const wrapper = document.getElementById('deliveryAddressWrapper');
+  if (!select || !wrapper) return;
+  wrapper.style.display = select.value ? 'none' : 'block';
+};
+
 function showCartTab() {
   if (!cartItems.length) {
     root.innerHTML =
-      '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+      '<div class="flex flex-col.items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
         '<div class="w-28 h-28 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center mb-6">' +
           '<svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
@@ -303,7 +318,7 @@ function showCartTab() {
               '</div>' +
             '</div>' +
             '<div class="text-right">' +
-              '<div class="flex items-center justify-end gap-2 mb-1">' +
+              '<div class="flex.items-center justify-end gap-2 mb-1">' +
                 '<button class="px-2 py-1 rounded-full bg-gray-200 text-sm font-bold"' +
                         ' onclick="changeCartItemQuantity(' + idx + ', -1)">-</button>' +
                 '<span class="min-w-[24px] text-center text-sm font-semibold">' + item.quantity + '</span>' +
@@ -356,18 +371,20 @@ function showCartTab() {
           (!pickupMode
             ? (
               '<label class="text-sm font-semibold text-gray-700 block">Адрес доставки</label>' +
-              '<select id="savedAddress" class="w-full bg-white border rounded-xl px-3 py-2 text-sm mb-2">' +
+              '<select id="savedAddress" class="w-full bg-white border rounded-xl px-3 py-2 text-sm mb-2" onchange="onSavedAddressChange()">' +
                 '<option value="">Выбрать сохранённый адрес</option>' +
                 (savedAddresses || []).map(addr =>
                   '<option value="' + escapeHtml(addr) + '">' + escapeHtml(addr) + '</option>'
                 ).join('') +
               '</select>' +
-              '<textarea id="deliveryAddress" class="w-full bg-white border rounded-xl px-3 py-2 text-sm"' +
-                        ' rows="3" placeholder="Введите адрес доставки..."></textarea>'
+              '<div id="deliveryAddressWrapper">' +
+                '<textarea id="deliveryAddress" class="w-full bg-white border rounded-xl px-3 py-2 text-sm"' +
+                          ' rows="3" placeholder="Введите адрес доставки..."></textarea>' +
+              '</div>'
             )
             : (
               '<label class="text-sm font-semibold text-gray-700 block">Адрес самовывоза</label>' +
-              '<select id="pickupLocation" class="w-full bg-white border rounded-xl px-3 py-2 text-sm mb-2"' +
+              '<select id="pickupLocation" class="w-full bg-white.border rounded-xl px-3 py-2 text-sm mb-2"' +
                       ' onchange="setPickupLocation(this.value)">' +
                 '<option value="">Выберите пункт самовывоза</option>' +
                 PICKUP_LOCATIONS.map(addr =>
@@ -416,8 +433,12 @@ function showCartTab() {
         '</div>' +
       '</div>' +
     '</div>';
-}
 
+  const savedSelect = document.getElementById('savedAddress');
+  if (savedSelect) {
+    onSavedAddressChange();
+  }
+}
 
 // ---------- Вкладка распродажи ----------
 
@@ -432,7 +453,7 @@ function showSaleTab() {
       '</div>' +
       '<h2 class="text-2xl font-bold text-gray-800 mb-4">Распродажа</h2>' +
       '<p class="text-lg text-gray-600 mb-8">Скоро здесь будут скидки до 70%!</p>' +
-      '<button onclick="switchTab(\'shop\')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
+      '<button onclick="switchTab(\'shop\')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg.transition-all">' +
         'В магазин' +
       '</button>' +
     '</div>';
@@ -454,7 +475,7 @@ function showProfileTab() {
   const ordersHtml = previousOrders.length
     ? previousOrders.map((o, idx) =>
         '<div class="p-3 border rounded-xl mb-2 cursor-pointer" onclick="toggleOrderDetails(' + idx + ')">' +
-          '<div class="flex items-center justify-between mb-1">' +
+          '<div class="flex.items-center justify-between mb-1">' +
             '<span class="text-sm font-semibold">Заказ #' + o.id + '</span>' +
             '<span class="text-sm font-bold text-blue-600">$' + o.total + '</span>' +
           '</div>' +
@@ -463,7 +484,7 @@ function showProfileTab() {
           '<div class="text-xs text-gray-600 mb-1">Товаров: ' + o.items.length + '</div>' +
           '<div id="orderDetails_' + idx + '" class="hidden mt-2 text-xs text-gray-700 bg-gray-50 rounded-lg p-2">' +
             o.items.map(item =>
-              '<div class="flex items-center justify-between mb-1">' +
+              '<div class="flex.items-center justify-between mb-1">' +
                 '<div>' +
                   '<div class="font-semibold">' + escapeHtml(item.name) + '</div>' +
                   '<div class="text-[11px] text-gray-500">' +
@@ -485,7 +506,7 @@ function showProfileTab() {
 
   const addressesHtml = savedAddresses.length
     ? savedAddresses.map((addr, idx) =>
-        '<div class="flex items-center justify-between p-2 border rounded-xl mb-1">' +
+        '<div class="flex.items-center justify-between p-2 border rounded-xl mb-1">' +
           '<span class="text-xs text-gray-700">' + escapeHtml(addr) + '</span>' +
           '<button class="text-xs text-red-500" onclick="removeAddress(' + idx + ')">Удалить</button>' +
         '</div>'
@@ -494,7 +515,7 @@ function showProfileTab() {
 
   root.innerHTML =
     '<div class="p-6 space-y-6 pb-[65px]">' +
-      '<div class="flex items-center space-x-4">' +
+      '<div class="flex.items-center space-x-4">' +
         '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">' +
           '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
@@ -572,7 +593,7 @@ function showAboutTab() {
 
 function showError(message) {
   root.innerHTML =
-    '<div class="flex flex-col items-center justify-center min-h-screen text-center p-8 pb-[65px]">' +
+    '<div class="flex flex-col.items-center justify-center min-h-screen text-center p-8 pb-[65px]">' +
       '<div class="w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center mb-6">' +
         '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
           '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
@@ -614,17 +635,25 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ---------- Оформление заказа (через backend, без прямого доступа к Apps Script) ----------
+// ---------- Метрики ----------
+
+function logStage(label, startTime) {
+  const now = performance.now();
+  console.log(`[perf] ${label}: ${Math.round(now - startTime)} ms`);
+}
+
+// ---------- Оформление заказа ----------
 
 window.placeOrder = async function() {
   if (isPlacingOrder) return;
+
+  const orderClickTs = Date.now(); // отметка клика
 
   if (cartItems.length === 0) {
     tg?.showAlert?.('Корзина пуста');
     return;
   }
 
-  // адрес
   let address = '';
   if (pickupMode) {
     if (!pickupLocation) {
@@ -648,7 +677,6 @@ window.placeOrder = async function() {
   isPlacingOrder = true;
   showCartTab();
 
-  // обновление товаров перед заказом
   try {
     await fetchAndUpdateProducts(false);
   } catch (e) {
@@ -662,7 +690,6 @@ window.placeOrder = async function() {
     return;
   }
 
-  // проверка доступности корзины
   let hasUnavailable = false;
   cartItems = cartItems.map(item => {
     const exists = productsData.some(p => p.id === item.id && p.inStock);
@@ -696,17 +723,14 @@ window.placeOrder = async function() {
     paymentType,
     pickupMode,
     pickupLocation: pickupMode ? pickupLocation : '',
-    user: tg?.initDataUnsafe?.user || null
+    user: tg?.initDataUnsafe?.user || null,
+    clientClickTs: orderClickTs
   };
 
-  // локально сохраняем историю
   previousOrders.push(order);
   saveOrdersToStorage();
 
-  // отправка только на backend
   try {
-    console.log('tg.initDataUnsafe.user:', tg?.initDataUnsafe?.user);
-    console.log('Order before send:', order);
     const resp = await fetch(BACKEND_ORDER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -726,6 +750,10 @@ window.placeOrder = async function() {
       showCartTab();
       return;
     }
+
+    const now = Date.now();
+    const durationMs = now - orderClickTs;
+    console.log('[perf] placeOrder duration:', durationMs, 'ms');
   } catch (e) {
     console.error('backend order error', e);
     tg?.showAlert?.('Ошибка при отправке заказа, попробуйте ещё раз.');
@@ -742,8 +770,6 @@ window.placeOrder = async function() {
   showCartTab();
 };
 
-
-
 // ---------- Обновление товаров вручную ----------
 
 window.refreshProducts = async function() {
@@ -751,9 +777,17 @@ window.refreshProducts = async function() {
   isRefreshingProducts = true;
 
   root.innerHTML =
-    '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
-      '<div class="w-20 h-20 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>' +
-      '<div class="text-lg font-semibold text-gray-700 mb-2">Обновляю товары...</div>' +
+    '<div class="pb-[65px]">' +
+      '<div class="product-grid">' +
+        Array.from({ length: 6 }).map(() =>
+          '<div class="bg-white rounded-2xl p-4 shadow-lg">' +
+            '<div class="h-32 mb-3 rounded-xl placeholder-shimmer"></div>' +
+            '<div class="h-4 w-3/4 mb-2 rounded placeholder-shimmer"></div>' +
+            '<div class="h-5 w-1/2 mb-2 rounded placeholder-shimmer"></div>' +
+            '<div class="h-3 w-1/3 rounded placeholder-shimmer"></div>' +
+          '</div>'
+        ).join('') +
+      '</div>' +
     '</div>';
 
   try {
@@ -766,24 +800,48 @@ window.refreshProducts = async function() {
 // ---------- Загрузка товаров с API ----------
 
 async function fetchAndUpdateProducts(showLoader = false) {
+  const t0 = performance.now();
+
   if (showLoader) {
     root.innerHTML =
-      '<div class="flex flex-col items-center justify-center min-h-[400px]">' +
-        '<div class="w-20 h-20 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>' +
-        '<div class="text-lg font-semibold text-gray-700 mb-2">Загрузка товаров...</div>' +
+      '<div class="pb-[65px]">' +
+        '<div class="mb-5">' +
+          '<div class="h-6 w-32 mb-4.rounded placeholder-shimmer"></div>' +
+          '<div class="flex items-center gap-3">' +
+            '<div class="flex-1 bg-white rounded-2xl px-3 py-2">' +
+              '<div class="h-3 w-20 mb-2 rounded placeholder-shimmer"></div>' +
+              '<div class="h-4 w-full rounded placeholder-shimmer"></div>' +
+            '</div>' +
+            '<div class="w-44 bg-white rounded-2xl px-3 py-2">' +
+              '<div class="h-3 w-16 mb-2 rounded placeholder-shimmer"></div>' +
+              '<div class="h-4 w-full rounded placeholder-shimmer"></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="product-grid">' +
+          Array.from({ length: 6 }).map(() =>
+            '<div class="bg-white rounded-2xl p-4 shadow-lg">' +
+              '<div class="h-32 mb-3 rounded-xl placeholder-shimmer"></div>' +
+              '<div class="h-4 w-3/4 mb-2 rounded.placeholder-shimmer"></div>' +
+              '<div class="h-5 w-1/2 mb-2 rounded.placeholder-shimmer"></div>' +
+              '<div class="h-3 w-1/3 rounded.placeholder-shimmer"></div>' +
+            '</div>'
+          ).join('') +
+        '</div>' +
       '</div>';
   }
 
   try {
     const response = await fetch(API_URL);
+    logStage('products fetch', t0);
+
     if (!response.ok) throw new Error('HTTP ' + response.status);
 
     const products = await response.json();
-    if (!Array.isArray(products) || products.length === 0) {
-      throw new Error('Нет товаров');
-    }
+    logStage('products json parse', t0);
 
     const normalized = normalizeProducts(products);
+    logStage('normalizeProducts', t0);
 
     const inStockNames = new Set(
       normalized.filter(v => v.inStock).map(v => v.name)
@@ -805,12 +863,14 @@ async function fetchAndUpdateProducts(showLoader = false) {
 
       syncProductsAndCart();
     }
+
+    logStage('update productsData + sync', t0);
   } catch (error) {
     console.error('API error:', error);
     if (showLoader) {
       isRefreshingProducts = false;
       root.innerHTML =
-        '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+        '<div class="flex flex-col.items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
           '<div class="w-24 h-24 bg-red-50 rounded-3xl flex items-center justify-center mb-4">' +
             '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
               '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
@@ -834,30 +894,36 @@ async function fetchAndUpdateProducts(showLoader = false) {
 // ---------- Инициализация ----------
 
 async function initApp() {
+  const t0 = performance.now();
   try {
     console.log('tg object:', window.Telegram?.WebApp);
     console.log('initData string:', window.Telegram?.WebApp?.initData);
     console.log('initDataUnsafe object:', window.Telegram?.WebApp?.initDataUnsafe);
     console.log('initDataUnsafe.user:', window.Telegram?.WebApp?.initDataUnsafe?.user);
+
     if (typeof initTabBar === 'function') {
       initTabBar();
     }
+    logStage('after initTabBar', t0);
 
     loadOrdersFromStorage();
     loadAddressesFromStorage();
     loadCartFromStorage();
+    logStage('after localStorage', t0);
 
     if (typeof fetchAndUpdateProducts === 'function') {
       await fetchAndUpdateProducts(true);
     } else {
       throw new Error('Функция fetchAndUpdateProducts не найдена (products.js не загружен)');
     }
+    logStage('after fetchAndUpdateProducts', t0);
 
     if (typeof renderShop === 'function') {
       renderShop();
     } else {
       throw new Error('Функция renderShop не найдена (products.js не загружен)');
     }
+    logStage('after renderShop', t0);
 
     setInterval(() => {
       try {

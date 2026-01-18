@@ -106,15 +106,12 @@ function getVisibleProducts() {
       );
     });
 
-  // фильтр по категории
   if (selectedCategory !== 'Все') {
     groupedVisible = groupedVisible.filter(p => p.cat === selectedCategory);
   } else {
-    // категория "Все" — просто перемешиваем, но ничего не отбрасываем
     groupedVisible = shuffleArray(groupedVisible);
   }
 
-  // поиск
   if (query.trim()) {
     const q = query.trim().toLowerCase();
     groupedVisible = groupedVisible.filter(p =>
@@ -162,7 +159,7 @@ function renderShop() {
     '<div class="pb-[65px]">' +
       '<div class="mb-5">' +
         '<h1 class="text-3xl font-bold text-center mb-4">🛒 Магазин</h1>' +
-        '<div class="flex items-center gap-3">' +
+        '<div class="flex.items-center gap-3">' +
           '<div class="flex-1 bg-white rounded-2xl shadow px-3 py-2">' +
             '<label class="text-xs text-gray-500 block.mb-1">Категория</label>' +
             '<select id="category" class="w-full bg-transparent border-none font-semibold text-base focus:outline-none appearance-none">' +
@@ -248,6 +245,13 @@ function setupHandlers() {
         renderShop();
       }, 500);
     };
+
+    searchEl.onkeydown = function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        searchEl.blur(); // закрыть клавиатуру по Return
+      }
+    };
   }
 
   document.querySelectorAll('[data-product-name]').forEach(card => {
@@ -267,7 +271,7 @@ function setupHandlers() {
   });
 }
 
-// карусели на карточках (как было)
+// карусели на карточках
 function setupImageCarousels() {
   document.querySelectorAll('.image-carousel-inner[data-carousel]').forEach(inner => {
     const dots = inner.parentElement.querySelectorAll('.dot');

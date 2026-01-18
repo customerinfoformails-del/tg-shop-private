@@ -2,6 +2,9 @@ let modalCurrentIndex = 0;
 let modalImageCount = 0;
 let modalImageIndexBeforeFullscreen = 0;
 
+let modalTouchStartX = 0;
+let modalTouchStartY = 0;
+
 function getVariantCountText(count) {
   const mod10 = count % 10;
   const mod100 = count % 100;
@@ -98,11 +101,7 @@ window.addToCartFromModal = async function() {
   const sc2 = document.querySelector('#modalContent .flex-1');
   if (sc2) sc2.scrollTop = prevScrollTop;
 
-  try {
-    await fetchAndUpdateProducts(false);
-  } catch (e) {
-    console.error('refresh before addToCart failed', e);
-  }
+  // УБРАН refresh продуктов — оставляем проверку на этапе заказа
 
   if (!isCompleteSelection()) {
     tg?.showAlert?.('❌ Выберите все опции: SIM → Память → Цвет → Регион');
@@ -127,12 +126,12 @@ window.addToCartFromModal = async function() {
   }
 
   const allVariants = getFilteredVariants(
-    getProductVariants(currentProduct.name).filter(v => v.inStock)
+    getProductVariants(currentProduct.name) // без фильтра по inStock
   );
   const variants = allVariants;
 
   if (variants.length === 0) {
-    tg?.showAlert?.('❌ Нет доступных вариантов');
+    tg?.showAlert?.('❌ Нет подходящих вариантов');
     isAddingToCart = false;
     const scA = document.querySelector('#modalContent .flex-1');
     const prevA = scA ? scA.scrollTop : 0;
@@ -166,7 +165,7 @@ function renderProductModal(product) {
     document.getElementById('modalContent').innerHTML =
       '<div class="flex flex-col h-full">' +
         '<div class="p-6 pb-4 border-b border-gray-200">' +
-          '<div class="flex items-center justify-between mb-2">' +
+          '<div class="flex items-center justify-between.mb-2">' +
             '<h2 class="text-2xl font-bold">' + escapeHtml(product.name) + '</h2>' +
             '<button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-xl">' +
               '<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
@@ -224,7 +223,7 @@ function renderProductModal(product) {
   document.getElementById('modalContent').innerHTML =
     '<div class="flex flex-col h-full">' +
       '<div class="p-6 pb-4 border-b border-gray-200">' +
-        '<div class="flex items-center justify-between mb-2">' +
+        '<div class="flex.items-center justify-between mb-2">' +
           '<h2 class="text-2xl font-bold">' + escapeHtml(product.name) + '</h2>' +
           '<button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-xl">' +
             '<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
@@ -245,12 +244,12 @@ function renderProductModal(product) {
             (complete && filteredImages.length > 0
               ? '<div class="image-carousel-inner" id="modalCarouselInner">' +
                   filteredImages.slice(0, 10).map(img =>
-                    '<img src="' + img + '" class="carousel-img loaded" alt="Product image" loading="lazy" />'
+                    '<img src="' + img + '" class="carousel-img.loaded" alt="Product image" loading="lazy" />'
                   ).join('') +
                 '</div>' +
                 (filteredImages.length > 1
                   ? '<button class="nav-btn nav-prev" onclick="modalPrev(); event.stopPropagation()">‹</button>' +
-                    '<button class="nav-btn nav-next" onclick="modalNext(); event.stopPropagation()">›</button>' +
+                    '<button class="nav-btn nav-next".onclick="modalNext(); event.stopPropagation()">›</button>' +
                     '<div class="carousel-dots" id="modalDots">' +
                       filteredImages.map((_, idx) =>
                         '<div class="dot' +
@@ -289,7 +288,7 @@ function renderProductModal(product) {
             return (
               '<div class="option-section ' + (isLocked ? 'locked' : 'unlocked') +
                    '" data-section="' + type + '">' +
-                '<label class="text-sm font-semibold text-gray-700 capitalize mb-2 block">' +
+                '<label class="text-sm font-semibold text-gray-700.capitalize mb-2 block">' +
                   getLabel(type) +
                 '</label>' +
                 '<div class="flex gap-2 scroll-carousel pb-1">' +
@@ -377,6 +376,7 @@ function renderProductModal(product) {
   if (complete && filteredImages.length > 0) {
     modalCurrentIndex = modalImageIndexBeforeFullscreen;
     initModalCarousel(filteredImages.length);
+    initModalSwipe();
   }
 }
 
@@ -412,6 +412,31 @@ function initModalCarousel(imageCount) {
   };
 
   updateModalCarousel();
+}
+
+function initModalSwipe() {
+  const carousel = document.getElementById('modalCarousel');
+  if (!carousel) return;
+
+  carousel.addEventListener('touchstart', function(e) {
+    const touch = e.changedTouches[0];
+    modalTouchStartX = touch.clientX;
+    modalTouchStartY = touch.clientY;
+  }, { passive: true });
+
+  carousel.addEventListener('touchend', function(e) {
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - modalTouchStartX;
+    const dy = Math.abs(touch.clientY - modalTouchStartY);
+
+    if (Math.abs(dx) < 40 || dy > 50) return;
+
+    if (dx < 0) {
+      window.modalNext && window.modalNext();
+    } else {
+      window.modalPrev && window.modalPrev();
+    }
+  }, { passive: true });
 }
 
 function showModal(product) {

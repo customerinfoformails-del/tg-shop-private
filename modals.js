@@ -101,8 +101,6 @@ window.addToCartFromModal = async function() {
   const sc2 = document.querySelector('#modalContent .flex-1');
   if (sc2) sc2.scrollTop = prevScrollTop;
 
-  // УБРАН refresh продуктов — оставляем проверку на этапе заказа
-
   if (!isCompleteSelection()) {
     tg?.showAlert?.('❌ Выберите все опции: SIM → Память → Цвет → Регион');
     isAddingToCart = false;
@@ -126,7 +124,7 @@ window.addToCartFromModal = async function() {
   }
 
   const allVariants = getFilteredVariants(
-    getProductVariants(currentProduct.name) // без фильтра по inStock
+    getProductVariants(currentProduct.name)
   );
   const variants = allVariants;
 
@@ -165,9 +163,9 @@ function renderProductModal(product) {
     document.getElementById('modalContent').innerHTML =
       '<div class="flex flex-col h-full">' +
         '<div class="p-6 pb-4 border-b border-gray-200">' +
-          '<div class="flex items-center justify-between.mb-2">' +
-            '<h2 class="text-2xl font-bold">' + escapeHtml(product.name) + '</h2>' +
-            '<button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-xl">' +
+          '<div class="flex items-start justify-between gap-2 mb-2">' +
+            '<h2 class="text-2xl font-bold leading-tight flex-1 break-words">' + escapeHtml(product.name) + '</h2>' +
+            '<button onclick="closeModal()" class="p-2 -mr-2 -mt-2 hover:bg-gray-100 rounded-xl shrink-0">' +
               '<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
                 '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>' +
               '</svg>' +
@@ -223,9 +221,9 @@ function renderProductModal(product) {
   document.getElementById('modalContent').innerHTML =
     '<div class="flex flex-col h-full">' +
       '<div class="p-6 pb-4 border-b border-gray-200">' +
-        '<div class="flex.items-center justify-between mb-2">' +
-          '<h2 class="text-2xl font-bold">' + escapeHtml(product.name) + '</h2>' +
-          '<button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-xl">' +
+        '<div class="flex items-start justify-between gap-2 mb-2">' +
+          '<h2 class="text-2xl font-bold leading-tight flex-1 break-words">' + escapeHtml(product.name) + '</h2>' +
+          '<button onclick="closeModal()" class="p-2 -mr-2 -mt-2 hover:bg-gray-100 rounded-xl shrink-0">' +
             '<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
               '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                     ' d="M6 18L18 6M6 6l12 12"/>' +
@@ -244,12 +242,12 @@ function renderProductModal(product) {
             (complete && filteredImages.length > 0
               ? '<div class="image-carousel-inner" id="modalCarouselInner">' +
                   filteredImages.slice(0, 10).map(img =>
-                    '<img src="' + img + '" class="carousel-img.loaded" alt="Product image" loading="lazy" />'
+                    '<img src="' + img + '" class="carousel-img loaded" alt="Product image" loading="lazy" />'
                   ).join('') +
                 '</div>' +
                 (filteredImages.length > 1
                   ? '<button class="nav-btn nav-prev" onclick="modalPrev(); event.stopPropagation()">‹</button>' +
-                    '<button class="nav-btn nav-next".onclick="modalNext(); event.stopPropagation()">›</button>' +
+                    '<button class="nav-btn nav-next" onclick="modalNext(); event.stopPropagation()">›</button>' +
                     '<div class="carousel-dots" id="modalDots">' +
                       filteredImages.map((_, idx) =>
                         '<div class="dot' +
@@ -260,8 +258,8 @@ function renderProductModal(product) {
                   : ''
                 )
               : (productCommonImage
-                  ? '<div class="w-full h-64 rounded-xl overflow-hidden mb-6">' +
-                      '<img src="' + productCommonImage + '" class="w-full h-full object-cover" alt="Product image" />' +
+                  ? '<div class="w-full h-64 rounded-xl overflow-hidden mb-6 flex items-center justify-center">' +
+                      '<img src="' + productCommonImage + '" class="w-full h-full object-contain" alt="Product image" />' +
                     '</div>'
                   : '<div class="no-images h-64">' +
                       '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
@@ -288,7 +286,7 @@ function renderProductModal(product) {
             return (
               '<div class="option-section ' + (isLocked ? 'locked' : 'unlocked') +
                    '" data-section="' + type + '">' +
-                '<label class="text-sm font-semibold text-gray-700.capitalize mb-2 block">' +
+                '<label class="text-sm font-semibold text-gray-700 capitalize mb-2 block">' +
                   getLabel(type) +
                 '</label>' +
                 '<div class="flex gap-2 scroll-carousel pb-1">' +

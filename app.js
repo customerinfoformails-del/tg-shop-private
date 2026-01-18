@@ -2,7 +2,7 @@ const tg = window.Telegram?.WebApp;
 try {
   tg?.ready();
   tg?.expand();
-  tg?.setBackgroundColor?.('#f3f4f6'); // это Tailwind bg-gray-100
+  tg?.setBackgroundColor?.('#f3f4f6'); // Tailwind bg-gray-100
 } catch (e) {}
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxyKA2QcJBKim9ttOKHiJ_uTVYunBKhBnNFNf9BLGewzHpqqcY9ZY8smmvCwQZzOGs85Q/exec';
@@ -146,11 +146,8 @@ function switchTab(tabName) {
     closeModal();
   }
 
-  currentTab = tabName;
-  document.querySelectorAll('#tabBar .tab-item').forEach(t => t.classList.remove('active'));
-  const currentEl = document.querySelector('[data-tab="' + tabName + '"]');
-  if (currentEl) currentEl.classList.add('active');
-
+  const prevTab = currentTab;
+  isTabChanging = true;
   setTabBarDisabled(true);
 
   Promise.resolve().then(() => {
@@ -165,7 +162,17 @@ function switchTab(tabName) {
     } else if (tabName === 'about') {
       showAboutTab();
     }
-  }).finally(() => setTabBarDisabled(false));
+    currentTab = tabName;
+    document.querySelectorAll('#tabBar .tab-item').forEach(t => t.classList.remove('active'));
+    const currentEl = document.querySelector('[data-tab="' + tabName + '"]');
+    if (currentEl) currentEl.classList.add('active');
+  }).catch(err => {
+    console.error('switchTab error', err);
+    currentTab = prevTab;
+  }).finally(() => {
+    isTabChanging = false;
+    setTabBarDisabled(false);
+  });
 }
 
 // ---------- Корзина и синхронизация ----------
@@ -188,7 +195,6 @@ function addToCart(variant, quantity) {
     return;
   }
 
-  // без проверки inStock — проверка наличия только при оформлении заказа
   const freshVariant = productsData.find(p => p.id === variant.id) || variant;
 
   const existing = cartItems.find(item => item.id === freshVariant.id);
@@ -273,7 +279,7 @@ window.onSavedAddressChange = function() {
 function showCartTab() {
   if (!cartItems.length) {
     root.innerHTML =
-      '<div class="flex flex-col.items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+      '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
         '<div class="w-28 h-28 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center mb-6">' +
           '<svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
@@ -299,15 +305,15 @@ function showCartTab() {
   const total = subtotal + commission;
 
   root.innerHTML =
-    '<div class="relative min-h-[100vh] p-6 space-y-6 pb-[80px]">' +
+    '<div class="relative min-h-[100vh] p-6 space-y-6 pb-[80px] max-w-md mx-auto">' +
       '<h2 class="text-2xl font-bold text-gray-800 mb-4">Корзина</h2>' +
       '<div class="space-y-3">' +
         cartItems.map((item, idx) =>
           '<div class="flex items-center justify-between p-3 rounded-xl border ' +
                  (item.available ? 'border-gray-200' : 'border-red-300 bg-red-50') +
                  '">' +
-            '<div class="text-left">' +
-              '<div class="font-semibold text-sm">' + escapeHtml(item.name) + '</div>' +
+            '<div class="text-left flex-1 mr-3">' +
+              '<div class="font-semibold text-sm break-words">' + escapeHtml(item.name) + '</div>' +
               '<div class="text-xs text-gray-500">' +
                 escapeHtml(item.storage) + ' | ' +
                 escapeHtml(item.color) + ' | ' +
@@ -317,15 +323,15 @@ function showCartTab() {
                 (item.available ? 'В наличии' : 'Товар недоступен, удалите из корзины') +
               '</div>' +
             '</div>' +
-            '<div class="text-right">' +
-              '<div class="flex.items-center justify-end gap-2 mb-1">' +
+            '<div class="text-right flex flex-col items-end gap-1">' +
+              '<div class="flex items-center justify-end gap-2">' +
                 '<button class="px-2 py-1 rounded-full bg-gray-200 text-sm font-bold"' +
                         ' onclick="changeCartItemQuantity(' + idx + ', -1)">-</button>' +
                 '<span class="min-w-[24px] text-center text-sm font-semibold">' + item.quantity + '</span>' +
                 '<button class="px-2 py-1 rounded-full bg-gray-200 text-sm font-bold"' +
                         ' onclick="changeCartItemQuantity(' + idx + ', 1)">+</button>' +
               '</div>' +
-              '<div class="text-sm font-bold text-blue-600 mb-1">$' + (item.price * item.quantity) + '</div>' +
+              '<div class="text-sm font-bold text-blue-600">$' + (item.price * item.quantity) + '</div>' +
               '<button class="text-xs text-red-500" onclick="removeCartItem(' + idx + ')">Удалить</button>' +
             '</div>' +
           '</div>'
@@ -384,7 +390,7 @@ function showCartTab() {
             )
             : (
               '<label class="text-sm font-semibold text-gray-700 block">Адрес самовывоза</label>' +
-              '<select id="pickupLocation" class="w-full bg-white.border rounded-xl px-3 py-2 text-sm mb-2"' +
+              '<select id="pickupLocation" class="w-full bg-white border rounded-xl px-3 py-2 text-sm mb-2"' +
                       ' onchange="setPickupLocation(this.value)">' +
                 '<option value="">Выберите пункт самовывоза</option>' +
                 PICKUP_LOCATIONS.map(addr =>
@@ -453,7 +459,7 @@ function showSaleTab() {
       '</div>' +
       '<h2 class="text-2xl font-bold text-gray-800 mb-4">Распродажа</h2>' +
       '<p class="text-lg text-gray-600 mb-8">Скоро здесь будут скидки до 70%!</p>' +
-      '<button onclick="switchTab(\'shop\')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg.transition-all">' +
+      '<button onclick="switchTab(\'shop\')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
         'В магазин' +
       '</button>' +
     '</div>';
@@ -475,25 +481,25 @@ function showProfileTab() {
   const ordersHtml = previousOrders.length
     ? previousOrders.map((o, idx) =>
         '<div class="p-3 border rounded-xl mb-2 cursor-pointer" onclick="toggleOrderDetails(' + idx + ')">' +
-          '<div class="flex.items-center justify-between mb-1">' +
-            '<span class="text-sm font-semibold">Заказ #' + o.id + '</span>' +
-            '<span class="text-sm font-bold text-blue-600">$' + o.total + '</span>' +
+          '<div class="flex items-center justify-between mb-1">' +
+            '<span class="text-sm font-semibold break-all">Заказ #' + o.id + '</span>' +
+            '<span class="text-sm font-bold text-blue-600 ml-2 whitespace-nowrap">$' + o.total + '</span>' +
           '</div>' +
           '<div class="text-xs text-gray-500 mb-1">' + new Date(o.date).toLocaleString() + '</div>' +
-          '<div class="text-xs text-gray-600 mb-1">Адрес: ' + escapeHtml(o.address) + '</div>' +
+          '<div class="text-xs text-gray-600 mb-1 break-words">Адрес: ' + escapeHtml(o.address) + '</div>' +
           '<div class="text-xs text-gray-600 mb-1">Товаров: ' + o.items.length + '</div>' +
           '<div id="orderDetails_' + idx + '" class="hidden mt-2 text-xs text-gray-700 bg-gray-50 rounded-lg p-2">' +
             o.items.map(item =>
-              '<div class="flex.items-center justify-between mb-1">' +
-                '<div>' +
-                  '<div class="font-semibold">' + escapeHtml(item.name) + '</div>' +
+              '<div class="flex items-center justify-between mb-1 gap-2">' +
+                '<div class="flex-1 min-w-0">' +
+                  '<div class="font-semibold break-words">' + escapeHtml(item.name) + '</div>' +
                   '<div class="text-[11px] text-gray-500">' +
                     escapeHtml(item.storage) + ' | ' +
                     escapeHtml(item.color) + ' | ' +
                     escapeHtml(item.region) +
                   '</div>' +
                 '</div>' +
-                '<div class="text-right text-[11px]">' +
+                '<div class="text-right text-[11px] whitespace-nowrap">' +
                   '<div>' + item.quantity + ' шт.</div>' +
                   '<div>$' + (item.price * item.quantity) + '</div>' +
                 '</div>' +
@@ -506,29 +512,29 @@ function showProfileTab() {
 
   const addressesHtml = savedAddresses.length
     ? savedAddresses.map((addr, idx) =>
-        '<div class="flex.items-center justify-between p-2 border rounded-xl mb-1">' +
-          '<span class="text-xs text-gray-700">' + escapeHtml(addr) + '</span>' +
-          '<button class="text-xs text-red-500" onclick="removeAddress(' + idx + ')">Удалить</button>' +
+        '<div class="flex items-center gap-2 p-2 border rounded-xl mb-1">' +
+          '<span class="flex-1 text-xs text-gray-700 break-words">' + escapeHtml(addr) + '</span>' +
+          '<button class="text-xs text-red-500 shrink-0" onclick="removeAddress(' + idx + ')">Удалить</button>' +
         '</div>'
       ).join('')
     : '<p class="text-sm text-gray-500">Сохранённых адресов нет</p>';
 
   root.innerHTML =
-    '<div class="p-6 space-y-6 pb-[65px]">' +
-      '<div class="flex.items-center space-x-4">' +
-        '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">' +
+    '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto">' +
+      '<div class="flex items-center gap-4">' +
+        '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex.items-center justify-center">' +
           '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                   ' d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>' +
           '</svg>' +
         '</div>' +
-        '<div>' +
-          '<h2 class="text-xl font-bold">Профиль</h2>' +
-          '<p class="text-gray-500 text-sm">ID: ' + escapeHtml(displayId) + '</p>' +
+        '<div class="flex flex-col min-w-0">' +
+          '<h2 class="text-xl font-bold leading-tight">Профиль</h2>' +
+          '<p class="text-gray-500 text-sm mt-1 break-all">ID: ' + escapeHtml(displayId) + '</p>' +
         '</div>' +
       '</div>' +
 
-      '<div class="space-y-4">' +
+      '<div class="space-y-3">' +
         '<h3 class="text-lg font-semibold">Сохранённые адреса</h3>' +
         '<div id="addressesList">' + addressesHtml + '</div>' +
         '<div class="space-y-2">' +
@@ -571,7 +577,7 @@ window.removeAddress = function(index) {
 
 function showAboutTab() {
   root.innerHTML =
-    '<div class="p-6 space-y-6 pb-[65px]">' +
+    '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto">' +
       '<h2 class="text-2xl font-bold text-gray-800 mb-4">О нас</h2>' +
       '<div class="space-y-4 text-gray-700">' +
         '<p>Магазин премиальной техники Apple с гарантией качества и лучшими ценами.</p>' +
@@ -600,10 +606,10 @@ function showError(message) {
                 ' d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
         '</svg>' +
       '</div>' +
-      '<h2 class="text-2xl font-bold text-gray-800.mb-4">Ошибка загрузки</h2>' +
+      '<h2 class="text-2xl font-bold text-gray-800 mb-4">Ошибка загрузки</h2>' +
       '<p class="text-lg text-red-600 mb-2">' + escapeHtml(message) + '</p>' +
       '<button onclick="location.reload()"' +
-              ' class="bg-blue-500 hover:bg-blue-600 text-white font-bold.py-3 px-8 rounded-2xl shadow-lg transition-all">' +
+              ' class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
         'Попробовать снова' +
       '</button>' +
     '</div>';
@@ -647,7 +653,7 @@ function logStage(label, startTime) {
 window.placeOrder = async function() {
   if (isPlacingOrder) return;
 
-  const orderClickTs = Date.now(); // отметка клика
+  const orderClickTs = Date.now();
 
   if (cartItems.length === 0) {
     tg?.showAlert?.('Корзина пуста');
@@ -777,14 +783,14 @@ window.refreshProducts = async function() {
   isRefreshingProducts = true;
 
   root.innerHTML =
-    '<div class="pb-[65px]">' +
+    '<div class="pb-[65px] max-w-md mx-auto">' +
       '<div class="product-grid">' +
         Array.from({ length: 6 }).map(() =>
           '<div class="bg-white rounded-2xl p-4 shadow-lg">' +
             '<div class="h-32 mb-3 rounded-xl placeholder-shimmer"></div>' +
             '<div class="h-4 w-3/4 mb-2 rounded placeholder-shimmer"></div>' +
-            '<div class="h-5 w-1/2 mb-2 rounded placeholder-shimmer"></div>' +
-            '<div class="h-3 w-1/3 rounded placeholder-shimmer"></div>' +
+            '<div class="h-5 w-1/2 mb-2 rounded.placeholder-shimmer"></div>' +
+            '<div class="h-3 w-1/3 rounded.placeholder-shimmer"></div>' +
           '</div>'
         ).join('') +
       '</div>' +
@@ -804,17 +810,17 @@ async function fetchAndUpdateProducts(showLoader = false) {
 
   if (showLoader) {
     root.innerHTML =
-      '<div class="pb-[65px]">' +
+      '<div class="pb-[65px] max-w-md mx-auto">' +
         '<div class="mb-5">' +
-          '<div class="h-6 w-32 mb-4.rounded placeholder-shimmer"></div>' +
+          '<div class="h-6 w-32 mb-4 rounded placeholder-shimmer"></div>' +
           '<div class="flex items-center gap-3">' +
             '<div class="flex-1 bg-white rounded-2xl px-3 py-2">' +
               '<div class="h-3 w-20 mb-2 rounded placeholder-shimmer"></div>' +
-              '<div class="h-4 w-full rounded placeholder-shimmer"></div>' +
+              '<div class="h-4 w-full rounded.placeholder-shimmer"></div>' +
             '</div>' +
             '<div class="w-44 bg-white rounded-2xl px-3 py-2">' +
-              '<div class="h-3 w-16 mb-2 rounded placeholder-shimmer"></div>' +
-              '<div class="h-4 w-full rounded placeholder-shimmer"></div>' +
+              '<div class="h-3 w-16 mb-2 rounded.placeholder-shimmer"></div>' +
+              '<div class="h-4 w-full rounded.placeholder-shimmer"></div>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -870,7 +876,7 @@ async function fetchAndUpdateProducts(showLoader = false) {
     if (showLoader) {
       isRefreshingProducts = false;
       root.innerHTML =
-        '<div class="flex flex-col.items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+        '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px] max-w-md mx-auto">' +
           '<div class="w-24 h-24 bg-red-50 rounded-3xl flex items-center justify-center mb-4">' +
             '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
               '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +

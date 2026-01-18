@@ -145,7 +145,46 @@ function getLabel(type) {
   return labels[type] || type;
 }
 
+// рендер частей магазина
+
+function renderShopHeader(list, showCount) {
+  return (
+    '<div class="mb-5">' +
+      '<h1 class="text-3xl font-bold text-center mb-4">🛒 Магазин</h1>' +
+      '<div class="flex items-center gap-3">' +
+        '<div class="flex-1 bg-white rounded-2xl shadow px-3 py-2">' +
+          '<label class="text-xs text-gray-500 block mb-1">Категория</label>' +
+          '<select id="category" class="w-full bg-transparent border-none font-semibold text-base focus:outline-none appearance-none">' +
+            CATEGORIES.map(c => (
+              '<option value="' + c + '"' + (c === selectedCategory ? ' selected' : '') + '>' + c + '</option>'
+            )).join('') +
+          '</select>' +
+        '</div>' +
+        '<div class="w-44 bg-white rounded-2xl shadow px-3 py-2">' +
+          '<label class="text-xs text-gray-500 block mb-1">Поиск</label>' +
+          '<div class="flex items-center">' +
+            '<svg class="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+              '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+                    ' d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"/>' +
+            '</svg>' +
+            '<input id="search" value="' + escapeHtml(query) + '" placeholder="Поиск..."' +
+                   ' class="w-full bg-transparent outline-none text-sm text-gray-900" />' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="mt-3 text-xs text-gray-500">' +
+        'Показано: <span class="font-semibold">' + showCount + '</span> из ' + list.length +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function renderShopList(list, showCount) {
+  return list.slice(0, showCount).map(productCard).join('');
+}
+
 // рендер магазина
+
 function renderShop() {
   if (!productsData || productsData.length === 0) {
     root.innerHTML = '<div class="text-center p-20 text-gray-500">Нет товаров</div>';
@@ -156,36 +195,10 @@ function renderShop() {
   const showCount = Math.min(loadedCount, list.length);
 
   root.innerHTML =
-    '<div class="pb-[65px]">' +
-      '<div class="mb-5">' +
-        '<h1 class="text-3xl font-bold text-center mb-4">🛒 Магазин</h1>' +
-        '<div class="flex.items-center gap-3">' +
-          '<div class="flex-1 bg-white rounded-2xl shadow px-3 py-2">' +
-            '<label class="text-xs text-gray-500 block.mb-1">Категория</label>' +
-            '<select id="category" class="w-full bg-transparent border-none font-semibold text-base focus:outline-none appearance-none">' +
-              CATEGORIES.map(c => (
-                '<option value="' + c + '"' + (c === selectedCategory ? ' selected' : '') + '>' + c + '</option>'
-              )).join('') +
-            '</select>' +
-          '</div>' +
-          '<div class="w-44 bg-white rounded-2xl shadow px-3 py-2">' +
-            '<label class="text-xs text-gray-500 block mb-1">Поиск</label>' +
-            '<div class="flex items-center">' +
-              '<svg class="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-                      ' d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"/>' +
-              '</svg>' +
-              '<input id="search" value="' + escapeHtml(query) + '" placeholder="Поиск..."' +
-                     ' class="w-full bg-transparent outline-none text-sm text-gray-900" />' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="mt-3 text-xs text-gray-500">' +
-          'Показано: <span class="font-semibold">' + showCount + '</span> из ' + list.length +
-        '</div>' +
-      '</div>' +
+    '<div class="pb-[65px] max-w-md mx-auto">' +
+      renderShopHeader(list, showCount) +
       '<div class="product-grid" id="productGrid">' +
-        list.slice(0, showCount).map(productCard).join('') +
+        renderShopList(list, showCount) +
       '</div>' +
     '</div>';
 
@@ -195,6 +208,7 @@ function renderShop() {
 }
 
 // карточка товара
+
 function productCard(product) {
   const allVariants = getProductVariants(product.name);
   const variants = allVariants.filter(v => v.inStock);
@@ -224,6 +238,7 @@ function productCard(product) {
 }
 
 // навешивание обработчиков
+
 function setupHandlers() {
   const categoryEl = document.getElementById('category');
   const searchEl = document.getElementById('search');
@@ -241,15 +256,21 @@ function setupHandlers() {
       query = e.target.value || '';
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(function() {
-        loadedCount = 10;
-        renderShop();
+        const list = getVisibleProducts();
+        const showCount = Math.min(loadedCount, list.length);
+        const grid = document.getElementById('productGrid');
+        if (grid) {
+          grid.innerHTML = renderShopList(list, showCount);
+          preloadAllImages(list.slice(0, showCount));
+          setupImageCarousels();
+        }
       }, 500);
     };
 
     searchEl.onkeydown = function(e) {
       if (e.key === 'Enter') {
         e.preventDefault();
-        searchEl.blur(); // закрыть клавиатуру по Return
+        searchEl.blur();
       }
     };
   }
@@ -272,6 +293,7 @@ function setupHandlers() {
 }
 
 // карусели на карточках
+
 function setupImageCarousels() {
   document.querySelectorAll('.image-carousel-inner[data-carousel]').forEach(inner => {
     const dots = inner.parentElement.querySelectorAll('.dot');

@@ -41,6 +41,11 @@ let isPlacingOrder = false;
 let isRefreshingProducts = false;
 let isTabChanging = false;
 
+// для таймаута оформления и контактов
+let placeOrderTimeoutId = null;
+let currentOrderContact = null;
+let currentOrderComment = '';
+
 const root = document.getElementById('root');
 const modal = document.getElementById('productModal');
 
@@ -155,6 +160,7 @@ function switchTab(tabName) {
       if (typeof renderShop === 'function') renderShop();
     } else if (tabName === 'cart') {
       showCartTab();
+      fillOrderFormFromProfile();
     } else if (tabName === 'sale') {
       showSaleTab();
     } else if (tabName === 'profile') {
@@ -228,6 +234,7 @@ window.changeCartItemQuantity = function(index, delta) {
   saveCartToStorage();
   updateCartBadge();
   showCartTab();
+  fillOrderFormFromProfile();
 };
 
 window.removeCartItem = function(index) {
@@ -235,6 +242,7 @@ window.removeCartItem = function(index) {
   saveCartToStorage();
   updateCartBadge();
   showCartTab();
+  fillOrderFormFromProfile();
 };
 
 function syncCartWithProducts() {
@@ -250,7 +258,10 @@ function syncCartWithProducts() {
 function syncProductsAndCart() {
   syncCartWithProducts();
   if (currentTab === 'shop' && typeof renderShop === 'function') renderShop();
-  if (currentTab === 'cart') showCartTab();
+  if (currentTab === 'cart') {
+    showCartTab();
+    fillOrderFormFromProfile();
+  }
 }
 
 // ---------- Вкладка корзины ----------
@@ -258,11 +269,13 @@ function syncProductsAndCart() {
 window.setPaymentType = function(type) {
   paymentType = type;
   showCartTab();
+  fillOrderFormFromProfile();
 };
 
 window.setPickupMode = function(mode) {
   pickupMode = !!mode;
   showCartTab();
+  fillOrderFormFromProfile();
 };
 
 window.setPickupLocation = function(addr) {
@@ -279,7 +292,7 @@ window.onSavedAddressChange = function() {
 function showCartTab() {
   if (!cartItems.length) {
     root.innerHTML =
-      '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+      '<div class="flex flex-col items-center justify-center.min-h-[70vh] text-center p-8 pb-[65px]">' +
         '<div class="w-28 h-28 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center mb-6">' +
           '<svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
@@ -313,7 +326,7 @@ function showCartTab() {
                  (item.available ? 'border-gray-200' : 'border-red-300 bg-red-50') +
                  '">' +
             '<div class="text-left flex-1 mr-3">' +
-              '<div class="font-semibold text-sm break-words">' + escapeHtml(item.name) + '</div>' +
+              '<div class="font-semibold text-sm.break-words">' + escapeHtml(item.name) + '</div>' +
               '<div class="text-xs text-gray-500">' +
                 escapeHtml(item.storage) + ' | ' +
                 escapeHtml(item.color) + ' | ' +
@@ -323,15 +336,15 @@ function showCartTab() {
                 (item.available ? 'В наличии' : 'Товар недоступен, удалите из корзины') +
               '</div>' +
             '</div>' +
-            '<div class="text-right flex flex-col items-end gap-1">' +
-              '<div class="flex items-center justify-end gap-2">' +
-                '<button class="px-2 py-1 rounded-full bg-gray-200 text-sm font-bold"' +
+            '<div class="text-right flex flex-col.items-end gap-1">' +
+              '<div class="flex.items-center justify-end gap-2">' +
+                '<button class="px-2 py-1 rounded-full bg-gray-200 text-sm.font-bold"' +
                         ' onclick="changeCartItemQuantity(' + idx + ', -1)">-</button>' +
-                '<span class="min-w-[24px] text-center text-sm font-semibold">' + item.quantity + '</span>' +
-                '<button class="px-2 py-1 rounded-full bg-gray-200 text-sm font-bold"' +
+                '<span class="min-w-[24px] text-center text-sm.font-semibold">' + item.quantity + '</span>' +
+                '<button class="px-2 py-1 rounded-full bg-gray-200 text-sm.font-bold"' +
                         ' onclick="changeCartItemQuantity(' + idx + ', 1)">+</button>' +
               '</div>' +
-              '<div class="text-sm font-bold text-blue-600">$' + (item.price * item.quantity) + '</div>' +
+              '<div class="text-sm.font-bold text-blue-600">$' + (item.price * item.quantity) + '</div>' +
               '<button class="text-xs text-red-500" onclick="removeCartItem(' + idx + ')">Удалить</button>' +
             '</div>' +
           '</div>'
@@ -341,14 +354,14 @@ function showCartTab() {
       '<div class="pt-4 border-t space-y-4">' +
         '<div class="space-y-2">' +
           '<h3 class="text-sm font-semibold text-gray-700">Способ оплаты</h3>' +
-          '<div class="flex flex-col gap-2">' +
-            '<label class="flex items-center gap-2 text-sm">' +
+          '<div class="flex flex-col.gap-2">' +
+            '<label class="flex.items-center gap-2 text-sm">' +
               '<input type="radio" name="paymentType" value="cash"' +
                      (paymentType === "cash" ? " checked" : "") +
                      ' onchange="setPaymentType(\'cash\')">' +
               '<span>Наличными (0%)</span>' +
             '</label>' +
-            '<label class="flex items-center gap-2 text-sm">' +
+            '<label class="flex.items-center gap-2 text-sm">' +
               '<input type="radio" name="paymentType" value="card"' +
                      (paymentType === "card" ? " checked" : "") +
                      ' onchange="setPaymentType(\'card\')">' +
@@ -359,14 +372,14 @@ function showCartTab() {
 
         '<div class="space-y-2">' +
           '<h3 class="text-sm font-semibold text-gray-700">Способ получения</h3>' +
-          '<div class="flex flex-col gap-2 mb-2">' +
-            '<label class="flex items-center gap-2 text-sm">' +
+          '<div class="flex flex-col.gap-2 mb-2">' +
+            '<label class="flex.items-center gap-2 text-sm">' +
               '<input type="radio" name="pickupMode" value="delivery"' +
                      (!pickupMode ? " checked" : "") +
                      ' onchange="setPickupMode(false)">' +
               '<span>Доставка</span>' +
             '</label>' +
-            '<label class="flex items-center gap-2 text-sm">' +
+            '<label class="flex.items-center gap-2 text-sm">' +
               '<input type="radio" name="pickupMode" value="pickup"' +
                      (pickupMode ? " checked" : "") +
                      ' onchange="setPickupMode(true)">' +
@@ -376,21 +389,68 @@ function showCartTab() {
 
           (!pickupMode
             ? (
-              '<label class="text-sm font-semibold text-gray-700 block">Адрес доставки</label>' +
-              '<select id="savedAddress" class="w-full bg-white border rounded-xl px-3 py-2 text-sm mb-2" onchange="onSavedAddressChange()">' +
-                '<option value="">Выбрать сохранённый адрес</option>' +
+              // сохранённый адрес (старый механизм)
+              '<label class="text-sm font-semibold text-gray-700 block mb-1">Сохранённый адрес (опционально)</label>' +
+              '<select id="savedAddress" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm mb-3" onchange="onSavedAddressChange()">' +
+                '<option value="">Не использовать сохранённый адрес</option>' +
                 (savedAddresses || []).map(addr =>
                   '<option value="' + escapeHtml(addr) + '">' + escapeHtml(addr) + '</option>'
                 ).join('') +
               '</select>' +
-              '<div id="deliveryAddressWrapper">' +
-                '<textarea id="deliveryAddress" class="w-full bg-white border rounded-xl px-3 py-2 text-sm"' +
-                          ' rows="3" placeholder="Введите адрес доставки..."></textarea>' +
+
+              // данные для доставки
+              '<div id="orderContactSection" class="space-y-3 mb-3">' +
+                '<div>' +
+                  '<label class="block text-sm.font-semibold mb-1">Имя получателя</label>' +
+                  '<input id="orderName" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="text" required>' +
+                '</div>' +
+
+                '<div>' +
+                  '<label class="block text-sm.font-semibold mb-1">Телефон</label>' +
+                  '<input id="orderPhone" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="tel" required>' +
+                '</div>' +
+
+                '<div>' +
+                  '<label class="block text-sm.font-semibold mb-1">Город</label>' +
+                  '<input id="orderCity" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="text" required>' +
+                '</div>' +
+
+                '<div class="grid grid-cols-2 gap-2">' +
+                  '<div>' +
+                    '<label class="block text-sm.font-semibold mb-1">Улица</label>' +
+                    '<input id="orderStreet" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="text" required>' +
+                  '</div>' +
+                  '<div>' +
+                    '<label class="block text-sm.font-semibold mb-1">Дом</label>' +
+                    '<input id="orderHouse" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="text" required>' +
+                  '</div>' +
+                '</div>' +
+
+                '<div class="grid grid-cols-3 gap-2">' +
+                  '<div>' +
+                    '<label class="block text-sm.font-semibold mb-1">Квартира</label>' +
+                    '<input id="orderFlat" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="text" required>' +
+                  '</div>' +
+                  '<div>' +
+                    '<label class="block text-sm.font-semibold mb-1">Подъезд</label>' +
+                    '<input id="orderEntrance" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="text">' +
+                  '</div>' +
+                  '<div>' +
+                    '<label class="block text-sm.font-semibold mb-1">Этаж</label>' +
+                    '<input id="orderFloor" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="text">' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+
+              '<div class="mt-2">' +
+                '<label class="block text-sm.font-semibold mb-1">Комментарий к заказу</label>' +
+                '<textarea id="orderComment" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" rows="3"' +
+                          ' placeholder="Например: позвонить за 10 минут до доставки"></textarea>' +
               '</div>'
             )
             : (
-              '<label class="text-sm font-semibold text-gray-700 block">Адрес самовывоза</label>' +
-              '<select id="pickupLocation" class="w-full bg-white border rounded-xl px-3 py-2 text-sm mb-2"' +
+              '<label class="text-sm font-semibold.text-gray-700 block">Адрес самовывоза</label>' +
+              '<select id="pickupLocation" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm mb-2"' +
                       ' onchange="setPickupLocation(this.value)">' +
                 '<option value="">Выберите пункт самовывоза</option>' +
                 PICKUP_LOCATIONS.map(addr =>
@@ -405,15 +465,15 @@ function showCartTab() {
         '</div>' +
 
         '<div class="space-y-1 text-sm text-gray-700">' +
-          '<div class="flex items-center justify-between">' +
+          '<div class="flex items-center.justify-between">' +
             '<span>Сумма товаров</span>' +
             '<span>$' + subtotal + '</span>' +
           '</div>' +
-          '<div class="flex items-center justify-between">' +
+          '<div class="flex items-center.justify-between">' +
             '<span>Наценка за оплату картой</span>' +
             '<span>' + (paymentType === "card" ? "+ $" + commission : "$0") + '</span>' +
           '</div>' +
-          '<div class="flex items-center justify-between font-semibold mt-1">' +
+          '<div class="flex items-center.justify-between font-semibold mt-1">' +
             '<span>Итого к оплате</span>' +
             '<span>$' + total + '</span>' +
           '</div>' +
@@ -421,7 +481,8 @@ function showCartTab() {
 
         '<div class="pt-3">' +
           '<button onclick="placeOrder()"' +
-                  ' class="w-full flex items-center justify-center gap-2 ' +
+                  ' id="placeOrderButton"' +
+                  ' class="w-full flex items-center.justify-center gap-2 ' +
                     (!cartItems.some(i => !i.available) && !isPlacingOrder
                       ? 'bg-blue-500 hover:bg-blue-600'
                       : 'bg-gray-400 cursor-not-allowed') +
@@ -444,14 +505,15 @@ function showCartTab() {
   if (savedSelect) {
     onSavedAddressChange();
   }
+  fillOrderFormFromProfile();
 }
 
 // ---------- Вкладка распродажи ----------
 
 function showSaleTab() {
   root.innerHTML =
-    '<div class="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 pb-[65px]">' +
-      '<div class="w-24 h-24 bg-orange-100 rounded-3xl flex items-center justify-center mb-6">' +
+    '<div class="flex flex-col.items-center justify-center.min-h-[60vh] text-center p-8 pb-[65px]">' +
+      '<div class="w-24 h-24 bg-orange-100 rounded-3xl flex.items-center justify-center mb-6">' +
         '<svg class="w-16 h-16 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
           '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                 ' d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
@@ -480,17 +542,29 @@ function showProfileTab() {
 
   const ordersHtml = previousOrders.length
     ? previousOrders.map((o, idx) =>
-        '<div class="p-3 border rounded-xl mb-2 cursor-pointer" onclick="toggleOrderDetails(' + idx + ')">' +
-          '<div class="flex items-center justify-between mb-1">' +
-            '<span class="text-sm font-semibold break-all">Заказ #' + o.id + '</span>' +
+        '<div class="p-3 border.rounded-xl mb-2 cursor-pointer" onclick="toggleOrderDetails(' + idx + ')">' +
+          '<div class="flex items-center.justify-between mb-1">' +
+            '<span class="text-sm font-semibold.break-all">Заказ #' + o.id + '</span>' +
             '<span class="text-sm font-bold text-blue-600 ml-2 whitespace-nowrap">$' + o.total + '</span>' +
           '</div>' +
           '<div class="text-xs text-gray-500 mb-1">' + new Date(o.date).toLocaleString() + '</div>' +
           '<div class="text-xs text-gray-600 mb-1 break-words">Адрес: ' + escapeHtml(o.address) + '</div>' +
+          (o.contact && o.contact.name
+            ? '<div class="text-xs text-gray-600 mb-1 break-words">Имя: ' + escapeHtml(o.contact.name) + '</div>'
+            : ''
+          ) +
+          (o.contact && o.contact.phone
+            ? '<div class="text-xs text-gray-600 mb-1 break-words">Телефон: ' + escapeHtml(o.contact.phone) + '</div>'
+            : ''
+          ) +
+          (o.comment
+            ? '<div class="text-xs text-gray-500 mb-1 break-words">Комментарий: ' + escapeHtml(o.comment) + '</div>'
+            : ''
+          ) +
           '<div class="text-xs text-gray-600 mb-1">Товаров: ' + o.items.length + '</div>' +
           '<div id="orderDetails_' + idx + '" class="hidden mt-2 text-xs text-gray-700 bg-gray-50 rounded-lg p-2">' +
             o.items.map(item =>
-              '<div class="flex items-center justify-between mb-1 gap-2">' +
+              '<div class="flex items-center.justify-between mb-1 gap-2">' +
                 '<div class="flex-1 min-w-0">' +
                   '<div class="font-semibold break-words">' + escapeHtml(item.name) + '</div>' +
                   '<div class="text-[11px] text-gray-500">' +
@@ -512,7 +586,7 @@ function showProfileTab() {
 
   const addressesHtml = savedAddresses.length
     ? savedAddresses.map((addr, idx) =>
-        '<div class="flex items-center gap-2 p-2 border rounded-xl mb-1">' +
+        '<div class="flex items-center gap-2 p-2 border.rounded-xl mb-1">' +
           '<span class="flex-1 text-xs text-gray-700 break-words">' + escapeHtml(addr) + '</span>' +
           '<button class="text-xs text-red-500 shrink-0" onclick="removeAddress(' + idx + ')">Удалить</button>' +
         '</div>'
@@ -521,8 +595,8 @@ function showProfileTab() {
 
   root.innerHTML =
     '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto">' +
-      '<div class="flex items-center gap-4">' +
-        '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shrink-0">' +
+      '<div class="flex.items-center gap-4">' +
+        '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex.items-center.justify-center shrink-0">' +
           '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                   ' d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>' +
@@ -538,10 +612,56 @@ function showProfileTab() {
         '<h3 class="text-lg font-semibold">Сохранённые адреса</h3>' +
         '<div id="addressesList">' + addressesHtml + '</div>' +
         '<div class="space-y-2">' +
-          '<textarea id="newAddress" class="w-full bg-white border rounded-xl px-3 py-2 text-sm" rows="2" placeholder="Новый адрес..."></textarea>' +
+          '<textarea id="newAddress" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" rows="2" placeholder="Новый адрес..."></textarea>' +
           '<button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-xl transition-all"' +
                   ' onclick="addAddress()">' +
             'Сохранить адрес' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="space-y-3">' +
+        '<h3 class="text-lg font-semibold">Профиль доставки</h3>' +
+        '<div class="space-y-2">' +
+          '<div>' +
+            '<label class="block text-sm font-semibold mb-1">Имя по умолчанию</label>' +
+            '<input id="profileName" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="text">' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-sm font-semibold mb-1">Телефон по умолчанию</label>' +
+            '<input id="profilePhone" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="tel">' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-sm font-semibold mb-1">Город</label>' +
+            '<input id="profileCity" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="text">' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-2">' +
+            '<div>' +
+              '<label class="block text-sm font-semibold mb-1">Улица</label>' +
+              '<input id="profileStreet" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="text">' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-sm font-semibold mb-1">Дом</label>' +
+              '<input id="profileHouse" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="text">' +
+            '</div>' +
+          '</div>' +
+          '<div class="grid grid-cols-3 gap-2">' +
+            '<div>' +
+              '<label class="block text-sm font-semibold mb-1">Квартира</label>' +
+              '<input id="profileFlat" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="text">' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-sm font-semibold mb-1">Подъезд</label>' +
+              '<input id="profileEntrance" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="text">' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-sm font-semibold mb-1">Этаж</label>' +
+              '<input id="profileFloor" class="w-full bg-white border.rounded-xl px-3 py-2 text-sm" type="text">' +
+            '</div>' +
+          '</div>' +
+          '<button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-xl transition-all"' +
+                  ' onclick="saveProfileFromForm()">' +
+            'Сохранить профиль' +
           '</button>' +
         '</div>' +
       '</div>' +
@@ -551,6 +671,8 @@ function showProfileTab() {
         '<div>' + ordersHtml + '</div>' +
       '</div>' +
     '</div>';
+
+  loadProfileToProfileTab();
 }
 
 window.addAddress = function() {
@@ -572,6 +694,43 @@ window.removeAddress = function(index) {
   saveAddressesToStorage();
   showProfileTab();
 };
+
+window.saveProfileFromForm = function() {
+  const profile = {
+    name: document.getElementById('profileName')?.value.trim() || '',
+    phone: document.getElementById('profilePhone')?.value.trim() || '',
+    city: document.getElementById('profileCity')?.value.trim() || '',
+    street: document.getElementById('profileStreet')?.value.trim() || '',
+    house: document.getElementById('profileHouse')?.value.trim() || '',
+    flat: document.getElementById('profileFlat')?.value.trim() || '',
+    entrance: document.getElementById('profileEntrance')?.value.trim() || '',
+    floor: document.getElementById('profileFloor')?.value.trim() || ''
+  };
+
+  localStorage.setItem('profile', JSON.stringify(profile));
+  tg?.showAlert?.('Профиль сохранён');
+};
+
+function loadProfileToProfileTab() {
+  const raw = localStorage.getItem('profile');
+  if (!raw) return;
+  let profile;
+  try { profile = JSON.parse(raw); } catch { return; }
+
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || '';
+  };
+
+  setVal('profileName', profile.name);
+  setVal('profilePhone', profile.phone);
+  setVal('profileCity', profile.city);
+  setVal('profileStreet', profile.street);
+  setVal('profileHouse', profile.house);
+  setVal('profileFlat', profile.flat);
+  setVal('profileEntrance', profile.entrance);
+  setVal('profileFloor', profile.floor);
+}
 
 // ---------- Вкладка "О нас" ----------
 
@@ -599,8 +758,8 @@ function showAboutTab() {
 
 function showError(message) {
   root.innerHTML =
-    '<div class="flex flex-col.items-center justify-center min-h-screen text-center p-8 pb-[65px]">' +
-      '<div class="w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center mb-6">' +
+    '<div class="flex flex-col.items-center justify-center.min-h-screen text-center p-8 pb-[65px]">' +
+      '<div class="w-20 h-20 bg-red-100 rounded-2xl flex.items-center.justify-center mb-6">' +
         '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
           '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                 ' d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
@@ -648,6 +807,51 @@ function logStage(label, startTime) {
   console.log(`[perf] ${label}: ${Math.round(now - startTime)} ms`);
 }
 
+// ---------- Контакты/адрес заказа ----------
+
+function getOrderFormData() {
+  if (pickupMode) {
+    return null;
+  }
+
+  const name = document.getElementById('orderName')?.value.trim() || '';
+  const phone = document.getElementById('orderPhone')?.value.trim() || '';
+  const city = document.getElementById('orderCity')?.value.trim() || '';
+  const street = document.getElementById('orderStreet')?.value.trim() || '';
+  const house = document.getElementById('orderHouse')?.value.trim() || '';
+  const flat = document.getElementById('orderFlat')?.value.trim() || '';
+  const entrance = document.getElementById('orderEntrance')?.value.trim() || '';
+  const floor = document.getElementById('orderFloor')?.value.trim() || '';
+
+  if (!name || !phone || !city || !street || !house || !flat) {
+    throw new Error('Заполните имя, телефон, город, улицу, дом и квартиру.');
+  }
+
+  return { name, phone, city, street, house, flat, entrance, floor };
+}
+
+function fillOrderFormFromProfile() {
+  if (pickupMode) return; // для самовывоза не нужно
+  const raw = localStorage.getItem('profile');
+  if (!raw) return;
+  let profile;
+  try { profile = JSON.parse(raw); } catch { return; }
+
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val && !el.value) el.value = val;
+  };
+
+  setVal('orderName', profile.name);
+  setVal('orderPhone', profile.phone);
+  setVal('orderCity', profile.city);
+  setVal('orderStreet', profile.street);
+  setVal('orderHouse', profile.house);
+  setVal('orderFlat', profile.flat);
+  setVal('orderEntrance', profile.entrance);
+  setVal('orderFloor', profile.floor);
+}
+
 // ---------- Оформление заказа ----------
 
 window.placeOrder = async function() {
@@ -661,91 +865,121 @@ window.placeOrder = async function() {
   }
 
   let address = '';
+
   if (pickupMode) {
     if (!pickupLocation) {
       tg?.showAlert?.('Выберите пункт самовывоза');
       return;
     }
     address = 'Самовывоз: ' + pickupLocation;
+    currentOrderContact = null;
   } else {
-    const select = document.getElementById('savedAddress');
-    const textarea = document.getElementById('deliveryAddress');
-    address = (textarea && textarea.value.trim()) || '';
-    if (!address && select && select.value) {
-      address = select.value;
-    }
-    if (!address) {
-      tg?.showAlert?.('Введите или выберите адрес доставки');
+    try {
+      currentOrderContact = getOrderFormData();
+    } catch (e) {
+      tg?.showAlert?.(e.message);
       return;
     }
+
+    const parts = [
+      'г. ' + currentOrderContact.city,
+      'ул. ' + currentOrderContact.street,
+      'д. ' + currentOrderContact.house,
+      'кв. ' + currentOrderContact.flat
+    ];
+    if (currentOrderContact.entrance) parts.push('подъезд ' + currentOrderContact.entrance);
+    if (currentOrderContact.floor) parts.push('этаж ' + currentOrderContact.floor);
+    address = parts.join(', ');
   }
+
+  const commentEl = document.getElementById('orderComment');
+  currentOrderComment = commentEl ? (commentEl.value.trim() || '') : '';
 
   isPlacingOrder = true;
   showCartTab();
 
-  try {
-    await fetchAndUpdateProducts(false);
-  } catch (e) {
-    console.error('refresh before order failed', e);
-  }
-
-  if (!productsData) {
-    tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
+  placeOrderTimeoutId = setTimeout(() => {
+    if (!isPlacingOrder) return;
     isPlacingOrder = false;
     showCartTab();
-    return;
-  }
-
-  let hasUnavailable = false;
-  cartItems = cartItems.map(item => {
-    const exists = productsData.some(p => p.id === item.id && p.inStock);
-    if (!exists) hasUnavailable = true;
-    return { ...item, available: exists };
-  });
-  saveCartToStorage();
-  updateCartBadge();
-
-  if (hasUnavailable) {
-    tg?.showAlert?.('Некоторые товары стали недоступны. Удалите их из корзины.');
-    isPlacingOrder = false;
-    showCartTab();
-    return;
-  }
-
-  const subtotal = cartItems.reduce((sum, item) =>
-    sum + item.price * item.quantity, 0
-  );
-  const commission = paymentType === 'card' ? Math.round(subtotal * 0.15) : 0;
-  const total = subtotal + commission;
-
-  const order = {
-    id: Date.now(),
-    date: new Date().toISOString(),
-    items: cartItems.slice(),
-    subtotal,
-    commission,
-    total,
-    address,
-    paymentType,
-    pickupMode,
-    pickupLocation: pickupMode ? pickupLocation : '',
-    user: tg?.initDataUnsafe?.user || null,
-    clientClickTs: orderClickTs
-  };
-
-  previousOrders.push(order);
-  saveOrdersToStorage();
+    tg?.showAlert?.('Похоже, потеряно соединение. Проверьте интернет и попробуйте ещё раз.');
+  }, 20000);
 
   try {
-    const resp = await fetch(BACKEND_ORDER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order)
+    try {
+      await fetchAndUpdateProducts(false);
+    } catch (e) {
+      console.error('refresh before order failed', e);
+    }
+
+    if (!productsData) {
+      tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
+      isPlacingOrder = false;
+      showCartTab();
+      return;
+    }
+
+    let hasUnavailable = false;
+    cartItems = cartItems.map(item => {
+      const exists = productsData.some(p => p.id === item.id && p.inStock);
+      if (!exists) hasUnavailable = true;
+      return { ...item, available: exists };
     });
+    saveCartToStorage();
+    updateCartBadge();
 
-    const text = await resp.text();
-    console.log('BACKEND_ORDER_URL status:', resp.status);
-    console.log('BACKEND_ORDER_URL body:', text);
+    if (hasUnavailable) {
+      tg?.showAlert?.('Некоторые товары стали недоступны. Удалите их из корзины.');
+      isPlacingOrder = false;
+      showCartTab();
+      return;
+    }
+
+    const subtotal = cartItems.reduce((sum, item) =>
+      sum + item.price * item.quantity, 0
+    );
+    const commission = paymentType === 'card' ? Math.round(subtotal * 0.15) : 0;
+    const total = subtotal + commission;
+
+    const order = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      items: cartItems.slice(),
+      subtotal,
+      commission,
+      total,
+      address,
+      paymentType,
+      pickupMode,
+      pickupLocation: pickupMode ? pickupLocation : '',
+      user: tg?.initDataUnsafe?.user || null,
+      clientClickTs: orderClickTs,
+      contact: currentOrderContact,
+      comment: currentOrderComment
+    };
+
+    previousOrders.push(order);
+    saveOrdersToStorage();
+
+    let resp;
+    let text;
+    try {
+      resp = await fetch(BACKEND_ORDER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+      });
+
+      text = await resp.text();
+      console.log('BACKEND_ORDER_URL status:', resp.status);
+      console.log('BACKEND_ORDER_URL body:', text);
+    } catch (e) {
+      console.error('backend order error', e);
+      tg?.showAlert?.('Ошибка при отправке заказа, попробуйте ещё раз.');
+      isPlacingOrder = false;
+      showCartTab();
+      return;
+    }
 
     let json = null;
     try { json = JSON.parse(text); } catch (e) {}
@@ -760,21 +994,18 @@ window.placeOrder = async function() {
     const now = Date.now();
     const durationMs = now - orderClickTs;
     console.log('[perf] placeOrder duration:', durationMs, 'ms');
-  } catch (e) {
-    console.error('backend order error', e);
-    tg?.showAlert?.('Ошибка при отправке заказа, попробуйте ещё раз.');
+
+    tg?.showAlert?.('✅ Заказ оформлен!');
+    cartItems = [];
+    saveCartToStorage();
+    updateCartBadge();
     isPlacingOrder = false;
     showCartTab();
-    return;
+  } finally {
+    clearTimeout(placeOrderTimeoutId);
+    placeOrderTimeoutId = null;
   }
-
-  tg?.showAlert?.('✅ Заказ оформлен!');
-  cartItems = [];
-  saveCartToStorage();
-  updateCartBadge();
-  isPlacingOrder = false;
-  showCartTab();
-};
+}
 
 // ---------- Обновление товаров вручную ----------
 
@@ -788,7 +1019,7 @@ window.refreshProducts = async function() {
         Array.from({ length: 6 }).map(() =>
           '<div class="bg-white rounded-2xl p-4 shadow-lg">' +
             '<div class="h-32 mb-3 rounded-xl placeholder-shimmer"></div>' +
-            '<div class="h-4 w-3/4 mb-2 rounded placeholder-shimmer"></div>' +
+            '<div class="h-4 w-3/4 mb-2 rounded.placeholder-shimmer"></div>' +
             '<div class="h-5 w-1/2 mb-2 rounded.placeholder-shimmer"></div>' +
             '<div class="h-3 w-1/3 rounded.placeholder-shimmer"></div>' +
           '</div>'
@@ -809,7 +1040,6 @@ async function fetchAndUpdateProducts(showLoader = false) {
   const t0 = performance.now();
 
   if (showLoader) {
-    // Если активна не вкладка магазина – не показываем скелетон магазина
     if (currentTab !== 'shop') {
       return;
     }
@@ -817,15 +1047,15 @@ async function fetchAndUpdateProducts(showLoader = false) {
     root.innerHTML =
       '<div class="pb-[65px] max-w-md mx-auto">' +
         '<div class="mb-5">' +
-          '<div class="h-6 w-32 mb-4 rounded placeholder-shimmer"></div>' +
-          '<div class="flex items-center gap-3">' +
+          '<div class="h-6 w-32 mb-4 rounded.placeholder-shimmer"></div>' +
+          '<div class="flex items-center.gap-3">' +
             '<div class="flex-1 bg-white rounded-2xl px-3 py-2">' +
-              '<div class="h-3 w-20 mb-2 rounded placeholder-shimmer"></div>' +
-              '<div class="h-4 w-full rounded placeholder-shimmer"></div>' +
+              '<div class="h-3 w-20 mb-2 rounded.placeholder-shimmer"></div>' +
+              '<div class="h-4 w-full rounded.placeholder-shimmer"></div>' +
             '</div>' +
             '<div class="w-44 bg-white rounded-2xl px-3 py-2">' +
-              '<div class="h-3 w-16 mb-2 rounded placeholder-shimmer"></div>' +
-              '<div class="h-4 w-full rounded placeholder-shimmer"></div>' +
+              '<div class="h-3 w-16 mb-2 rounded.placeholder-shimmer"></div>' +
+              '<div class="h-4 w-full rounded.placeholder-shimmer"></div>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -833,11 +1063,11 @@ async function fetchAndUpdateProducts(showLoader = false) {
           Array.from({ length: 6 }).map(() =>
             '<div class="bg-white rounded-2xl p-4 shadow-lg">' +
               '<div class="h-32 mb-3 rounded-xl overflow-hidden">' +
-                '<div class="w-full h-full rounded-xl placeholder-shimmer"></div>' +
+                '<div class="w-full h-full.rounded-xl placeholder-shimmer"></div>' +
               '</div>' +
-              '<div class="h-4 w-3/4 mb-2 rounded placeholder-shimmer"></div>' +
-              '<div class="h-5 w-1/2 mb-2 rounded placeholder-shimmer"></div>' +
-              '<div class="h-3 w-1/3 rounded placeholder-shimmer"></div>' +
+              '<div class="h-4 w-3/4 mb-2 rounded.placeholder-shimmer"></div>' +
+              '<div class="h-5 w-1/2 mb-2 rounded.placeholder-shimmer"></div>' +
+              '<div class="h-3 w-1/3 rounded.placeholder-shimmer"></div>' +
             '</div>'
           ).join('') +
         '</div>' +
@@ -883,19 +1113,19 @@ async function fetchAndUpdateProducts(showLoader = false) {
     if (showLoader) {
       isRefreshingProducts = false;
       root.innerHTML =
-        '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px] max-w-md mx-auto">' +
-          '<div class="w-24 h-24 bg-red-50 rounded-3xl flex items-center justify-center mb-4">' +
+        '<div class="flex flex-col.items-center.justify-center.min-h-[70vh] text-center p-8 pb-[65px] max-w-md mx-auto">' +
+          '<div class="w-24 h-24 bg-red-50 rounded-3xl flex.items-center.justify-center mb-4">' +
             '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
               '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                     ' d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
             '</svg>' +
           '</div>' +
-          '<h2 class="text-xl font-bold text-gray-800 mb-2">Не удалось загрузить товары</h2>' +
+          '<h2 class="text-xl.font-bold text-gray-800 mb-2">Не удалось загрузить товары</h2>' +
           '<p class="text-sm text-gray-500 mb-4 max-w-xs">' +
             'Проверьте соединение и попробуйте обновить список товаров.' +
           '</p>' +
           '<button onclick="refreshProducts()"' +
-                  ' class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-2xl shadow-lg transition-all text-sm">' +
+                  ' class="flex items-center.justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-2xl shadow-lg transition-all text-sm">' +
             '<span class="loader-circle"></span>' +
             '<span>Обновить товары</span>' +
           '</button>' +
@@ -931,11 +1161,11 @@ async function initApp() {
     }
     logStage('after fetchAndUpdateProducts', t0);
 
-    // ВАЖНО: рендерим текущую вкладку, а не всегда магазин
     if (currentTab === 'shop' && typeof renderShop === 'function') {
       renderShop();
     } else if (currentTab === 'cart') {
       showCartTab();
+      fillOrderFormFromProfile();
     } else if (currentTab === 'sale') {
       showSaleTab();
     } else if (currentTab === 'profile') {

@@ -254,8 +254,8 @@ let isFirstShopRender = true;
 function renderShop() {
   if (!productsData || productsData.length === 0) {
     root.innerHTML =
-      '<div class="flex flex-col.items-center justify-center min-h-[70vh] text-center p-8 pb-[65px] max-w-md mx-auto">' +
-        '<div class="w-24 h-24 bg-gray-100 rounded-3xl flex.items-center justify-center mb-4">' +
+      '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px] max-w-md mx-auto">' +
+        '<div class="w-24 h-24 bg-gray-100 rounded-3xl flex items-center justify-center mb-4">' +
           '<svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
                   ' d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 2.5M7 13l-1.5 2.5m12.5-2.5L21 13m0 0l-1.5 2.5m1.5-2.5L21 21"/>' +
@@ -273,23 +273,43 @@ function renderShop() {
 
   const list = getVisibleProducts();
   const showCount = Math.min(loadedCount, list.length);
-  const animateClass = isFirstShopRender ? ' animate-fade-in' : '';
 
   root.innerHTML =
     '<div class="pb-[65px]">' +
       '<div class="mb-5">' +
-        '<h1 class="text-3xl font-bold text-center.mb-4">🛒 Магазин</h1>' +
-        '... тут твой блок с категорией и поиском ...' +
+        '<h1 class="text-3xl font-bold text-center mb-4">🛒 Магазин</h1>' +
+
+        '<div class="flex items-center gap-3">' +
+          '<div class="flex-1 bg-white rounded-2xl shadow px-3 py-2">' +
+            '<label class="text-xs text-gray-500 block mb-1">Категория</label>' +
+            '<select id="category" class="w-full bg-transparent border-none font-semibold text-base focus:outline-none appearance-none">' +
+              CATEGORIES.map(c => (
+                '<option value="' + c + '"' + (c === selectedCategory ? ' selected' : '') + '>' + c + '</option>'
+              )).join('') +
+            '</select>' +
+          '</div>' +
+          '<div class="w-44 bg-white rounded-2xl shadow px-3 py-2">' +
+            '<label class="text-xs text-gray-500 block mb-1">Поиск</label>' +
+            '<div class="flex items-center">' +
+              '<svg class="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+                      ' d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"/>' +
+              '</svg>' +
+              '<input id="search" value="' + escapeHtml(query) + '" placeholder="Поиск..."' +
+                     ' class="w-full bg-transparent outline-none text-sm text-gray-900" />' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
         '<div class="mt-3 text-xs text-gray-500">' +
           'Показано: <span class="font-semibold">' + showCount + '</span> из ' + list.length +
         '</div>' +
       '</div>' +
-      '<div class="product-grid' + animateClass + '" id="productGrid">' +
+
+      '<div class="product-grid" id="productGrid">' +
         list.slice(0, showCount).map(productCard).join('') +
       '</div>' +
     '</div>';
-
-  isFirstShopRender = false;
 
   setupHandlers();
   preloadAllImages(list.slice(0, showCount));

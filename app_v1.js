@@ -511,7 +511,7 @@ function showCartTab() {
   ' bg-purple-500 hover:bg-purple-600 text-white shadow-md transition-all active:scale-[0.97] max-w-[180px] whitespace-nowrap"' +
   ' id="refreshCartButton">' +
   '<span class="loader-circle hidden mr-1" id="refreshCartLoader"></span>' +
-  '<span class="leading-tight">Обновить цены и удалить неактуальные</span>' +
+  '<span class="leading-tight">Актуализировать корзину</span>' +
 '</button>' +
       '</div>' +
       '<div class="space-y-3">' +

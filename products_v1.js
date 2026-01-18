@@ -7,8 +7,10 @@ const PLACEHOLDERS = {
   'AirPods': 'https://via.placeholder.com/300x300/30D158/FFFFFF?text=AirPods'
 };
 
+
 // порядок выбора опций в модалке
 const FILTER_ORDER = ['simType', 'storage', 'color', 'region'];
+
 
 // нормализация ответа из Google Apps Script (плоский массив вариантов)
 function normalizeProducts(products) {
@@ -28,10 +30,12 @@ function normalizeProducts(products) {
   }));
 }
 
+
 // все варианты по имени товара
 function getProductVariants(productName) {
   return productsData ? productsData.filter(p => p.name === productName) : [];
 }
+
 
 // все картинки по вариантам
 function getFilteredProductImages(variants) {
@@ -46,6 +50,7 @@ function getFilteredProductImages(variants) {
   return Array.from(images);
 }
 
+
 // текущие варианты по выбранным опциям
 function getFilteredVariants(variants) {
   return variants.filter(variant => {
@@ -56,6 +61,7 @@ function getFilteredVariants(variants) {
   });
 }
 
+
 // доступные значения для одного типа опции
 function getAvailableOptions(type, variants) {
   const filteredVariants = getFilteredVariants(variants);
@@ -63,10 +69,12 @@ function getAvailableOptions(type, variants) {
   return options.sort();
 }
 
+
 // все ли опции выбраны
 function isCompleteSelection() {
   return FILTER_ORDER.every(type => selectedOption[type]);
 }
+
 
 // индекс секции, до которой выбор сделан
 function getCurrentSectionIndex() {
@@ -75,6 +83,7 @@ function getCurrentSectionIndex() {
   }
   return FILTER_ORDER.length;
 }
+
 
 // перемешивание массива (вместо randomIds)
 function shuffleArray(items) {
@@ -85,6 +94,7 @@ function shuffleArray(items) {
   }
   return arr;
 }
+
 
 // список товаров для отображения в магазине
 function getVisibleProducts() {
@@ -123,6 +133,7 @@ function getVisibleProducts() {
   return groupedVisible;
 }
 
+
 // предзагрузка картинок
 function preloadAllImages(products) {
   products.forEach(product => {
@@ -139,13 +150,16 @@ function preloadAllImages(products) {
   });
 }
 
+
 // подписи к опциям
 function getLabel(type) {
   const labels = { simType: 'SIM/eSIM', storage: 'Память', color: 'Цвет', region: 'Регион' };
   return labels[type] || type;
 }
 
+
 // рендер частей магазина
+
 
 function renderShopHeader(list, showCount) {
   var optionsHtml = '';
@@ -186,11 +200,14 @@ function renderShopHeader(list, showCount) {
   );
 }
 
+
 function renderShopList(list, showCount) {
   return list.slice(0, showCount).map(productCard).join('');
 }
 
+
 // рендер магазина
+
 
 function renderShop() {
   if (!productsData || productsData.length === 0) {
@@ -214,7 +231,9 @@ function renderShop() {
   setupImageCarousels();
 }
 
+
 // карточка товара
+
 
 function productCard(product) {
   const allVariants = getProductVariants(product.name);
@@ -232,7 +251,7 @@ function productCard(product) {
     '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
       ' data-product-name="' + escapeHtml(product.name) + '"' +
       ' data-carousel-id="' + carouselId + '">' +
-      '<div class="w-full h-32 rounded-xl mb-3 image-carousel h-32 cursor-pointer">' +
+      '<div class="w-full h-32 rounded-xl mb-3 image-carousel h-32 cursor-pointer overflow-hidden">' +
         '<div class="image-carousel-inner" data-carousel="' + carouselId + '" data-current="0">' +
           '<img src="' + mainImage + '" class="carousel-img loaded" alt="Product" />' +
         '</div>' +
@@ -244,7 +263,9 @@ function productCard(product) {
   );
 }
 
+
 // навешивание обработчиков
+
 
 function setupHandlers() {
   const categoryEl = document.getElementById('category');
@@ -299,7 +320,9 @@ function setupHandlers() {
   });
 }
 
+
 // карусели на карточках
+
 
 function setupImageCarousels() {
   document.querySelectorAll('.image-carousel-inner[data-carousel]').forEach(inner => {
@@ -345,12 +368,13 @@ function setupImageCarousels() {
   });
 }
 
+
 window.carouselNext = function(id) {
-  window['carouselNext_' + id] && window['carouselNext_' + id]();
+  if (window['carouselNext_' + id]) window['carouselNext_' + id]();
 };
 window.carouselPrev = function(id) {
-  window['carouselPrev_' + id] && window['carouselPrev_' + id]();
+  if (window['carouselPrev_' + id]) window['carouselPrev_' + id]();
 };
 window.carouselGoTo = function(id, index) {
-  window['carouselGoTo_' + id] && window['carouselGoTo_' + id](index);
+  if (window['carouselGoTo_' + id]) window['carouselGoTo_' + id](index);
 };

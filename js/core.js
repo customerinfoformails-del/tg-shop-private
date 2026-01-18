@@ -13,6 +13,13 @@ const ORDERS_API_URL =
   'https://tg-shop-test-backend.onrender.com/orders';
 const BACKEND_ORDER_URL = 'https://tg-shop-test-backend.onrender.com/order';
 
+
+const isMobileDevice =
+  (navigator.userAgentData && navigator.userAgentData.mobile) ||
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobi/i.test(
+    navigator.userAgent || ''
+  );
+
 let CATEGORIES = ['Все'];
 let isOrdersLoading = false;
 
@@ -405,6 +412,7 @@ async function fetchUserOrders() {
 // ---------- Инициализация ----------
 
 function hideTabBar() {
+  if (!isMobileDevice) return; // на десктопе не трогаем таббар
   const tabBar = document.getElementById('tabBar');
   if (!tabBar) return;
   tabBar.style.opacity = '0';
@@ -412,6 +420,7 @@ function hideTabBar() {
 }
 
 function showTabBar() {
+  if (!isMobileDevice) return; // на десктопе всегда видим
   const tabBar = document.getElementById('tabBar');
   if (!tabBar) return;
   tabBar.style.opacity = '1';

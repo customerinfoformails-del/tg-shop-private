@@ -162,7 +162,7 @@ window.refreshCartPricesAndCleanup = async function () {
             i.color +
             ', ' +
             i.region +
-            '), цена была RUB' +
+            '), цена была RUB ' +
             i.price
         );
       });

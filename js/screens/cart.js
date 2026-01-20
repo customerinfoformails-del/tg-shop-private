@@ -774,7 +774,7 @@ window.placeOrder = async function () {
     const durationMs = now - orderClickTs;
     console.log('[perf] placeOrder duration:', durationMs, 'ms');
 
-    tg?.showAlert?.('✅ Заказ оформлен!');
+    tg?.showAlert?.('✅ Заказ оформлен 1!');
     cartItems = [];
     saveCartToStorage();
     updateCartBadge();

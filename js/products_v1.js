@@ -251,7 +251,8 @@ function productCard(product) {
                 '" ' +
                 'alt="Product" ' +
                 'data-src="' + safeMainImage + '" ' +
-                'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" />'
+                'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" ' +
+                'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" />'
             : getPlainSvgPlaceholder()
           ) +
         '</div>' +

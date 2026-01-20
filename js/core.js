@@ -394,6 +394,32 @@ function setupImageTimeoutsForGrid() {
   });
 }
 
+window.handleProductImageError = function (img, url) {
+  try {
+    const wrapper = img.closest('.image-carousel');
+    const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
+
+    if (wrapper) {
+      const inner = wrapper.querySelector('.image-carousel-inner');
+      if (inner) {
+        inner.innerHTML = getPlainSvgPlaceholder();
+      }
+    }
+
+    if (skeleton) skeleton.remove();
+
+    if (img.dataset.loadTimeoutId) {
+      clearTimeout(Number(img.dataset.loadTimeoutId));
+      delete img.dataset.loadTimeoutId;
+    }
+    delete img.dataset.loadTimeoutAttached;
+
+    loadedImageUrls.add(url);
+  } catch (e) {
+    console.log('[images] handleProductImageError error', e);
+  }
+};
+
 window.handleProductImageLoad = function (img, url) {
   try {
     const wrapper = img.closest('.image-carousel');

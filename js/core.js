@@ -348,6 +348,9 @@ function attachImageTimeout(img) {
       const wrapper = img.closest('.image-carousel');
       const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
       if (skeleton) skeleton.remove();
+
+      const placeholder = wrapper?.querySelector('.card-placeholder');
+      if (placeholder) placeholder.style.display = 'none';
       return;
     }
 
@@ -360,26 +363,16 @@ function attachImageTimeout(img) {
       const wrapper = img.closest('.image-carousel');
       const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
 
-      if (wrapper) {
-        const inner = wrapper.querySelector('.image-carousel-inner');
-        if (inner) {
-          // полностью выкидываем <img>, чтобы не было broken icon
-          inner.innerHTML =
-            '<div class="w-full h-full flex items-center justify-center bg-gray-100">' +
-              '<svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-                ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
-              '</svg>' +
-            '</div>';
-        }
-      }
+      const placeholder = wrapper?.querySelector('.card-placeholder');
+      if (placeholder) placeholder.style.display = 'flex';
+
+      img.style.display = 'none';
 
       if (skeleton) skeleton.remove();
 
       delete img.dataset.loadTimeoutAttached;
       delete img.dataset.loadTimeoutId;
-
-      loadedImageUrls.add(url);
+      // важное: не добавляем url в loadedImageUrls (он не загрузился)
     }, 10000);
 
     img.dataset.loadTimeoutId = String(timeoutId);
@@ -387,6 +380,57 @@ function attachImageTimeout(img) {
     console.log('[images] attachImageTimeout error', e);
   }
 }
+
+window.handleProductImageError = function (img, url) {
+  try {
+    const wrapper = img.closest('.image-carousel');
+    const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
+
+    if (img.dataset.loadTimeoutId) {
+      clearTimeout(Number(img.dataset.loadTimeoutId));
+      delete img.dataset.loadTimeoutId;
+    }
+    delete img.dataset.loadTimeoutAttached;
+
+    // битый URL — явно отмечаем как плохой
+    imageCache?.set(url, false);
+
+    const placeholder = wrapper?.querySelector('.card-placeholder');
+    if (placeholder) placeholder.style.display = 'flex';
+
+    img.style.display = 'none';
+
+    if (skeleton) skeleton.remove();
+  } catch (e) {
+    console.log('[images] handleProductImageError error', e);
+  }
+};
+
+window.handleProductImageLoad = function (img, url) {
+  try {
+    const wrapper = img.closest('.image-carousel');
+    const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
+
+    const placeholder = wrapper?.querySelector('.card-placeholder');
+    if (placeholder) placeholder.style.display = 'none';
+
+    loadedImageUrls.add(url);
+    imageCache?.set(url, true);
+
+    if (img.dataset.loadTimeoutId) {
+      clearTimeout(Number(img.dataset.loadTimeoutId));
+      delete img.dataset.loadTimeoutId;
+    }
+    delete img.dataset.loadTimeoutAttached;
+
+    img.style.opacity = '1';
+
+    if (skeleton) skeleton.remove();
+  } catch (e) {
+    console.log('[images] handleProductImageLoad error', e);
+    img.style.opacity = '1';
+  }
+};
 
 function setupImageTimeoutsForGrid() {
   document.querySelectorAll('.product-grid img.product-image').forEach(img => {
@@ -399,14 +443,12 @@ window.handleProductImageError = function (img, url) {
     const wrapper = img.closest('.image-carousel');
     const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
 
-    // помечаем URL как НЕвалидный
-    if (typeof imageCache !== 'undefined') {
-      imageCache.set(url, false);
+    if (wrapper) {
+      const inner = wrapper.querySelector('.image-carousel-inner');
+      if (inner) {
+        inner.innerHTML = getPlainSvgPlaceholder();
+      }
     }
-
-    // вместо innerHTML = ... просто заменяем img на SVG
-    const svg = getPlainSvgPlaceholder();
-    img.replaceWith(svg);
 
     if (skeleton) skeleton.remove();
 
@@ -416,8 +458,7 @@ window.handleProductImageError = function (img, url) {
     }
     delete img.dataset.loadTimeoutAttached;
 
-    // важно: не добавляем битый url в loadedImageUrls
-    // loadedImageUrls.add(url);  // ← это убрать
+    loadedImageUrls.add(url);
   } catch (e) {
     console.log('[images] handleProductImageError error', e);
   }

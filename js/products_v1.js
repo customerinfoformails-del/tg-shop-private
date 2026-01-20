@@ -209,14 +209,8 @@ function productCard(product) {
   if (variants.length === 0) return '';
 
   const commonImage = product.commonImage || variants[0]?.commonImage || '';
-  const variantsImages = getFilteredProductImages(variants);
-
-  // берём первый, который уже в кэше как true
-  const firstValidFromCache = variantsImages.find(src => imageCache.get(src));
-  const mainImage = firstValidFromCache || commonImage || '';
-
-  const hasImage = !!mainImage;
-  const safeMainImage = hasImage ? mainImage.replace(/'/g, "\\'") : '';
+  const hasImage = !!commonImage;
+  const safeMainImage = commonImage ? commonImage.replace(/'/g, "\\'") : '';
 
   const cheapestVariant = variants.reduce(
     (min, p) => (p.price < min.price ? p : min),
@@ -229,30 +223,39 @@ function productCard(product) {
     typeof loadedImageUrls !== 'undefined' &&
     loadedImageUrls.has(safeMainImage);
 
-  const shouldShowSvgImmediately = !hasImage;
-
   return (
     '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
       ' data-product-name="' + escapeHtml(product.name) + '"' +
       ' data-carousel-id="' + carouselId + '">' +
 
       '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden relative">' +
+        // шиммер только при первом заходе
         (!hasLoaded && hasImage
           ? '<div class="w-full h-full rounded-xl placeholder-shimmer absolute inset-0" data-skeleton="image"></div>'
           : ''
         ) +
-        '<div class="image-carousel-inner relative" data-carousel="' +
-          carouselId +
-          '" data-current="0">' +
-          (shouldShowSvgImmediately
-            ? getPlainSvgPlaceholder()
-            : '<img src="' + mainImage + '" ' +
-                'class="carousel-img product-image ' + (hasLoaded ? 'no-fade' : '') + '" ' +
+        '<div class="image-carousel-inner relative flex items-center justify-center" ' +
+             'data-carousel="' + carouselId + '" data-current="0">' +
+
+          // 1) всегда SVG-заглушка в DOM
+          '<div class="card-placeholder w-full h-full flex items-center justify-center bg-gray-100">' +
+            '<svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+              '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+              ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+            '</svg>' +
+          '</div>' +
+
+          // 2) img, если есть URL (изначально скрыт)
+          (hasImage
+            ? '<img src="' + commonImage + '" ' +
+                'class="product-image w-full h-full object-contain opacity-0" ' +
                 'alt="Product" ' +
                 'data-src="' + safeMainImage + '" ' +
                 'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" ' +
                 'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" />'
+            : ''
           ) +
+
         '</div>' +
       '</div>' +
 

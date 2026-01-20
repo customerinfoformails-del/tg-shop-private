@@ -1,12 +1,3 @@
-// Плейсхолдеры по категориям
-const PLACEHOLDERS = {
-  iPhone: 'https://via.placeholder.com/300x300/007AFF/FFFFFF?text=iPhone',
-  iPad: 'https://via.placeholder.com/300x300/34C759/FFFFFF?text=iPad',
-  MacBook: 'https://via.placeholder.com/300x300/FFD60A/000000?text=MacBook',
-  'Apple Watch': 'https://via.placeholder.com/300x300/AF52DE/FFFFFF?text=Watch',
-  AirPods: 'https://via.placeholder.com/300x300/30D158/FFFFFF?text=AirPods'
-};
-
 // порядок выбора опций в модалке
 const FILTER_ORDER = ['simType', 'storage', 'color', 'region'];
 
@@ -221,9 +212,8 @@ function productCard(product) {
   if (variants.length === 0) return '';
 
   const commonImage = product.commonImage || variants[0]?.commonImage || '';
-  const fallbackByCategory = PLACEHOLDERS[product.cat] || PLACEHOLDERS.iPhone;
-  const mainImage = commonImage || fallbackByCategory;
-  const safeMainImage = mainImage.replace(/'/g, "\\'");
+  const hasImage = !!commonImage;
+  const safeMainImage = commonImage ? commonImage.replace(/'/g, "\\'") : '';
 
   const cheapestVariant = variants.reduce(
     (min, p) => (p.price < min.price ? p : min),
@@ -231,9 +221,10 @@ function productCard(product) {
   );
   const carouselId = 'carousel_' + Math.random().toString(36).substr(2, 9);
 
-  // уже загруженный URL — не показываем скелетон, сразу видим картинку
   const hasLoaded =
-    typeof loadedImageUrls !== 'undefined' && loadedImageUrls.has(safeMainImage);
+    hasImage &&
+    typeof loadedImageUrls !== 'undefined' &&
+    loadedImageUrls.has(safeMainImage);
 
   return (
     '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
@@ -244,22 +235,25 @@ function productCard(product) {
       carouselId +
       '">' +
       '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden relative">' +
-        (!hasLoaded
+        (!hasLoaded && hasImage
           ? '<div class="w-full h-full rounded-xl placeholder-shimmer absolute inset-0" data-skeleton="image"></div>'
           : ''
         ) +
         '<div class="image-carousel-inner relative" data-carousel="' +
           carouselId +
           '" data-current="0">' +
-          '<img src="' +
-            mainImage +
-            '" ' +
-            'class="carousel-img product-image' +
-              (hasLoaded ? ' loaded' : ' opacity-0') +
-            '" ' +
-            'alt="Product" ' +
-            'data-src="' + safeMainImage + '" ' +
-            'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" />' +
+          (hasImage
+            ? '<img src="' +
+                commonImage +
+                '" ' +
+                'class="carousel-img product-image' +
+                  (hasLoaded ? ' loaded' : ' opacity-0') +
+                '" ' +
+                'alt="Product" ' +
+                'data-src="' + safeMainImage + '" ' +
+                'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" />'
+            : getPlainSvgPlaceholder()
+          ) +
         '</div>' +
       '</div>' +
       '<div class="font-bold text-base mb-1 truncate">' +

@@ -18,6 +18,18 @@ function getVariantCountText(count) {
   return count + ' вариантов';
 }
 
+function getModalSvgPlaceholder() {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'no-images h-64';
+  wrapper.innerHTML =
+    '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+      ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+    '</svg>' +
+    '<div class="text-center text-sm font-medium">Фото недоступно</div>';
+  return wrapper;
+}
+
 function selectOptionNoFocus(type, option) {
   if (document.activeElement && document.activeElement.blur) {
     document.activeElement.blur();
@@ -258,13 +270,14 @@ function renderProductModal(product) {
     '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden" id="modalCarousel">' +
     (complete && filteredImages.length > 0
       ? '<div class="image-carousel-inner" id="modalCarouselInner">' +
-        filteredImages
+          filteredImages
           .slice(0, 10)
           .map(
             img =>
               '<img src="' +
               img +
-              '" class="carousel-img loaded w-full h-full object-contain" alt="Product image" loading="lazy" />'
+              '" class="carousel-img w-full h-full object-contain" alt="Product image" loading="lazy"' +
+              ' onerror="this.onerror=null; this.replaceWith(getModalSvgPlaceholder());" />'
           )
           .join('') +
         '</div>' +
@@ -288,7 +301,8 @@ function renderProductModal(product) {
       ? '<div class="w-full h-64 rounded-xl overflow-hidden flex items-center justify-center">' +
         '<img src="' +
         productCommonImage +
-        '" class="w-full h-full object-contain" alt="Product image" />' +
+        '" class="w-full h-full object-contain" alt="Product image"' +
+        ' onerror="this.onerror=null; this.replaceWith(getModalSvgPlaceholder());" />' +
         '</div>'
       : '<div class="no-images h-64">' +
         '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +

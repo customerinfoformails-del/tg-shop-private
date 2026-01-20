@@ -301,7 +301,9 @@ function showCartTab() {
         '<div class="w-28 h-28 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center mb-6">' +
           '<svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-            ' d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 2.5M7 13l-1.5 2.5m12.5-2.5L21 13m0 0l-1.5 2.5m1.5-2.5L21 21"/>' +
+              ' d="M3 3h2l1 4h13l1.2-3.6A1 1 0 0 0 20.3 2H6"/>' +
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+              ' d="M7 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM17 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>' +
           '</svg>' +
         '</div>' +
         '<h2 class="text-2xl font-bold text-gray-800 mb-2">Корзина пуста</h2>' +
@@ -315,7 +317,7 @@ function showCartTab() {
       '</div>';
     return;
   }
-
+  
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const commission = paymentType === 'card' ? Math.round(subtotal * 0.15) : 0;
   const total = subtotal + commission;

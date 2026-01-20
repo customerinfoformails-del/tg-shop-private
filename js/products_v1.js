@@ -351,7 +351,7 @@ function setupHandlers() {
     categoryEl.onchange = function (e) {
       selectedCategory = e.target.value;
       loadedCount = 10;
-      renderShop();
+      if (currentTab === 'shop') renderShop();
     };
   }
 

@@ -362,23 +362,22 @@ function attachImageTimeout(img) {
       const wrapper = img.closest('.image-carousel');
       const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
     
-      // убираем старое <img> и вставляем SVG-заглушку
       if (wrapper) {
         const inner = wrapper.querySelector('.image-carousel-inner');
         if (inner) {
+          // полностью убираем <img> и вставляем SVG
           inner.innerHTML = getPlainSvgPlaceholder();
         }
       }
     
-      img.style.opacity = '1';
       if (skeleton) skeleton.remove();
     
       delete img.dataset.loadTimeoutAttached;
       delete img.dataset.loadTimeoutId;
     
-      // помечаем URL как обработанный, чтобы больше не было шиммера
+      // ключ должен совпадать с тем, что ты проверяешь в productCard
       loadedImageUrls.add(url);
-    }, 10000);    
+    }, 10000);
 
     img.dataset.loadTimeoutId = String(timeoutId);
   } catch (e) {

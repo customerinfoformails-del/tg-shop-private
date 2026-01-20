@@ -86,6 +86,14 @@ function shuffleArray(items) {
   return arr;
 }
 
+function getMaxNumberFromName(name) {
+  if (!name) return 0;
+  const matches = String(name).match(/\d+/g);
+  if (!matches) return 0;
+  // берём максимальное число из всех найденных
+  return Math.max(...matches.map(n => parseInt(n, 10) || 0));
+}
+
 // список товаров для отображения в магазине
 function getVisibleProducts() {
   if (!productsData) return [];
@@ -118,8 +126,19 @@ function getVisibleProducts() {
     );
   }
 
-  // стабильный порядок: по имени (или по цене, как тебе нужно)
-  groupedVisible.sort((a, b) => a.name.localeCompare(b.name));
+  // потом по имени (для тех, у кого число одинаковое или отсутствует)
+  groupedVisible.sort((a, b) => {
+    const na = getMaxNumberFromName(a.name);
+    const nb = getMaxNumberFromName(b.name);
+
+    if (na !== nb) {
+      return nb - na; // большее число — выше в списке
+    }
+
+    // если цифр нет или одинаковые — сортируем по имени
+    return a.name.localeCompare(b.name);
+  });
+
 
   return groupedVisible;
 }

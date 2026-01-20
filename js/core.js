@@ -425,6 +425,7 @@ window.handleProductImageLoad = function (img, url) {
     const wrapper = img.closest('.image-carousel');
     const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
 
+    const alreadyLoaded = loadedImageUrls.has(url);
     loadedImageUrls.add(url);
 
     if (img.dataset.loadTimeoutId) {
@@ -433,7 +434,17 @@ window.handleProductImageLoad = function (img, url) {
     }
     delete img.dataset.loadTimeoutAttached;
 
-    img.classList.add('loaded');
+    // Сначала очищаем старые классы
+    img.classList.remove('fade-in-once', 'no-fade');
+
+    if (alreadyLoaded) {
+      // Картинка уже когда-то грузилась — без анимации
+      img.classList.add('no-fade');
+    } else {
+      // Первая успешная загрузка этого URL — делаем fade-in
+      img.classList.add('fade-in-once');
+    }
+
     img.style.opacity = '1';
 
     if (skeleton) {

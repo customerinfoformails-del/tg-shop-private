@@ -246,9 +246,7 @@ function productCard(product) {
             ? '<img src="' +
                 commonImage +
                 '" ' +
-                'class="carousel-img product-image' +
-                  (hasLoaded ? ' loaded' : ' opacity-0') +
-                '" ' +
+                'class="carousel-img product-image" ' + // без loaded/opacity здесь
                 'alt="Product" ' +
                 'data-src="' + safeMainImage + '" ' +
                 'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" ' +

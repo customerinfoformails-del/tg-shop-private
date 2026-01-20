@@ -349,3 +349,19 @@ img,
   padding-top: 8px;
   box-sizing: border-box;
 }
+
+/* Плавное появление только при первой загрузке */
+.product-image {
+  opacity: 0;
+  transition: opacity 0.25s ease-in;
+}
+
+.product-image.fade-in-once {
+  opacity: 1;
+}
+
+/* При последующих рендерах (URL уже загружался) — без анимации */
+.product-image.no-fade {
+  opacity: 1;
+  transition: none;
+}

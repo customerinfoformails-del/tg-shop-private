@@ -300,11 +300,11 @@ function showCartTab() {
       '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
         '<div class="w-28 h-28 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center mb-6">' +
           '<svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-              ' d="M3 4h2l1.5 11h11l1.5-8H7"/>' +
-            '<circle cx="9" cy="19" r="1.5" stroke-width="2"></circle>' +
-            '<circle cx="17" cy="19" r="1.5" stroke-width="2"></circle>' +
-          '</svg>' +
+          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+            ' d="M3 4h2l1.5 11h11L20 7H7" />' +
+          '<circle cx="9" cy="19" r="1.5" stroke-width="2" />' +
+          '<circle cx="17" cy="19" r="1.5" stroke-width="2" />' +
+        '</svg>' +
         '</div>' +
         '<h2 class="text-2xl font-bold text-gray-800 mb-2">Корзина пуста</h2>' +
         '<p class="text-sm text-gray-500 mb-6 max-w-xs">' +

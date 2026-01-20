@@ -98,68 +98,59 @@ window.addToCartFromModal = async function () {
   const scrollContainer = document.querySelector('#modalContent .flex-1');
   const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
 
-  isAddingToCart = true;
-  renderProductModal(currentProduct);
-  const sc2 = document.querySelector('#modalContent .flex-1');
-  if (sc2) sc2.scrollTop = prevScrollTop;
+  try {
+    isAddingToCart = true;
+    renderProductModal(currentProduct);
+    const sc2 = document.querySelector('#modalContent .flex-1');
+    if (sc2) sc2.scrollTop = prevScrollTop;
 
-  if (!isCompleteSelection()) {
-    tg?.showAlert?.('❌ Выберите все опции: SIM → Память → Цвет → Регион');
+    if (!isCompleteSelection()) {
+      tg?.showAlert?.('❌ Выберите все опции: SIM → Память → Цвет → Регион');
+      return;
+    }
+
+    if (!productsData) {
+      tg?.showAlert?.('Товары не загрузились, попробуйте позже');
+      return;
+    }
+
+    const variants = getFilteredVariants(
+      getProductVariants(currentProduct.name).filter(v => v.inStock)
+    );
+
+    if (!variants.length) {
+      tg?.showAlert?.('❌ Нет доступных вариантов');
+      return;
+    }
+
+    const selectedVariant = variants[0];
+    addToCart(selectedVariant, selectedQuantity);
+    tg?.showAlert?.(
+      '✅ ' +
+        selectedVariant.name +
+        '\n' +
+        selectedVariant.storage +
+        ' | ' +
+        selectedVariant.color +
+        ' | ' +
+        selectedVariant.region +
+        '\n' +
+        'Количество: ' +
+        selectedQuantity +
+        '\nRUB ' +
+        selectedVariant.price * selectedQuantity
+    );
+    closeModal();
+  } finally {
     isAddingToCart = false;
     const scA = document.querySelector('#modalContent .flex-1');
     const prevA = scA ? scA.scrollTop : 0;
-    renderProductModal(currentProduct);
-    const scB = document.querySelector('#modalContent .flex-1');
-    if (scB) scB.scrollTop = prevA;
-    return;
+    if (currentProduct) {
+      renderProductModal(currentProduct);
+      const scB = document.querySelector('#modalContent .flex-1');
+      if (scB) scB.scrollTop = prevA;
+    }
   }
-
-  if (!productsData) {
-    tg?.showAlert?.('Товары не загрузились, попробуйте позже');
-    isAddingToCart = false;
-    const scA = document.querySelector('#modalContent .flex-1');
-    const prevA = scA ? scA.scrollTop : 0;
-    renderProductModal(currentProduct);
-    const scB = document.querySelector('#modalContent .flex-1');
-    if (scB) scB.scrollTop = prevA;
-    return;
-  }
-
-  const allVariants = getFilteredVariants(
-    getProductVariants(currentProduct.name).filter(v => v.inStock)
-  );
-  const variants = allVariants;
-
-  if (!variants.length) {
-    tg?.showAlert?.('❌ Нет доступных вариантов');
-    isAddingToCart = false;
-    const scA = document.querySelector('#modalContent .flex-1');
-    const prevA = scA ? scA.scrollTop : 0;
-    renderProductModal(currentProduct);
-    const scB = document.querySelector('#modalContent .flex-1');
-    if (scB) scB.scrollTop = prevA;
-    return;
-  }
-
-  const selectedVariant = variants[0];
-  addToCart(selectedVariant, selectedQuantity);
-  tg?.showAlert?.(
-    '✅ ' +
-      selectedVariant.name +
-      '\n' +
-      selectedVariant.storage +
-      ' | ' +
-      selectedVariant.color +
-      ' | ' +
-      selectedVariant.region +
-      '\n' +
-      'Количество: ' +
-      selectedQuantity +
-      '\nRUB ' +
-      selectedVariant.price * selectedQuantity
-  );
-  isAddingToCart = false;
-  closeModal();
 };
 
 function renderProductModal(product) {
@@ -225,7 +216,6 @@ function renderProductModal(product) {
 
   const productCommonImage = product.commonImage || '';
 
-  // 1. Каркас один раз
   if (!modalRoot.dataset.initialized) {
     modalRoot.dataset.initialized = '1';
 
@@ -247,7 +237,7 @@ function renderProductModal(product) {
           '</div>' +
         '</div>' +
 
-        '<div class="flex-1 overflow-y-auto">' +
+        '<div class="flex-1 overflow-y-auto" id="modalScrollArea">' +
 
           '<div class="modal-image-section">' +
             '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden" id="modalCarousel">' +
@@ -269,20 +259,20 @@ function renderProductModal(product) {
 
         '<div class="modal-footer border-t bg-white">' +
           '<button id="modalAddButton"' +
-          ' class="w-full flex items-center justify-center gap-2 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all"></button>' +
+          ' class="w-full flex items-center justify-center gap-2 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all" onclick="addToCartFromModal(); return false;"></button>' +
         '</div>' +
 
       '</div>';
+
+    initModalSwipe();
   }
 
-  // 2. Шапка
   document.getElementById('modalTitle').textContent = product.name;
   document.getElementById('modalPrice').textContent =
     headerPriceText + (headerSuffix ? ' ' + headerSuffix : '');
   document.getElementById('modalVariantCount').textContent =
     getVariantCountText(availableVariants.length);
 
-  // 3. Картинка без innerHTML
   const imgEl = document.getElementById('modalImage');
   const placeholderEl = document.getElementById('modalPlaceholder');
   const imageHintEl = document.getElementById('modalImageHint');
@@ -304,13 +294,11 @@ function renderProductModal(product) {
     modalCurrentImageUrl = nextImageKey;
 
     if (!targetUrl) {
-      // только SVG
       imgEl.classList.add('hidden');
       placeholderEl.classList.remove('hidden');
       imageHintEl.textContent =
         '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
     } else {
-      // держим SVG, пока картинка не загрузится
       placeholderEl.classList.remove('hidden');
       imgEl.classList.add('hidden');
 
@@ -334,7 +322,6 @@ function renderProductModal(product) {
     }
   }
 
-  // 4. Динамическая часть
   const body = document.getElementById('modalBodyDynamic');
 
   body.innerHTML =
@@ -409,7 +396,6 @@ function renderProductModal(product) {
       '</div>' +
     '</div>';
 
-  // 5. Кнопка
   const btn = document.getElementById('modalAddButton');
 
   if (isAddingToCart) {

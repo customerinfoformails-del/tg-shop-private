@@ -238,7 +238,7 @@ function productCard(product) {
         '</div>' +
       '</div>' +
       '<div class="font-bold text-base mb-1 truncate">' + escapeHtml(product.name) + '</div>' +
-      '<div class="text-blue-600 font-black text-xl.mb-1">$' + cheapestVariant.price + '</div>' +
+      '<div class="text-blue-600 font-black text-xl.mb-1">RUB ' + cheapestVariant.price + '</div>' +
       '<div class="text-xs text-gray-500 mb-4">' + variants.length + ' вариантов</div>' +
     '</div>'
   );

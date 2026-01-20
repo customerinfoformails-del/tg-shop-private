@@ -235,7 +235,7 @@ function syncProductsAndCart() {
 
 function logStage(label, startTime) {
   const now = performance.now();
-  console.log(`[perf] ${label}: ${Math.round(now - startTime)} ms`);
+  console.log(`[perf] {label}: ${Math.round(now - startTime)} ms`);
 }
 
 // ---------- Загрузка товаров с API ----------

@@ -147,7 +147,7 @@ window.addToCartFromModal = async function() {
     selectedVariant.storage + ' | ' +
     selectedVariant.color + ' | ' +
     selectedVariant.region + '\n' +
-    'Количество: ' + selectedQuantity + '\n$' +
+    'Количество: ' + selectedQuantity + '\nRUB ' +
     (selectedVariant.price * selectedQuantity)
   );
   isAddingToCart = false;
@@ -196,11 +196,11 @@ function renderProductModal(product) {
   let headerSuffix = '';
 
   if (!complete) {
-    headerPriceText = 'от $' + currentMinPrice;
+    headerPriceText = 'от RUB ' + currentMinPrice;
     headerSuffix = 'за единицу';
   } else if (complete && availableVariants.length > 0) {
     const priceToShow = availableVariants[0].price;
-    headerPriceText = '$' + priceToShow;
+    headerPriceText = 'RUB ' + priceToShow;
     headerSuffix = 'за единицу';
   } else {
     headerPriceText = 'Нет вариантов';
@@ -362,7 +362,7 @@ function renderProductModal(product) {
           (isAddingToCart
             ? '<span class="loader-circle"></span><span>Проверяю наличие...</span>'
             : (complete && availableVariants.length > 0
-                ? '✅ В корзину $' +
+                ? '✅ В корзину RUB ' +
                     (availableVariants[0] && availableVariants[0].price
                       ? (availableVariants[0].price * selectedQuantity)
                       : '')

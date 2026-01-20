@@ -64,7 +64,7 @@ function showProfileTab() {
             new Date(o.date).toLocaleString() +
             '</span>' +
             '</div>' +
-            '<span class="text-sm font-bold text-blue-600 whitespace-nowrap">$' +
+            '<span class="text-sm font-bold text-blue-600 whitespace-nowrap">RUB ' +
             o.total +
             '</span>' +
             '</button>' +
@@ -110,7 +110,7 @@ function showProfileTab() {
                   '<div>' +
                   item.quantity +
                   ' шт.</div>' +
-                  '<div>$' +
+                  '<div>RUB ' +
                   item.price * item.quantity +
                   '</div>' +
                   '</div>' +

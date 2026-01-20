@@ -352,7 +352,7 @@ window.refreshCartPricesAndCleanup = async function() {
       removedItems.forEach(i => {
         msgLines.push(
           '- ' + i.name +
-          ' (' + i.storage + ', ' + i.color + ', ' + i.region + '), цена была $' + i.price
+          ' (' + i.storage + ', ' + i.color + ', ' + i.region + '), цена была RUB ' + i.price
         );
       });
     }
@@ -364,7 +364,7 @@ window.refreshCartPricesAndCleanup = async function() {
         msgLines.push(
           '- ' + i.name +
           ' (' + i.storage + ', ' + i.color + ', ' + i.region + '): ' +
-          '$' + i.oldPrice + ' → $' + i.newPrice
+          'RUB ' + i.oldPrice + ' → RUB ' + i.newPrice
         );
       });
       msgLines.push('');
@@ -536,7 +536,7 @@ function showCartTab() {
                 (item.available
                   ? 'В наличии'
                   : (item.newPrice
-                      ? 'Цена обновилась: старая $' + item.price + ', новая $' + item.newPrice
+                      ? 'Цена обновилась: старая RUB ' + item.price + ', новая RUB ' + item.newPrice
                       : 'Товар недоступен, удалите из корзины')) +
               '</div>' +
             '</div>' +
@@ -548,7 +548,7 @@ function showCartTab() {
                 '<button class="px-2 py-1 rounded-full bg-gray-200 text-sm font-bold"' +
                         ' onclick="changeCartItemQuantity(' + idx + ', 1)">+</button>' +
               '</div>' +
-              '<div class="text-sm font-bold text-blue-600">$' + (item.price * item.quantity) + '</div>' +
+              '<div class="text-sm font-bold text-blue-600">RUB ' + (item.price * item.quantity) + '</div>' +
               (item.newPrice
                 ? '<button class="text-xs text-blue-500" onclick="updateCartItemPrice(' + idx + ')">Обновить цену</button>'
                 : '') +
@@ -647,20 +647,20 @@ function showCartTab() {
         '<div class="space-y-1 text-sm text-gray-700">' +
           '<div class="flex items-center justify-between">' +
             '<span>Сумма товаров</span>' +
-            '<span>$' + subtotal + '</span>' +
+            '<span>RUB ' + subtotal + '</span>' +
           '</div>' +
           (paymentType === "card"
             ? (
               '<div class="flex items-center justify-between">' +
                 '<span>Сервисный сбор (карта)</span>' +
-                '<span>+$' + commission + '</span>' +
+                '<span>+RUB ' + commission + '</span>' +
               '</div>'
             )
             : ''
           ) +
           '<div class="flex items-center justify-between font-semibold mt-1">' +
             '<span>Итого к оплате</span>' +
-            '<span>$' + total + '</span>' +
+            '<span>RUB ' + total + '</span>' +
           '</div>' +
         '</div>' +
 
@@ -736,7 +736,7 @@ function showProfileTab() {
               '<span class="text-sm font-semibold text-gray-800 truncate">Заказ #' + o.id + '</span>' +
               '<span class="text-[11px] text-gray-500">' + new Date(o.date).toLocaleString() + '</span>' +
             '</div>' +
-            '<span class="text-sm font-bold text-blue-600 whitespace-nowrap">$' + o.total + '</span>' +
+            '<span class="text-sm font-bold text-blue-600 whitespace-nowrap">RUB ' + o.total + '</span>' +
           '</button>' +
           '<div class="px-3 pb-2 border-t border-gray-100 text-xs text-gray-600">' +
             '<div class="mt-1 break-words">Адрес: ' + escapeHtml(o.address) + '</div>' +
@@ -766,7 +766,7 @@ function showProfileTab() {
                   '</div>' +
                   '<div class="text-right text-[10px] whitespace-nowrap">' +
                     '<div>' + item.quantity + ' шт.</div>' +
-                    '<div>$' + (item.price * item.quantity) + '</div>' +
+                    '<div>RUB ' + (item.price * item.quantity) + '</div>' +
                   '</div>' +
                 '</div>'
               ).join('') +

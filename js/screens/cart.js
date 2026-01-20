@@ -162,7 +162,7 @@ window.refreshCartPricesAndCleanup = async function () {
             i.color +
             ', ' +
             i.region +
-            '), цена была $' +
+            '), цена была RUB' +
             i.price
         );
       });
@@ -182,9 +182,9 @@ window.refreshCartPricesAndCleanup = async function () {
             ', ' +
             i.region +
             '): ' +
-            '$' +
+            'RUB ' +
             i.oldPrice +
-            ' → $' +
+            ' → RUB ' +
             i.newPrice
         );
       });
@@ -360,7 +360,7 @@ function showCartTab() {
                     (item.available
                       ? 'В наличии'
                       : item.newPrice
-                      ? 'Цена обновилась: старая $' + item.price + ', новая $' + item.newPrice
+                      ? 'Цена обновилась: старая RUB ' + item.price + ', новая RUB ' + item.newPrice
                       : 'Товар недоступен, удалите из корзины') +
                   '</div>' +
                 '</div>' +
@@ -378,7 +378,7 @@ function showCartTab() {
                       idx +
                       ', 1)">+</button>' +
                   '</div>' +
-                  '<div class="text-sm font-bold text-blue-600">$' +
+                  '<div class="text-sm font-bold text-blue-600">RUB ' +
                     item.price * item.quantity +
                   '</div>' +
                   (item.newPrice
@@ -485,21 +485,21 @@ function showCartTab() {
         '<div class="space-y-1 text-sm text-gray-700">' +
           '<div class="flex items-center justify-between">' +
             '<span>Сумма товаров</span>' +
-            '<span>$' +
+            '<span>RUB ' +
               subtotal +
             '</span>' +
           '</div>' +
           (paymentType === 'card'
             ? '<div class="flex items-center justify-between">' +
                 '<span>Сервисный сбор (карта)</span>' +
-                '<span>+$' +
+                '<span>+RUB ' +
                   commission +
                 '</span>' +
               '</div>'
             : '') +
           '<div class="flex items-center justify-between font-semibold mt-1">' +
             '<span>Итого к оплате</span>' +
-            '<span>$' +
+            '<span>RUB ' +
               total +
             '</span>' +
           '</div>' +

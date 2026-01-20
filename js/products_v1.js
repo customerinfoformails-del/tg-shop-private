@@ -212,8 +212,9 @@ function productCard(product) {
   );
   const carouselId = 'carousel_' + Math.random().toString(36).substr(2, 9);
 
-  // если картинка уже когда‑то успешно грузилась — не показываем скелетон и сразу делаем её видимой
-  const hasLoaded = loadedImageUrls && loadedImageUrls.has(safeMainImage);
+  // уже загруженный URL — не показываем скелетон, сразу видим картинку
+  const hasLoaded =
+    typeof loadedImageUrls !== 'undefined' && loadedImageUrls.has(safeMainImage);
 
   return (
     '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
@@ -290,7 +291,6 @@ function renderShop() {
     '<div class="pb-[65px]">' +
       '<div class="mb-5">' +
         '<h1 class="text-3xl font-bold text-center mb-4">🛒 Магазин</h1>' +
-
         '<div class="flex items-center gap-3">' +
           '<div class="flex-1 bg-white rounded-2xl shadow px-3 py-2">' +
             '<label class="text-xs text-gray-500 block mb-1">Категория</label>' +
@@ -312,12 +312,10 @@ function renderShop() {
             '</div>' +
           '</div>' +
         '</div>' +
-
         '<div class="mt-3 text-xs text-gray-500">' +
           'Показано: <span class="font-semibold">' + showCount + '</span> из ' + list.length +
         '</div>' +
       '</div>' +
-
       '<div class="product-grid" id="productGrid">' +
         list.slice(0, showCount).map(productCard).join('') +
       '</div>' +

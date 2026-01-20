@@ -224,7 +224,8 @@ function renderProductModal(product) {
     }
   }
 
-  const productCommonImage = variants[0].commonImage || product.commonImage || '';
+  // общая картинка только из самого товара
+  const productCommonImage = product.commonImage || '';
 
   modalImageIndexBeforeFullscreen = modalCurrentIndex;
 
@@ -294,6 +295,7 @@ function renderProductModal(product) {
         '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
         ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
         '</svg>' +
+        '<div class="text-center text-sm font-medium">Выберите все параметры для просмотра фото</div>' +
         '</div>') +
     '</div>' +
     (complete && filteredImages.length > 0
@@ -323,7 +325,7 @@ function renderProductModal(product) {
               '<button class="option-btn px-3 py-1.5 text-xs font-medium rounded-full border scroll-item ' +
               (isSelected
                 ? 'bg-blue-500 text-white border-blue-500 shadow-md font-bold'
-                : 'bg-gray-100 border-gray-300 hover:bg-gray-200') +
+                : 'bg-gray-100 border-gray-300 hover.bg-gray-200') +
               ' transition-all"' +
               ' data-type="' +
               type +
@@ -391,7 +393,7 @@ function renderProductModal(product) {
 
     '<div class="modal-footer border-t bg-white">' +
     '<button onclick="addToCartFromModal()"' +
-    ' class="w-full flex items-center justify-center gap-2 ' +
+    ' class="w-full flex.items-center justify-center gap-2 ' +
     (complete && availableVariants.length > 0 && !isAddingToCart
       ? 'bg-blue-500 hover:bg-blue-600'
       : 'bg-gray-400 cursor-not-allowed') +
@@ -473,7 +475,6 @@ function initModalSwipe() {
       const dx = touch.clientX - modalTouchStartX;
       const dy = Math.abs(touch.clientY - modalTouchStartY);
 
-      // горизонтальный свайп, без вертикального скролла
       if (Math.abs(dx) < 40 || dy > 50) return;
 
       if (dx < 0) {

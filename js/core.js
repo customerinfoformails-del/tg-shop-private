@@ -13,7 +13,6 @@ const ORDERS_API_URL =
   'https://tg-shop-test-backend.onrender.com/orders';
 const BACKEND_ORDER_URL = 'https://tg-shop-test-backend.onrender.com/order';
 
-
 const isMobileDevice =
   (navigator.userAgentData && navigator.userAgentData.mobile) ||
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobi/i.test(
@@ -331,7 +330,6 @@ window.handleProductImageLoad = function (img, url) {
       loadedImageUrls.add(url);
       img.classList.add('loaded'); // плавный fade-in
     } else {
-      // уже когда-то грузили этот URL — сразу показываем без анимации
       img.style.opacity = '1';
     }
   } catch (e) {
@@ -399,7 +397,7 @@ async function fetchUserOrders() {
     previousOrders = data.orders;
     console.log('[orders] previousOrders updated', previousOrders.length);
 
-    isOrdersLoading = false
+    isOrdersLoading = false;
 
     if (currentTab === 'profile') {
       showProfileTab();
@@ -411,7 +409,10 @@ async function fetchUserOrders() {
   }
 }
 
-// ---------- Инициализация ----------
+// ---------- Скролл и infinite scroll ----------
+
+const LOAD_STEP = 10;
+let scrollObserver = null;
 
 function hideTabBar() {
   if (!isMobileDevice) return; // на десктопе не трогаем таббар
@@ -428,6 +429,67 @@ function showTabBar() {
   tabBar.style.opacity = '1';
   tabBar.style.pointerEvents = 'auto';
 }
+
+function setupInfiniteScroll() {
+  if (scrollObserver) {
+    scrollObserver.disconnect();
+    scrollObserver = null;
+  }
+
+  const sentinel = document.getElementById('scrollSentinel');
+  if (!sentinel) return;
+
+  const list = getVisibleProducts();
+  if (loadedCount >= list.length) return;
+
+  scrollObserver = new IntersectionObserver(
+    entries => {
+      const entry = entries[0];
+      if (!entry.isIntersecting) return;
+
+      const all = getVisibleProducts();
+      if (loadedCount >= all.length) {
+        scrollObserver.disconnect();
+        return;
+      }
+
+      loadedCount = Math.min(loadedCount + LOAD_STEP, all.length);
+
+      const grid = document.getElementById('productGrid');
+      if (!grid) return;
+
+      const showCount = Math.min(loadedCount, all.length);
+      grid.innerHTML = renderShopList(all, showCount);
+      preloadAllImages(all.slice(0, showCount));
+      setupImageCarousels();
+      setupHandlers();
+
+      const sentinelEl = document.getElementById('scrollSentinel');
+      if (sentinelEl) {
+        sentinelEl.innerHTML =
+          showCount < all.length
+            ? '<div class="w-full">' +
+                '<div class="h-4 w-3/4 mx-auto mb-2 rounded placeholder-shimmer"></div>' +
+                '<div class="h-4 w-1/2 mx-auto rounded placeholder-shimmer"></div>' +
+              '</div>'
+            : '';
+      }
+
+      if (loadedCount >= all.length && scrollObserver) {
+        scrollObserver.disconnect();
+      }
+    },
+    {
+      root: null,
+      rootMargin: '0px 0px 200px 0px',
+      threshold: 0
+    }
+  );
+
+  scrollObserver.observe(sentinel);
+}
+
+// ---------- Инициализация ----------
 
 async function initApp() {
   const t0 = performance.now();

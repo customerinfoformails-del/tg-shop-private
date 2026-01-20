@@ -309,11 +309,21 @@ function renderShop() {
       '<div class="product-grid" id="productGrid">' +
         list.slice(0, showCount).map(productCard).join('') +
       '</div>' +
+      '<div id="scrollSentinel" class="h-10 flex items-center justify-center mt-4">' +
+        (showCount < list.length
+          ? '<div class="w-full">' +
+              '<div class="h-4 w-3/4 mx-auto mb-2 rounded placeholder-shimmer"></div>' +
+              '<div class="h-4 w-1/2 mx-auto rounded placeholder-shimmer"></div>' +
+            '</div>'
+          : ''
+        ) +
+      '</div>' +
     '</div>';
 
   setupHandlers();
   preloadAllImages(list.slice(0, showCount));
   setupImageCarousels();
+  setupInfiniteScroll();
 }
 
 // ---------- навешивание обработчиков ----------
@@ -331,7 +341,7 @@ function setupHandlers() {
         searchEl.blur();
       }
     }
-  });  
+  });
 
   if (categoryEl) {
     categoryEl.onchange = function (e) {
@@ -348,6 +358,7 @@ function setupHandlers() {
       query = e.target.value || '';
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(function () {
+        loadedCount = 10;
         const list = getVisibleProducts();
         const showCount = Math.min(loadedCount, list.length);
         const grid = document.getElementById('productGrid');
@@ -356,6 +367,7 @@ function setupHandlers() {
           preloadAllImages(list.slice(0, showCount));
           setupImageCarousels();
           setupHandlers(); // чтобы модалки продолжали работать после поиска
+          setupInfiniteScroll();
         }
       }, 500);
     };

@@ -53,7 +53,9 @@ window.changeCartItemQuantity = function (index, delta) {
   console.log('[cart] changeCartItemQuantity index=', index, 'quantity=', q);
   saveCartToStorage();
   updateCartBadge();
-  showCartTab();
+  if (currentTab === 'cart') {
+    showCartTab();
+  }
 };
 
 window.removeCartItem = function (index) {
@@ -61,7 +63,9 @@ window.removeCartItem = function (index) {
   cartItems.splice(index, 1);
   saveCartToStorage();
   updateCartBadge();
-  showCartTab();
+  if (currentTab === 'cart') {
+    showCartTab();
+  }
 };
 
 // обновление цены одной позиции
@@ -74,7 +78,9 @@ window.updateCartItemPrice = function (index) {
   delete item.newPrice;
   saveCartToStorage();
   updateCartBadge();
-  showCartTab();
+  if (currentTab === 'cart') {
+    showCartTab();
+  }
   tg?.showAlert?.('Цена обновлена для выбранного товара');
 };
 
@@ -268,13 +274,17 @@ function restoreCartFormState() {
 window.setPaymentType = function (type) {
   paymentType = type;
   console.log('[cart] setPaymentType', type);
-  showCartTab();
+  if (currentTab === 'cart') {
+    showCartTab();
+  }
 };
 
 window.setPickupMode = function (mode) {
   pickupMode = !!mode;
   console.log('[cart] setPickupMode', pickupMode);
-  showCartTab();
+  if (currentTab === 'cart') {
+    showCartTab();
+  }
 };
 
 window.setPickupLocation = function (addr) {
@@ -601,8 +611,9 @@ window.placeOrder = async function () {
   console.log('[placeOrder] comment=', deliveryComment, 'contact=', contactName, contactPhone);
 
   isPlacingOrder = true;
-  showCartTab();
-
+  if (currentTab === 'cart') {
+    showCartTab();
+  }
   placeOrderTimeoutId = setTimeout(async () => {
     if (!isPlacingOrder) return;
     console.log('[placeOrder] client-side timeout 70s');
@@ -614,7 +625,9 @@ window.placeOrder = async function () {
       console.error('[placeOrder] fetchUserOrders after timeout error', e);
     }
 
-    showCartTab();
+    if (currentTab === 'cart') {
+      showCartTab();
+    }
     tg?.showAlert?.(
       'Превышено время ожидания ответа сервера. Возможно большая нагрузка и заказ появится в профиле в течении 3 минут. Если не появился проверьте интернет и попробуйте ещё раз (либо сразу можете попробовать повторно оформить заказ)'
     );
@@ -632,7 +645,9 @@ window.placeOrder = async function () {
     if (!productsData) {
       tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
       isPlacingOrder = false;
-      showCartTab();
+      if (currentTab === 'cart') {
+        showCartTab();
+      }
       return;
     }
 
@@ -662,7 +677,9 @@ window.placeOrder = async function () {
 
     if (hasUnavailable || hasPriceChanged) {
       isPlacingOrder = false;
-      showCartTab();
+      if (currentTab === 'cart') {
+        showCartTab();
+      }
       if (hasUnavailable && hasPriceChanged) {
         tg?.showAlert?.('Некоторые товары недоступны, а у других обновилась цена. Проверьте корзину.');
       } else if (hasUnavailable) {
@@ -719,7 +736,9 @@ window.placeOrder = async function () {
       scheduleDelayedOrdersSync('network-error');
 
       isPlacingOrder = false;
-      showCartTab();
+      if (currentTab === 'cart') {
+        showCartTab();
+      }
       return;
     }
 
@@ -738,7 +757,9 @@ window.placeOrder = async function () {
       scheduleDelayedOrdersSync('server-error');
 
       isPlacingOrder = false;
-      showCartTab();
+      if (currentTab === 'cart') {
+        showCartTab();
+      }
       return;
     }
 
@@ -758,7 +779,9 @@ window.placeOrder = async function () {
     saveCartToStorage();
     updateCartBadge();
     isPlacingOrder = false;
-    showCartTab();
+    if (currentTab === 'cart') {
+      showCartTab();
+    }
   } finally {
     clearTimeout(placeOrderTimeoutId);
     placeOrderTimeoutId = null;

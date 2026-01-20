@@ -81,7 +81,6 @@ function getMaxNumberFromName(name) {
   if (!name) return 0;
   const matches = String(name).match(/\d+/g);
   if (!matches) return 0;
-  // берём максимальное число из всех найденных
   return Math.max(...matches.map(n => parseInt(n, 10) || 0));
 }
 
@@ -117,7 +116,6 @@ function getVisibleProducts() {
     );
   }
 
-  // потом по имени (для тех, у кого число одинаковое или отсутствует)
   groupedVisible.sort((a, b) => {
     const na = getMaxNumberFromName(a.name);
     const nb = getMaxNumberFromName(b.name);
@@ -125,11 +123,8 @@ function getVisibleProducts() {
     if (na !== nb) {
       return nb - na; // большее число — выше в списке
     }
-
-    // если цифр нет или одинаковые — сортируем по имени
     return a.name.localeCompare(b.name);
   });
-
 
   return groupedVisible;
 }
@@ -206,6 +201,8 @@ function renderShopHeader(list, showCount) {
   );
 }
 
+// ---------- карточка товара ----------
+
 function productCard(product) {
   const allVariants = getProductVariants(product.name);
   const variants = allVariants.filter(v => v.inStock);
@@ -226,6 +223,8 @@ function productCard(product) {
     typeof loadedImageUrls !== 'undefined' &&
     loadedImageUrls.has(safeMainImage);
 
+  const shouldShowSvgImmediately = !hasImage;
+
   return (
     '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
       ' data-product-name="' +
@@ -235,6 +234,7 @@ function productCard(product) {
       carouselId +
       '">' +
       '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden relative">' +
+        // Шиммер только если есть URL и он ещё не загружался
         (!hasLoaded && hasImage
           ? '<div class="w-full h-full rounded-xl placeholder-shimmer absolute inset-0" data-skeleton="image"></div>'
           : ''
@@ -242,16 +242,18 @@ function productCard(product) {
         '<div class="image-carousel-inner relative" data-carousel="' +
           carouselId +
           '" data-current="0">' +
-          (hasImage
-            ? '<img src="' +
+          (shouldShowSvgImmediately
+            ? getPlainSvgPlaceholder()
+            : '<img src="' +
                 commonImage +
                 '" ' +
-                'class="carousel-img product-image" ' + // без loaded/opacity здесь
+                'class="carousel-img product-image ' +
+                  (hasLoaded ? 'no-fade' : '') +
+                '" ' +
                 'alt="Product" ' +
                 'data-src="' + safeMainImage + '" ' +
                 'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" ' +
                 'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" />'
-            : getPlainSvgPlaceholder()
           ) +
         '</div>' +
       '</div>' +
@@ -358,7 +360,7 @@ function setupHandlers() {
   document.addEventListener('click', function (e) {
     const searchEl = document.getElementById('search');
     if (!searchEl) return;
-    const wrapper = searchEl.closest('.w-44'); // контейнер поиска
+    const wrapper = searchEl.closest('.w-44');
     if (wrapper && !wrapper.contains(e.target)) {
       if (document.activeElement === searchEl) {
         searchEl.blur();

@@ -277,7 +277,7 @@ function renderProductModal(product) {
               '<img src="' +
               img +
               '" class="carousel-img w-full h-full object-contain" alt="Product image" loading="lazy"' +
-              ' onerror="this.onerror=null; this.replaceWith(getModalSvgPlaceholder());" />'
+              ' onerror="this.onerror=null; var inner=this.parentElement; if(inner){ inner.innerHTML=\'\'; inner.appendChild(getModalSvgPlaceholder()); }" />'
           )
           .join('') +
         '</div>' +
@@ -301,8 +301,7 @@ function renderProductModal(product) {
       ? '<div class="w-full h-64 rounded-xl overflow-hidden flex items-center justify-center">' +
         '<img src="' +
         productCommonImage +
-        '" class="w-full h-full object-contain" alt="Product image"' +
-        ' onerror="this.onerror=null; this.replaceWith(getModalSvgPlaceholder());" />' +
+        '" class="w-full h-full object-contain" alt="Product image" />' +
         '</div>'
       : '<div class="no-images h-64">' +
         '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
@@ -328,7 +327,7 @@ function renderProductModal(product) {
         '" data-section="' +
         type +
         '">' +
-        '<label class="text-sm font-semibold text-gray-700.capitalize mb-2 block">' +
+        '<label class="text-sm font-semibold text-gray-700 capitalize mb-2 block">' +
         getLabel(type) +
         '</label>' +
         '<div class="flex gap-2 scroll-carousel pb-1">' +
@@ -361,7 +360,7 @@ function renderProductModal(product) {
           ? '<button onclick="clearOptionNoFocus(\'' +
             type +
             '\'); return false;"' +
-            ' class="px-3 py-1.5 text-xs text-red-500 font-medium.rounded-full border border-red-200 hover:bg-red-50 scroll-item w-12">✕</button>'
+            ' class="px-3 py-1.5 text-xs text-red-500.font-medium rounded-full border border-red-200 hover:bg-red-50 scroll-item w-12">✕</button>'
           : '') +
         '</div>' +
         (!availableOptions[type].length

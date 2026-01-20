@@ -254,7 +254,7 @@ function renderProductModal(product) {
 
     '<div class="flex-1 overflow-y-auto">' +
     '<div class="modal-image-section">' +
-    '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden mb-4" id="modalCarousel">' +
+    '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden" id="modalCarousel">' +
     (complete && filteredImages.length > 0
       ? '<div class="image-carousel-inner" id="modalCarouselInner">' +
         filteredImages

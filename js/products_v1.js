@@ -1,6 +1,7 @@
 // порядок выбора опций в модалке
 const FILTER_ORDER = ['simType', 'storage', 'color', 'region'];
 
+
 // нормализация ответа из Google Apps Script (плоский массив вариантов)
 function normalizeProducts(products) {
   return products.map(row => ({
@@ -19,10 +20,12 @@ function normalizeProducts(products) {
   }));
 }
 
+
 // все варианты по имени товара
 function getProductVariants(productName) {
   return productsData ? productsData.filter(p => p.name === productName) : [];
 }
+
 
 // все картинки по вариантам
 function getFilteredProductImages(variants) {
@@ -37,6 +40,7 @@ function getFilteredProductImages(variants) {
   return Array.from(images);
 }
 
+
 // текущие варианты по выбранным опциям
 function getFilteredVariants(variants) {
   return variants.filter(variant =>
@@ -47,6 +51,7 @@ function getFilteredVariants(variants) {
   );
 }
 
+
 // доступные значения для одного типа опции
 function getAvailableOptions(type, variants) {
   const filteredVariants = getFilteredVariants(variants);
@@ -54,10 +59,12 @@ function getAvailableOptions(type, variants) {
   return options.sort();
 }
 
+
 // все ли опции выбраны
 function isCompleteSelection() {
   return FILTER_ORDER.every(type => selectedOption[type]);
 }
+
 
 // индекс секции, до которой выбор сделан
 function getCurrentSectionIndex() {
@@ -66,6 +73,7 @@ function getCurrentSectionIndex() {
   }
   return FILTER_ORDER.length;
 }
+
 
 // перемешивание массива
 function shuffleArray(items) {
@@ -77,12 +85,14 @@ function shuffleArray(items) {
   return arr;
 }
 
+
 function getMaxNumberFromName(name) {
   if (!name) return 0;
   const matches = String(name).match(/\d+/g);
   if (!matches) return 0;
   return Math.max(...matches.map(n => parseInt(n, 10) || 0));
 }
+
 
 // список товаров для отображения в магазине
 function getVisibleProducts() {
@@ -129,6 +139,7 @@ function getVisibleProducts() {
   return groupedVisible;
 }
 
+
 // предзагрузка картинок
 function preloadAllImages(products) {
   products.forEach(product => {
@@ -145,13 +156,16 @@ function preloadAllImages(products) {
   });
 }
 
+
 // подписи к опциям
 function getLabel(type) {
   const labels = { simType: 'SIM/eSIM', storage: 'Память', color: 'Цвет', region: 'Регион' };
   return labels[type] || type;
 }
 
+
 // ---------- рендер магазина ----------
+
 
 function renderShopHeader(list, showCount) {
   let optionsHtml = '';
@@ -169,39 +183,41 @@ function renderShopHeader(list, showCount) {
 
   return (
     '<div class="mb-5">' +
-    '<h1 class="text-3xl font-bold text-center mb-4">🛒 Магазин</h1>' +
-    '<div class="flex items-center gap-3">' +
-    '<div class="flex-1 bg-white rounded-2xl shadow px-3 py-2">' +
-    '<label class="text-xs text-gray-500 block mb-1">Категория</label>' +
-    '<select id="category" class="w-full bg-transparent border-none font-semibold text-base focus:outline-none appearance-none">' +
-    optionsHtml +
-    '</select>' +
-    '</div>' +
-    '<div class="w-44 bg-white rounded-2xl shadow px-3 py-2">' +
-    '<label class="text-xs text-gray-500 block mb-1">Поиск</label>' +
-    '<div class="flex items-center">' +
-    '<svg class="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-    ' d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"/>' +
-    '</svg>' +
-    '<input id="search" value="' +
-    escapeHtml(query) +
-    '" placeholder="Поиск..."' +
-    ' class="w-full bg-transparent outline-none text-sm text-gray-900" />' +
-    '</div>' +
-    '</div>' +
-    '</div>' +
-    '<div class="mt-3 text-xs text-gray-500">' +
-    'Показано: <span class="font-semibold">' +
-    showCount +
-    '</span> из ' +
-    list.length +
-    '</div>' +
+      '<h1 class="text-3xl font-bold text-center mb-4">🛒 Магазин</h1>' +
+      '<div class="flex items-center gap-3">' +
+        '<div class="flex-1 bg-white rounded-2xl shadow px-3 py-2">' +
+          '<label class="text-xs text-gray-500 block mb-1">Категория</label>' +
+          '<select id="category" class="w-full bg-transparent border-none font-semibold text-base focus:outline-none appearance-none">' +
+            optionsHtml +
+          '</select>' +
+        '</div>' +
+        '<div class="w-44 bg-white rounded-2xl shadow px-3 py-2">' +
+          '<label class="text-xs text-gray-500 block mb-1">Поиск</label>' +
+          '<div class="flex items-center">' +
+            '<svg class="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+              '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+              ' d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"/>' +
+            '</svg>' +
+            '<input id="search" value="' +
+              escapeHtml(query) +
+              '" placeholder="Поиск..."' +
+              ' class="w-full bg-transparent outline-none text-sm text-gray-900" />' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="mt-3 text-xs text-gray-500">' +
+        'Показано: <span class="font-semibold">' +
+        showCount +
+        '</span> из ' +
+        list.length +
+      '</div>' +
     '</div>'
   );
 }
 
+
 // ---------- карточка товара ----------
+
 function productCard(product) {
   const allVariants = getProductVariants(product.name);
   const variants = allVariants.filter(v => v.inStock);
@@ -217,13 +233,17 @@ function productCard(product) {
   );
   const carouselId = 'carousel_' + Math.random().toString(36).substr(2, 9);
 
-  const hasLoaded =
+  const isLoaded =
     hasImage &&
     typeof loadedImageUrls !== 'undefined' &&
     loadedImageUrls.has(safeMainImage);
 
-  // если нет картинки или URL уже был обработан (ошибка/таймаут) — сразу SVG
-  const shouldShowSvgImmediately = !hasImage || hasLoaded;
+  const isFailed =
+    hasImage &&
+    typeof failedImageUrls !== 'undefined' &&
+    failedImageUrls.has(safeMainImage);
+
+  const shouldShowSvgImmediately = !hasImage || isFailed;
 
   return (
     '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
@@ -233,8 +253,8 @@ function productCard(product) {
       // фон сразу серый, чтобы не было белой вспышки
       '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden relative bg-gray-100">' +
 
-        // Шиммер только если есть валидный URL и он ещё не загружался
-        (!hasLoaded && hasImage
+        // Шиммер только если есть валидный URL и он ещё не загружался и не упал
+        (!isLoaded && !isFailed && hasImage
           ? '<div class="w-full h-full rounded-xl placeholder-shimmer absolute inset-0" data-skeleton="image"></div>'
           : ''
         ) +
@@ -249,7 +269,7 @@ function productCard(product) {
               getPlainSvgPlaceholder() +
               '<img src="' + commonImage + '" ' +
                   'class="carousel-img product-image absolute inset-0 object-contain ' +
-                    (hasLoaded ? 'no-fade' : '') + '" ' +
+                    (isLoaded ? 'no-fade' : '') + '" ' +
                   'alt="Product" ' +
                   'data-src="' + safeMainImage + '" ' +
                   'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" ' +
@@ -271,11 +291,14 @@ function productCard(product) {
   );
 }
 
+
 function renderShopList(list, showCount) {
   return list.slice(0, showCount).map(productCard).join('');
 }
 
+
 let isFirstShopRender = true;
+
 
 function renderShop() {
   if (!productsData || productsData.length === 0) {
@@ -332,7 +355,7 @@ function renderShop() {
         '</div>' +
       '</div>' +
       '<div class="product-grid" id="productGrid">' +
-        list.slice(0, showCount).map(productCard).join('') +
+        renderShopList(list, showCount) +
       '</div>' +
       '<div id="scrollSentinel" class="h-10 flex items-center justify-center mt-4">' +
         (showCount < list.length
@@ -352,7 +375,9 @@ function renderShop() {
   setupImageTimeoutsForGrid();
 }
 
+
 // ---------- навешивание обработчиков ----------
+
 
 function setupHandlers() {
   const categoryEl = document.getElementById('category');
@@ -424,7 +449,9 @@ function setupHandlers() {
   });
 }
 
+
 // ---------- карусели на карточках ----------
+
 
 function setupImageCarousels() {
   document.querySelectorAll('.image-carousel-inner[data-carousel]').forEach(inner => {

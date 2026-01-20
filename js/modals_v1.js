@@ -11,16 +11,14 @@ function getVariantCountText(count) {
   const mod10 = count % 10;
   const mod100 = count % 100;
 
-  if (mod10 === 1 && mod100 !== 11) {
-    return count + ' вариант';
-  }
+  if (mod10 === 1 && mod100 !== 11) return count + ' вариант';
   if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) {
     return count + ' варианта';
   }
   return count + ' вариантов';
 }
 
-// SVG-заглушка без текста, размеры как у .no-images h-64
+// SVG-заглушка для onerror
 function getModalSvgPlaceholder() {
   const wrapper = document.createElement('div');
   wrapper.className = 'no-images h-64';
@@ -143,7 +141,7 @@ window.addToCartFromModal = async function () {
   );
   const variants = allVariants;
 
-  if (variants.length === 0) {
+  if (!variants.length) {
     tg?.showAlert?.('❌ Нет доступных вариантов');
     isAddingToCart = false;
     const scA = document.querySelector('#modalContent .flex-1');
@@ -180,7 +178,6 @@ function renderProductModal(product) {
 
   const allVariants = getProductVariants(product.name);
   const variants = allVariants.filter(v => v.inStock);
-
   const modalRoot = document.getElementById('modalContent');
 
   if (!variants.length) {
@@ -232,21 +229,20 @@ function renderProductModal(product) {
   let filteredImages = [];
   if (complete && availableVariants.length > 0) {
     filteredImages = getFilteredProductImages(availableVariants);
-    if (filteredImages.length === 0 && variants[0].commonImage) {
+    if (!filteredImages.length && variants[0].commonImage) {
       filteredImages = [variants[0].commonImage];
     }
   }
 
   const productCommonImage = product.commonImage || '';
 
-  // ---------- 1. Рисуем каркас и картинку ОДИН РАЗ ----------
+  // 1. Каркас один раз
   if (!modalRoot.dataset.initialized) {
     modalRoot.dataset.initialized = '1';
 
     modalRoot.innerHTML =
       '<div class="flex flex-col h-full">' +
 
-        // шапка
         '<div class="p-6 pb-4 border-b border-gray-200">' +
           '<div class="flex items-center justify-between mb-2">' +
             '<h2 class="text-2xl font-bold" id="modalTitle"></h2>' +
@@ -262,47 +258,45 @@ function renderProductModal(product) {
           '</div>' +
         '</div>' +
 
-        // тело
         '<div class="flex-1 overflow-y-auto">' +
 
-          // картинка
           '<div class="modal-image-section">' +
             '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden" id="modalCarousel">' +
-              '<div class="image-carousel-inner" id="modalCarouselInner"></div>' +
+              '<div class="image-carousel-inner" id="modalCarouselInner">' +
+                '<div class="modal-base-placeholder no-images h-64">' +
+                  '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+                    ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+                  '</svg>' +
+                '</div>' +
+              '</div>' +
             '</div>' +
             '<div id="modalImageHint" class="px-3 pt-1 pb-2 text-xs text-gray-500 text-center"></div>' +
           '</div>' +
 
-          // нижняя часть (опции, количество, инфо)
           '<div id="modalBodyDynamic" class="px-4 pt-0 pb-4 space-y-4"></div>' +
         '</div>' +
 
-        // футер
         '<div class="modal-footer border-t bg-white">' +
           '<button id="modalAddButton"' +
-          ' class="w-full flex items-center justify-center gap-2 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all">' +
-          '</button>' +
+          ' class="w-full flex items-center justify-center gap-2 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all"></button>' +
         '</div>' +
 
       '</div>';
   }
 
-  // ---------- 2. Обновляем шапку ----------
+  // 2. Шапка
   document.getElementById('modalTitle').textContent = product.name;
   document.getElementById('modalPrice').textContent =
     headerPriceText + (headerSuffix ? ' ' + headerSuffix : '');
   document.getElementById('modalVariantCount').textContent =
     getVariantCountText(availableVariants.length);
 
-  // ---------- 3. Обновляем картинку только при реальном изменении ----------
+  // 3. Картинка
   const carouselInner = document.getElementById('modalCarouselInner');
   const imageHintEl = document.getElementById('modalImageHint');
 
-  // ключ состояния картинки:
-  // - 'variant' + JSON.stringify(filteredImages) для полного выбора
-  // - 'common:' + productCommonImage для неполного выбора
   let nextImageKey;
-
   if (complete && filteredImages.length > 0) {
     nextImageKey = 'variant:' + JSON.stringify(filteredImages);
   } else if (productCommonImage) {
@@ -314,50 +308,58 @@ function renderProductModal(product) {
   if (modalCurrentImageUrl !== nextImageKey) {
     modalCurrentImageUrl = nextImageKey;
 
+    // очищаем только поверхностные <img>, SVG-плейсхолдер оставляем
+    Array.from(carouselInner.querySelectorAll('img.modal-photo, img.carousel-img')).forEach(img =>
+      img.remove()
+    );
+
     if (complete && filteredImages.length > 0) {
-      // реальные фото варианта
-      carouselInner.innerHTML = filteredImages
-        .slice(0, 10)
-        .map(
-          img =>
-            '<img src="' +
-            img +
-            '" class="carousel-img w-full h-full object-contain" alt="Product image" loading="lazy"' +
-            ' onerror="this.onerror=null; var inner=this.parentElement; if(inner){ inner.innerHTML=\'\'; inner.appendChild(getModalSvgPlaceholder()); }" />'
-        )
-        .join('');
+      filteredImages.slice(0, 10).forEach(src => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = 'Product image';
+        img.loading = 'lazy';
+        img.className = 'modal-photo';
+        img.onload = () => img.classList.add('loaded');
+        img.onerror = () => {
+          const inner = img.parentElement;
+          if (inner) {
+            inner.innerHTML = '';
+            inner.appendChild(getModalSvgPlaceholder());
+          }
+        };
+        carouselInner.appendChild(img);
+      });
 
       imageHintEl.textContent = '';
       modalCurrentIndex = modalImageIndexBeforeFullscreen;
       initModalCarousel(filteredImages.length);
       initModalSwipe();
     } else if (productCommonImage) {
-      // общая картинка товара
-      carouselInner.innerHTML =
-        '<img src="' +
-        productCommonImage +
-        '" class="carousel-img w-full h-full object-contain" alt="Product image"' +
-        ' onerror="this.onerror=null; var inner=this.parentElement; if(inner){ inner.innerHTML=\'\'; inner.appendChild(getModalSvgPlaceholder()); }" />';
+      const img = document.createElement('img');
+      img.src = productCommonImage;
+      img.alt = 'Product image';
+      img.className = 'modal-photo';
+      img.onload = () => img.classList.add('loaded');
+      img.onerror = () => {
+        const inner = img.parentElement;
+        if (inner) {
+          inner.innerHTML = '';
+          inner.appendChild(getModalSvgPlaceholder());
+        }
+      };
+      carouselInner.appendChild(img);
 
       imageHintEl.textContent =
         '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
     } else {
-      // совсем нет фото
-      carouselInner.innerHTML =
-      '<div class="modal-base-placeholder">' +
-        /* svg */ +
-      '</div>' +
-      '<img src="' + productCommonImage + '" class="modal-photo" alt="Product image"' +
-      ' onload="this.classList.add(\'loaded\')" ' +
-      ' onerror="this.remove()" />';
-    
-
+      // только SVG-плейсхолдер
       imageHintEl.textContent =
         '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
     }
   }
 
-  // ---------- 4. Динамическая часть: опции, количество, инфо ----------
+  // 4. Динамическая часть
   const body = document.getElementById('modalBodyDynamic');
 
   body.innerHTML =
@@ -400,7 +402,6 @@ function renderProductModal(product) {
       );
     }).join('') +
 
-    // Количество
     '<div class="quantity-section">' +
       '<label class="text-sm font-semibold text-gray-700 mb-2 block">Количество</label>' +
       '<div class="flex items-center gap-3">' +
@@ -415,7 +416,6 @@ function renderProductModal(product) {
       '<p class="text-xs text-gray-400 mt-1">Максимум 100 шт.</p>' +
     '</div>' +
 
-    // Информация о вариантах
     '<div class="pt-4 border-t">' +
       '<div class="text-center text-sm text-gray-500 mb-3">' +
         'Доступно: <span id="variantCount" class="font-bold text-blue-600">' +
@@ -434,7 +434,7 @@ function renderProductModal(product) {
       '</div>' +
     '</div>';
 
-  // ---------- 5. Кнопка "В корзину" ----------
+  // 5. Кнопка
   const btn = document.getElementById('modalAddButton');
 
   if (isAddingToCart) {
@@ -453,7 +453,7 @@ function renderProductModal(product) {
   } else {
     btn.innerHTML = 'Выберите все опции';
     btn.className =
-      'w-full flex items-center justify-center gap-2 bg-gray-400 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all cursor-not-allowed';
+      'w-full flex itemscenter justify-center gap-2 bg-gray-400 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all cursor-not-allowed';
     btn.disabled = true;
   }
 }
@@ -492,7 +492,6 @@ function initModalCarousel(imageCount) {
   updateModalCarousel();
 }
 
-// свайпы по карусели
 function initModalSwipe() {
   const carousel = document.getElementById('modalCarousel');
   if (!carousel) return;

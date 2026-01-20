@@ -195,7 +195,7 @@ img,
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 0.75rem 0.75rem; /* ~ py-1.5 px-3 */
+  padding: 0.75rem 0.75rem;
 }
 
 /* Горизонтальный скролл опций */
@@ -247,9 +247,9 @@ img,
 
 /* Блок с изображением в модалке */
 .modal-image-section {
-  padding: 12px 24px 0;      /* было 16px → 12px, поднимает блок чуть выше */
+  padding: 12px 16px 0; /* было 24px по бокам */
   border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 16px;       /* было 12px → 16px, больше расстояние вниз */
+  margin-bottom: 16px;
 }
 
 /* Состояние, когда нет изображений */
@@ -265,9 +265,9 @@ img,
 }
 
 .no-images svg {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 12px;
+  width: 96px;  /* чуть крупнее */
+  height: 96px;
+  margin-bottom: 0;
 }
 
 /* Поиск */
@@ -350,7 +350,7 @@ img,
   box-sizing: border-box;
 }
 
-/* Плавное появление только при первой загрузке */
+/* Плавное появление только при первой загрузке карточек (если нужно) */
 .product-image {
   opacity: 0;
   transition: opacity 0.25s ease-in;
@@ -360,25 +360,28 @@ img,
   opacity: 1;
 }
 
-/* При последующих рендерах (URL уже загружался) — без анимации */
 .product-image.no-fade {
   opacity: 1;
   transition: none;
 }
 
+/* Для модалки — базовый фон и фото поверх */
 #modalCarouselInner {
   position: relative;
 }
+
 .modal-base-placeholder {
   position: absolute;
   inset: 0;
 }
+
 .modal-photo {
   position: absolute;
   inset: 0;
   opacity: 0;
   transition: opacity 0.2s ease;
 }
+
 .modal-photo.loaded {
   opacity: 1;
 }

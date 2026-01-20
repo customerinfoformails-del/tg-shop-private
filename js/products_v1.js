@@ -260,7 +260,9 @@ function renderShop() {
         '<div class="w-24 h-24 bg-gray-100 rounded-3xl flex items-center justify-center mb-4">' +
           '<svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-                  ' d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 2.5M7 13l-1.5 2.5m12.5-2.5L21 13m0 0l-1.5 2.5m1.5-2.5L21 21"/>' +
+              ' d="M3 4h2l1.5 11h10.5L20 7H7" />' +
+            '<circle cx="8.5" cy="19" r="1.5" stroke-width="2" />' +
+            '<circle cx="16.5" cy="19" r="1.5" stroke-width="2" />' +
           '</svg>' +
         '</div>' +
         '<h2 class="text-xl font-bold text-gray-800 mb-2">Нет товаров</h2>' +

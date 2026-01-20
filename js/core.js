@@ -399,12 +399,14 @@ window.handleProductImageError = function (img, url) {
     const wrapper = img.closest('.image-carousel');
     const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
 
-    if (wrapper) {
-      const inner = wrapper.querySelector('.image-carousel-inner');
-      if (inner) {
-        inner.innerHTML = getPlainSvgPlaceholder();
-      }
+    // помечаем URL как НЕвалидный
+    if (typeof imageCache !== 'undefined') {
+      imageCache.set(url, false);
     }
+
+    // вместо innerHTML = ... просто заменяем img на SVG
+    const svg = getPlainSvgPlaceholder();
+    img.replaceWith(svg);
 
     if (skeleton) skeleton.remove();
 
@@ -414,7 +416,8 @@ window.handleProductImageError = function (img, url) {
     }
     delete img.dataset.loadTimeoutAttached;
 
-    loadedImageUrls.add(url);
+    // важно: не добавляем битый url в loadedImageUrls
+    // loadedImageUrls.add(url);  // ← это убрать
   } catch (e) {
     console.log('[images] handleProductImageError error', e);
   }

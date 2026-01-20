@@ -195,11 +195,15 @@ window.addAddress = function () {
   savedAddresses.push(val);
   saveAddressesToStorage();
   ta.value = '';
-  showProfileTab();
+  if (currentTab === 'profile') {
+    showProfileTab();
+  }
 };
 
 window.removeAddress = function (index) {
   savedAddresses.splice(index, 1);
   saveAddressesToStorage();
-  showProfileTab();
+  if (currentTab === 'profile') {
+    showProfileTab();
+  }
 };

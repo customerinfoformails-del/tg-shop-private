@@ -302,8 +302,8 @@ function showCartTab() {
           '<svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
           '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
             ' d="M3 4h2l1.5 11h10.5L20 7H7" />' +
-          '<circle cx="8.5" cy="19" r="1.5" stroke-width="2" />' +
-          '<circle cx="16.5" cy="19" r="1.5" stroke-width="2" />' +
+          '<circle cx="8" cy="19" r="1.5" stroke-width="2" />' +
+          '<circle cx="16" cy="19" r="1.5" stroke-width="2" />' +
         '</svg>' +
         '</div>' +
         '<h2 class="text-2xl font-bold text-gray-800 mb-2">Корзина пуста</h2>' +

@@ -231,7 +231,7 @@ function productCard(product) {
             '" ' +
             'class="carousel-img product-image opacity-0" ' +
             'alt="Product" ' +
-            'data-src="' + safeMainImage + '" ' +          
+            'data-src="' + safeMainImage + '" ' +
             'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" />' +
         '</div>' +
       '</div>' +
@@ -329,12 +329,7 @@ function renderShop() {
   preloadAllImages(list.slice(0, showCount));
   setupImageCarousels();
   setupInfiniteScroll();
-
-  // запускаем таймеры для всех картинок в текущем гриде
-  document.querySelectorAll('.product-grid img.product-image').forEach(img => {
-    const url = img.getAttribute('data-src') || img.src;
-    startImageLoadTimeout(img, url);
-  });
+  setupImageTimeoutsForGrid();
 }
 
 // ---------- навешивание обработчиков ----------
@@ -379,12 +374,7 @@ function setupHandlers() {
           setupImageCarousels();
           setupHandlers();
           setupInfiniteScroll();
-
-          // таймеры на новые картинки
-          document.querySelectorAll('.product-grid img.product-image').forEach(img => {
-            const url = img.getAttribute('data-src') || img.src;
-            startImageLoadTimeout(img, url);
-          });
+          setupImageTimeoutsForGrid();
         }
       }, 500);
     };

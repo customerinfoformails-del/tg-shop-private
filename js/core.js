@@ -322,43 +322,51 @@ async function fetchAndUpdateProducts(showLoader = false) {
   }
 }
 
+// ---------- Загрузка изображений с таймаутом ----------
+
 const loadedImageUrls = new Set();
-const imageLoadTimeouts = new Map();
 
-function startImageLoadTimeout(img, url) {
-  // если уже загружали этот URL раньше — ничего не ждём
-  if (loadedImageUrls.has(url)) return;
+function attachImageTimeout(img) {
+  try {
+    const url = img.getAttribute('data-src') || img.src;
 
-  // на всякий случай очищаем старый
-  if (imageLoadTimeouts.has(url)) {
-    clearTimeout(imageLoadTimeouts.get(url));
-    imageLoadTimeouts.delete(url);
-  }
+    // если этот URL уже загружался успешно — сразу показываем и убираем скелетон
+    if (loadedImageUrls.has(url)) {
+      img.style.opacity = '1';
+      const wrapper = img.closest('.image-carousel');
+      const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
+      if (skeleton) skeleton.remove();
+      return;
+    }
 
-  const timeoutId = setTimeout(() => {
-    imageLoadTimeouts.delete(url);
+    // если уже повесили таймер на этот img — не дублируем
+    if (img.dataset.loadTimeoutAttached === '1') return;
+    img.dataset.loadTimeoutAttached = '1';
 
-    // если к этому моменту картинка уже загрузилась, ничего не делаем
-    if (loadedImageUrls.has(url)) return;
+    const timeoutId = setTimeout(() => {
+      // если за это время URL успел загрузиться — ничего не делаем
+      if (loadedImageUrls.has(url)) return;
 
-    // fallback: ставим плейсхолдер и убираем шиммер
-    try {
       const wrapper = img.closest('.image-carousel');
       const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
 
-      // выбираем плейсхолдер по категории (через data-cat можно, если нужно),
-      // но у нас уже была mainImage, поэтому просто показываем текущий src без анимации
       img.style.opacity = '1';
+      if (skeleton) skeleton.remove();
 
-      if (skeleton) {
-        skeleton.remove();
-      }
-    } catch (e) {
-      console.log('[images] timeout fallback error', e);
-    }
-  }, 10000); // 10 секунд
+      delete img.dataset.loadTimeoutAttached;
+      delete img.dataset.loadTimeoutId;
+    }, 10000); // 10 секунд
 
-  imageLoadTimeouts.set(url, timeoutId);
+    img.dataset.loadTimeoutId = String(timeoutId);
+  } catch (e) {
+    console.log('[images] attachImageTimeout error', e);
+  }
+}
+
+function setupImageTimeoutsForGrid() {
+  document.querySelectorAll('.product-grid img.product-image').forEach(img => {
+    attachImageTimeout(img);
+  });
 }
 
 window.handleProductImageLoad = function (img, url) {
@@ -366,14 +374,13 @@ window.handleProductImageLoad = function (img, url) {
     const wrapper = img.closest('.image-carousel');
     const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
 
-    // помечаем, что этот URL успешно загрузился
     loadedImageUrls.add(url);
 
-    // снимаем таймер, если был
-    if (imageLoadTimeouts.has(url)) {
-      clearTimeout(imageLoadTimeouts.get(url));
-      imageLoadTimeouts.delete(url);
+    if (img.dataset.loadTimeoutId) {
+      clearTimeout(Number(img.dataset.loadTimeoutId));
+      delete img.dataset.loadTimeoutId;
     }
+    delete img.dataset.loadTimeoutAttached;
 
     img.classList.add('loaded');
     img.style.opacity = '1';
@@ -386,8 +393,6 @@ window.handleProductImageLoad = function (img, url) {
     img.style.opacity = '1';
   }
 };
-
-
 
 // ---------- Обновление товаров вручную ----------
 
@@ -516,11 +521,7 @@ function setupInfiniteScroll() {
       preloadAllImages(all.slice(0, showCount));
       setupImageCarousels();
       setupHandlers();
-
-      document.querySelectorAll('.product-grid img.product-image').forEach(img => {
-        const url = img.getAttribute('data-src') || img.src;
-        startImageLoadTimeout(img, url);
-      });
+      setupImageTimeoutsForGrid();
 
       // ОБНОВИТЬ СЧЁТЧИК "Показано"
       const counterSpan = document.querySelector(

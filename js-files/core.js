@@ -413,7 +413,7 @@ window.handleProductImageError = function (img, url) {
   } catch (e) {
     console.log('[images] handleProductImageError error', e);
   }
-};
+}; 
 
 window.handleProductImageLoad = function (img, url) {
   try {

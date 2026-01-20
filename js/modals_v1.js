@@ -18,18 +18,6 @@ function getVariantCountText(count) {
   return count + ' вариантов';
 }
 
-// SVG-заглушка для onerror
-function getModalSvgPlaceholder() {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'no-images h-64';
-  wrapper.innerHTML =
-    '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-      ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
-    '</svg>';
-  return wrapper;
-}
-
 function selectOptionNoFocus(type, option) {
   if (document.activeElement && document.activeElement.blur) {
     document.activeElement.blur();
@@ -263,7 +251,15 @@ function renderProductModal(product) {
 
           '<div class="modal-image-section">' +
             '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden" id="modalCarousel">' +
-              '<div class="image-carousel-inner" id="modalCarouselInner"></div>' +
+              '<div class="image-carousel-inner w-full h-full flex items-center justify-center" id="modalCarouselInner">' +
+                '<div id="modalPlaceholder" class="no-images h-64 flex items-center justify-center w-full">' +
+                  '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+                    ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+                  '</svg>' +
+                '</div>' +
+                '<img id="modalImage" class="w-full h-64 object-contain hidden" alt="Product image">' +
+              '</div>' +
             '</div>' +
             '<div id="modalImageHint" class="px-3 pt-1 pb-2 text-xs text-gray-500 text-center"></div>' +
           '</div>' +
@@ -286,15 +282,20 @@ function renderProductModal(product) {
   document.getElementById('modalVariantCount').textContent =
     getVariantCountText(availableVariants.length);
 
-  // 3. Картинка
-  const carouselInner = document.getElementById('modalCarouselInner');
+  // 3. Картинка без innerHTML
+  const imgEl = document.getElementById('modalImage');
+  const placeholderEl = document.getElementById('modalPlaceholder');
   const imageHintEl = document.getElementById('modalImageHint');
 
   let nextImageKey;
+  let targetUrl = null;
+
   if (complete && filteredImages.length > 0) {
     nextImageKey = 'variant:' + JSON.stringify(filteredImages);
+    targetUrl = filteredImages[0];
   } else if (productCommonImage) {
     nextImageKey = 'common:' + productCommonImage;
+    targetUrl = productCommonImage;
   } else {
     nextImageKey = 'empty';
   }
@@ -302,46 +303,34 @@ function renderProductModal(product) {
   if (modalCurrentImageUrl !== nextImageKey) {
     modalCurrentImageUrl = nextImageKey;
 
-    // очищаем всё внутри и рисуем заново
-    carouselInner.innerHTML = '';
-
-    if (complete && filteredImages.length > 0) {
-      // первый URL как основная картинка
-      const img = document.createElement('img');
-      img.src = filteredImages[0];
-      img.alt = 'Product image';
-      img.loading = 'lazy';
-      img.className = 'w-full h-full object-contain';
-      img.onerror = () => {
-        const inner = img.parentElement;
-        if (inner) {
-          inner.innerHTML = '';
-          inner.appendChild(getModalSvgPlaceholder());
-        }
-      };
-      carouselInner.appendChild(img);
-
-      imageHintEl.textContent = '';
-    } else if (productCommonImage) {
-      const img = document.createElement('img');
-      img.src = productCommonImage;
-      img.alt = 'Product image';
-      img.className = 'w-full h-full object-contain';
-      img.onerror = () => {
-        const inner = img.parentElement;
-        if (inner) {
-          inner.innerHTML = '';
-          inner.appendChild(getModalSvgPlaceholder());
-        }
-      };
-      carouselInner.appendChild(img);
-
+    if (!targetUrl) {
+      // только SVG
+      imgEl.classList.add('hidden');
+      placeholderEl.classList.remove('hidden');
       imageHintEl.textContent =
         '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
     } else {
-      carouselInner.appendChild(getModalSvgPlaceholder());
-      imageHintEl.textContent =
-        '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
+      // держим SVG, пока картинка не загрузится
+      placeholderEl.classList.remove('hidden');
+      imgEl.classList.add('hidden');
+
+      imgEl.onload = () => {
+        placeholderEl.classList.add('hidden');
+        imgEl.classList.remove('hidden');
+      };
+      imgEl.onerror = () => {
+        imgEl.classList.add('hidden');
+        placeholderEl.classList.remove('hidden');
+      };
+
+      imgEl.src = targetUrl;
+
+      if (complete && filteredImages.length > 0) {
+        imageHintEl.textContent = '';
+      } else {
+        imageHintEl.textContent =
+          '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
+      }
     }
   }
 
@@ -444,8 +433,7 @@ function renderProductModal(product) {
   }
 }
 
-// Карусель сейчас по сути не нужна (мы показываем только первый снимок),
-// но оставляю инициализацию, чтобы не ломать остальной код.
+// Карусель оставлена на будущее
 function initModalCarousel(imageCount) {
   if (imageCount <= 1) return;
   modalImageCount = imageCount;

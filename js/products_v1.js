@@ -231,6 +231,7 @@ function productCard(product) {
             '" ' +
             'class="carousel-img product-image opacity-0" ' +
             'alt="Product" ' +
+            'data-src="' + safeMainImage + '" ' +          
             'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" />' +
         '</div>' +
       '</div>' +
@@ -328,6 +329,12 @@ function renderShop() {
   preloadAllImages(list.slice(0, showCount));
   setupImageCarousels();
   setupInfiniteScroll();
+
+  // запускаем таймеры для всех картинок в текущем гриде
+  document.querySelectorAll('.product-grid img.product-image').forEach(img => {
+    const url = img.getAttribute('data-src') || img.src;
+    startImageLoadTimeout(img, url);
+  });
 }
 
 // ---------- навешивание обработчиков ----------
@@ -370,8 +377,14 @@ function setupHandlers() {
           grid.innerHTML = renderShopList(list, showCount);
           preloadAllImages(list.slice(0, showCount));
           setupImageCarousels();
-          setupHandlers(); // чтобы модалки продолжали работать после поиска
+          setupHandlers();
           setupInfiniteScroll();
+
+          // таймеры на новые картинки
+          document.querySelectorAll('.product-grid img.product-image').forEach(img => {
+            const url = img.getAttribute('data-src') || img.src;
+            startImageLoadTimeout(img, url);
+          });
         }
       }, 500);
     };

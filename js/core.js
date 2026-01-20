@@ -323,16 +323,59 @@ async function fetchAndUpdateProducts(showLoader = false) {
 }
 
 const loadedImageUrls = new Set();
+const imageLoadTimeouts = new Map();
+
+function startImageLoadTimeout(img, url) {
+  // если уже загружали этот URL раньше — ничего не ждём
+  if (loadedImageUrls.has(url)) return;
+
+  // на всякий случай очищаем старый
+  if (imageLoadTimeouts.has(url)) {
+    clearTimeout(imageLoadTimeouts.get(url));
+    imageLoadTimeouts.delete(url);
+  }
+
+  const timeoutId = setTimeout(() => {
+    imageLoadTimeouts.delete(url);
+
+    // если к этому моменту картинка уже загрузилась, ничего не делаем
+    if (loadedImageUrls.has(url)) return;
+
+    // fallback: ставим плейсхолдер и убираем шиммер
+    try {
+      const wrapper = img.closest('.image-carousel');
+      const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
+
+      // выбираем плейсхолдер по категории (через data-cat можно, если нужно),
+      // но у нас уже была mainImage, поэтому просто показываем текущий src без анимации
+      img.style.opacity = '1';
+
+      if (skeleton) {
+        skeleton.remove();
+      }
+    } catch (e) {
+      console.log('[images] timeout fallback error', e);
+    }
+  }, 10000); // 10 секунд
+
+  imageLoadTimeouts.set(url, timeoutId);
+}
 
 window.handleProductImageLoad = function (img, url) {
   try {
     const wrapper = img.closest('.image-carousel');
     const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
 
-    if (!loadedImageUrls.has(url)) {
-      loadedImageUrls.add(url);
-      img.classList.add('loaded');
+    // помечаем, что этот URL успешно загрузился
+    loadedImageUrls.add(url);
+
+    // снимаем таймер, если был
+    if (imageLoadTimeouts.has(url)) {
+      clearTimeout(imageLoadTimeouts.get(url));
+      imageLoadTimeouts.delete(url);
     }
+
+    img.classList.add('loaded');
     img.style.opacity = '1';
 
     if (skeleton) {
@@ -343,6 +386,7 @@ window.handleProductImageLoad = function (img, url) {
     img.style.opacity = '1';
   }
 };
+
 
 
 // ---------- Обновление товаров вручную ----------
@@ -472,6 +516,11 @@ function setupInfiniteScroll() {
       preloadAllImages(all.slice(0, showCount));
       setupImageCarousels();
       setupHandlers();
+
+      document.querySelectorAll('.product-grid img.product-image').forEach(img => {
+        const url = img.getAttribute('data-src') || img.src;
+        startImageLoadTimeout(img, url);
+      });
 
       // ОБНОВИТЬ СЧЁТЧИК "Показано"
       const counterSpan = document.querySelector(

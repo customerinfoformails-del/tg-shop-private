@@ -212,6 +212,9 @@ function productCard(product) {
   );
   const carouselId = 'carousel_' + Math.random().toString(36).substr(2, 9);
 
+  // если картинка уже когда‑то успешно грузилась — не показываем скелетон и сразу делаем её видимой
+  const hasLoaded = loadedImageUrls && loadedImageUrls.has(safeMainImage);
+
   return (
     '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
       ' data-product-name="' +
@@ -221,15 +224,19 @@ function productCard(product) {
       carouselId +
       '">' +
       '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden relative">' +
-        // ШИММЕР-ПОДЛОЖКА
-        '<div class="w-full h-full rounded-xl placeholder-shimmer absolute inset-0" data-skeleton="image"></div>' +
+        (!hasLoaded
+          ? '<div class="w-full h-full rounded-xl placeholder-shimmer absolute inset-0" data-skeleton="image"></div>'
+          : ''
+        ) +
         '<div class="image-carousel-inner relative" data-carousel="' +
           carouselId +
           '" data-current="0">' +
           '<img src="' +
             mainImage +
             '" ' +
-            'class="carousel-img product-image opacity-0" ' +
+            'class="carousel-img product-image' +
+              (hasLoaded ? ' loaded' : ' opacity-0') +
+            '" ' +
             'alt="Product" ' +
             'data-src="' + safeMainImage + '" ' +
             'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" />' +

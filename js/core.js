@@ -326,17 +326,24 @@ const loadedImageUrls = new Set();
 
 window.handleProductImageLoad = function (img, url) {
   try {
+    const wrapper = img.closest('.image-carousel');
+    const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
+
     if (!loadedImageUrls.has(url)) {
       loadedImageUrls.add(url);
-      img.classList.add('loaded'); // плавный fade-in
-    } else {
-      img.style.opacity = '1';
+      img.classList.add('loaded');
+    }
+    img.style.opacity = '1';
+
+    if (skeleton) {
+      skeleton.remove();
     }
   } catch (e) {
     console.log('[images] handleProductImageLoad error', e);
     img.style.opacity = '1';
   }
 };
+
 
 // ---------- Обновление товаров вручную ----------
 
@@ -459,11 +466,22 @@ function setupInfiniteScroll() {
       if (!grid) return;
 
       const showCount = Math.min(loadedCount, all.length);
+
+      // обновляем карточки
       grid.innerHTML = renderShopList(all, showCount);
       preloadAllImages(all.slice(0, showCount));
       setupImageCarousels();
       setupHandlers();
 
+      // ОБНОВИТЬ СЧЁТЧИК "Показано"
+      const counterSpan = document.querySelector(
+        '.mt-3.text-xs.text-gray-500 span.font-semibold'
+      );
+      if (counterSpan) {
+        counterSpan.textContent = String(showCount);
+      }
+
+      // ОБНОВИТЬ ШИММЕР ВНИЗУ
       const sentinelEl = document.getElementById('scrollSentinel');
       if (sentinelEl) {
         sentinelEl.innerHTML =

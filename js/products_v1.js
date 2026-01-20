@@ -220,14 +220,16 @@ function productCard(product) {
       ' data-carousel-id="' +
       carouselId +
       '">' +
-      '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden">' +
-        '<div class="image-carousel-inner" data-carousel="' +
+      '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden relative">' +
+        // ШИММЕР-ПОДЛОЖКА
+        '<div class="w-full h-full rounded-xl placeholder-shimmer absolute inset-0" data-skeleton="image"></div>' +
+        '<div class="image-carousel-inner relative" data-carousel="' +
           carouselId +
           '" data-current="0">' +
           '<img src="' +
             mainImage +
             '" ' +
-            'class="carousel-img product-image" ' +
+            'class="carousel-img product-image opacity-0" ' +
             'alt="Product" ' +
             'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" />' +
         '</div>' +

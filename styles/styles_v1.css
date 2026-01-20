@@ -365,3 +365,20 @@ img,
   opacity: 1;
   transition: none;
 }
+
+#modalCarouselInner {
+  position: relative;
+}
+.modal-base-placeholder {
+  position: absolute;
+  inset: 0;
+}
+.modal-photo {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.modal-photo.loaded {
+  opacity: 1;
+}

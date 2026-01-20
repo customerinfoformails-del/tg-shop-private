@@ -202,15 +202,14 @@ function renderShopHeader(list, showCount) {
 }
 
 // ---------- карточка товара ----------
-
 function productCard(product) {
   const allVariants = getProductVariants(product.name);
   const variants = allVariants.filter(v => v.inStock);
-  if (variants.length === 0) return '';
+  if (!variants.length) return '';
 
   const commonImage = product.commonImage || variants[0]?.commonImage || '';
   const hasImage = !!commonImage;
-  const safeMainImage = commonImage ? commonImage.replace(/'/g, "\\'") : '';
+  const safeMainImage = hasImage ? commonImage.replace(/'/g, "\\'") : '';
 
   const cheapestVariant = variants.reduce(
     (min, p) => (p.price < min.price ? p : min),
@@ -223,40 +222,43 @@ function productCard(product) {
     typeof loadedImageUrls !== 'undefined' &&
     loadedImageUrls.has(safeMainImage);
 
-  const shouldShowSvgImmediately = !hasImage;
+  // если нет картинки или URL уже был обработан (ошибка/таймаут) — сразу SVG
+  const shouldShowSvgImmediately = !hasImage || hasLoaded;
 
   return (
     '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
-      ' data-product-name="' +
-      escapeHtml(product.name) +
-      '"' +
-      ' data-carousel-id="' +
-      carouselId +
-      '">' +
-      '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden relative">' +
-        // Шиммер только если есть URL и он ещё не загружался
+      ' data-product-name="' + escapeHtml(product.name) + '"' +
+      ' data-carousel-id="' + carouselId + '">' +
+
+      // фон сразу серый, чтобы не было белой вспышки
+      '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden relative bg-gray-100">' +
+
+        // Шиммер только если есть валидный URL и он ещё не загружался
         (!hasLoaded && hasImage
           ? '<div class="w-full h-full rounded-xl placeholder-shimmer absolute inset-0" data-skeleton="image"></div>'
           : ''
         ) +
-        '<div class="image-carousel-inner relative" data-carousel="' +
-          carouselId +
-          '" data-current="0">' +
+
+        '<div class="image-carousel-inner relative w-full h-full" data-carousel="' +
+          carouselId + '" data-current="0">' +
+
           (shouldShowSvgImmediately
             ? getPlainSvgPlaceholder()
-            : '<img src="' +
-                commonImage +
-                '" ' +
-                'class="carousel-img product-image ' +
-                  (hasLoaded ? 'no-fade' : '') +
-                '" ' +
-                'alt="Product" ' +
-                'data-src="' + safeMainImage + '" ' +
-                'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" ' +
-                'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" />'
+            : (
+              // SVG как фон + img поверх, чтобы не было белого кадра
+              getPlainSvgPlaceholder() +
+              '<img src="' + commonImage + '" ' +
+                  'class="carousel-img product-image absolute inset-0 object-contain ' +
+                    (hasLoaded ? 'no-fade' : '') + '" ' +
+                  'alt="Product" ' +
+                  'data-src="' + safeMainImage + '" ' +
+                  'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" ' +
+                  'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" />'
+            )
           ) +
         '</div>' +
       '</div>' +
+
       '<div class="font-bold text-base mb-1 truncate">' +
         escapeHtml(product.name) +
       '</div>' +
@@ -264,8 +266,7 @@ function productCard(product) {
         cheapestVariant.price +
       '</div>' +
       '<div class="text-xs text-gray-500 mb-4">' +
-        variants.length +
-        ' вариантов</div>' +
+        variants.length + ' вариантов</div>' +
     '</div>'
   );
 }

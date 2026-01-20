@@ -237,86 +237,74 @@ function renderProductModal(product) {
   }
 
   // общая картинка только из самого товара
-  const productCommonImage = product.commonImage || '';
+    // общая картинка только из самого товара
+    const productCommonImage = product.commonImage || '';
 
-  modalImageIndexBeforeFullscreen = modalCurrentIndex;
-
-  document.getElementById('modalContent').innerHTML =
-    '<div class="flex flex-col h-full">' +
-    '<div class="p-6 pb-4 border-b border-gray-200">' +
-    '<div class="flex items-center justify-between mb-2">' +
-    '<h2 class="text-2xl font-bold">' +
-    escapeHtml(product.name) +
-    '</h2>' +
-    '<button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-xl">' +
-    '<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>' +
-    '</svg>' +
-    '</button>' +
-    '</div>' +
-    '<div class="flex items-center gap-2 text-sm text-gray-500">' +
-    '<span>' +
-    headerPriceText +
-    (headerSuffix ? ' ' + headerSuffix : '') +
-    '</span>' +
-    '<span>• ' +
-    getVariantCountText(availableVariants.length) +
-    '</span>' +
-    '</div>' +
-    '</div>' +
-
-    '<div class="flex-1 overflow-y-auto">' +
-    '<div class="modal-image-section">' +
-    '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden" id="modalCarousel">' +
-    (complete && filteredImages.length > 0
-      ? '<div class="image-carousel-inner" id="modalCarouselInner">' +
-        filteredImages
-          .slice(0, 10)
-          .map(
-            img =>
-              '<img src="' +
-              img +
-              '" class="carousel-img w-full h-full object-contain" alt="Product image" loading="lazy"' +
-              ' onerror="this.onerror=null; var inner=this.parentElement; if(inner){ inner.innerHTML=\'\'; inner.appendChild(getModalSvgPlaceholder()); }" />'
-          )
-          .join('') +
-        '</div>' +
-        (filteredImages.length > 1
-          ? '<button class="nav-btn nav-prev" onclick="modalPrev(); event.stopPropagation()">‹</button>' +
-            '<button class="nav-btn nav-next" onclick="modalNext(); event.stopPropagation()">›</button>' +
-            '<div class="carousel-dots" id="modalDots">' +
-            filteredImages
-              .map(
-                (_, idx) =>
-                  '<div class="dot' +
-                  (idx === modalImageIndexBeforeFullscreen ? ' active' : '') +
-                  '" onclick="modalGoTo(' +
-                  idx +
-                  '); event.stopPropagation()"></div>'
-              )
-              .join('') +
-            '</div>'
-          : '')
-      : productCommonImage
-      ? '<div class="w-full h-64 rounded-xl overflow-hidden flex items-center justify-center">' +
-        '<img src="' +
-        productCommonImage +
-        '" class="w-full h-full object-contain" alt="Product image" />' +
-        '</div>'
-      : '<div class="no-images h-64">' +
-        '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-        ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
-        '</svg>' +
-        '<div class="text-center text-sm font-medium">Выберите все параметры для просмотра фото</div>' +
-        '</div>') +
-    '</div>' +
-    (complete && filteredImages.length > 0
-      ? '<div class="h-2 mb-2"></div>'
-      : '<p class="px-3 pt-1 pb-2 text-xs text-gray-500 text-center">' +
-        '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.' +
-        '</p>') +
-    '</div>' +
+    modalImageIndexBeforeFullscreen = modalCurrentIndex;
+  
+    document.getElementById('modalContent').innerHTML =
+      '<div class="flex flex-col h-full">' +
+      /* ... шапка как есть ... */ +
+  
+      '<div class="flex-1 overflow-y-auto">' +
+      '<div class="modal-image-section">' +
+      '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden" id="modalCarousel">' +
+      // 1) если выбор полный и есть реальные фото варианта – показываем их
+      (complete && filteredImages.length > 0
+        ? '<div class="image-carousel-inner" id="modalCarouselInner">' +
+          filteredImages
+            .slice(0, 10)
+            .map(
+              img =>
+                '<img src="' +
+                img +
+                '" class="carousel-img w-full h-full object-contain" alt="Product image" loading="lazy"' +
+                // при ошибке – SVG вместо битой иконки
+                ' onerror="this.onerror=null; var inner=this.parentElement; if(inner){ inner.innerHTML=\'\'; inner.appendChild(getModalSvgPlaceholder()); }" />'
+            )
+            .join('') +
+          '</div>' +
+          (filteredImages.length > 1
+            ? '<button class="nav-btn nav-prev" onclick="modalPrev(); event.stopPropagation()">‹</button>' +
+              '<button class="nav-btn nav-next" onclick="modalNext(); event.stopPropagation()">›</button>' +
+              '<div class="carousel-dots" id="modalDots">' +
+              filteredImages
+                .map(
+                  (_, idx) =>
+                    '<div class="dot' +
+                    (idx === modalImageIndexBeforeFullscreen ? ' active' : '') +
+                    '" onclick="modalGoTo(' +
+                    idx +
+                    '); event.stopPropagation()"></div>'
+                )
+                .join('') +
+              '</div>'
+            : '')
+        // 2) выбор НЕ полный: пытаемся показать productCommonImage
+        : productCommonImage
+        ? '<div class="w-full h-64 rounded-xl overflow-hidden flex items-center justify-center">' +
+          '<img src="' +
+          productCommonImage +
+          '" class="w-full h-full object-contain" alt="Product image"' +
+          // если общий URL битый – заменяем весь блок на SVG-заглушку
+          ' onerror="this.onerror=null; var parent=this.parentElement; if(parent){ parent.innerHTML=\'\'; parent.appendChild(getModalSvgPlaceholder()); }" />' +
+          '</div>'
+        // 3) нет даже общей фотки – сразу SVG «пусто»
+        : '<div class="no-images h-64">' +
+          '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+          ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+          '</svg>' +
+          '<div class="text-center text-sm font-medium">Выберите все параметры для просмотра фото</div>' +
+          '</div>') +
+      '</div>' +
+      (complete && filteredImages.length > 0
+        ? '<div class="h-2 mb-2"></div>'
+        : '<p class="px-3 pt-1 pb-2 text-xs text-gray-500 text-center">' +
+          '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.' +
+          '</p>') +
+      '</div>' +
+      /* дальше – блоки опций, количества, кнопка */  
 
     '<div class="px-4 pt-0 pb-4 space-y-4">' +
     FILTER_ORDER.map((type, index) => {

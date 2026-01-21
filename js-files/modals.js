@@ -322,16 +322,16 @@ function renderProductModal(product) {
         const slidesWrapper = document.getElementById('modalSlidesWrapper');
       
         slidesWrapper.innerHTML = imagesToShow
-          .map(
-            url =>
-              '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center">' +
-                '<img src="' + url + '"' +
-                ' class="carousel-img w-full h-64 object-contain"' +
-                ' alt="Product image" loading="lazy"' +
-                ' onerror="this.onerror=null; this.src=\'/assets/no-image.svg\';" />' +
-              '</div>'
-          )
-          .join('');
+        .map(
+          url =>
+            '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center">' +
+              '<img src="' + url + '"' +
+              ' class="carousel-img w-full h-64 object-contain"' +
+              ' alt="Product image" loading="lazy"' +
+              ' onerror="this.onerror=null; this.src=\'/assets/no-image.svg\';" />' +
+            '</div>'
+        )
+        .join('');      
       
         modalCurrentIndex = 0;
       

@@ -433,8 +433,6 @@ window.handleProductImageLoad = function (img, url) {
     img.classList.remove('fade-in-once', 'no-fade');
     img.classList.add(alreadyLoaded ? 'no-fade' : 'fade-in-once');
 
-    img.style.opacity = '1';
-
     // 🔴 здесь — смена цвета заглушки на белый
     if (wrapper) {
       const phWrapper = wrapper.querySelector('.placeholder-wrapper');

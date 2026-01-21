@@ -242,11 +242,10 @@ function renderProductModal(product) {
         '<div class="flex-1 overflow-y-auto" id="modalScrollArea">' +
 
           '<div class="modal-image-section">' +
-            '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden relative" id="modalCarousel">' +
-              '<div class="image-carousel-inner w-full h-full flex items-center justify-center" id="modalCarouselInner"></div>' +
-              '<button class="nav-btn nav-prev" id="modalPrevBtn" onclick="modalPrev(); event.stopPropagation()">‹</button>' +
-              '<button class="nav-btn nav-next" id="modalNextBtn" onclick="modalNext(); event.stopPropagation()">›</button>' +
-              '<div class="carousel-dots" id="modalDots"></div>' +
+            '<div class="w-full h-64 rounded-xl overflow-hidden relative bg-white flex items-center justify-center" id="modalCarousel">' +
+              '<img id="modalImage"' +
+              ' class="w-full h-64 object-contain transition-opacity duration-200 ease-out"' +
+              ' alt="Product image">' +
             '</div>' +
             '<div id="modalImageHint" class="px-3 pt-1 pb-2 text-xs text-gray-500 text-center"></div>' +
           '</div>' +
@@ -261,7 +260,8 @@ function renderProductModal(product) {
 
       '</div>';
 
-    initModalSwipe();
+    // свайп сейчас не нужен (одна картинка), но initModalSwipe можно оставить закомментированным
+    // initModalSwipe();
   }
 
   document.getElementById('modalTitle').textContent = product.name;
@@ -270,12 +270,8 @@ function renderProductModal(product) {
   document.getElementById('modalVariantCount').textContent =
     getVariantCountText(availableVariants.length);
 
-  // === БЛОК КАРУСЕЛИ / ПЛЕЙСХОЛДЕР ===
-  const carouselInner = document.getElementById('modalCarouselInner');
-  const dotsRoot = document.getElementById('modalDots');
+  const imgEl = document.getElementById('modalImage');
   const imageHintEl = document.getElementById('modalImageHint');
-  const prevBtn = document.getElementById('modalPrevBtn');
-  const nextBtn = document.getElementById('modalNextBtn');
 
   let imagesToShow = [];
   if (complete && filteredImages.length > 0) {
@@ -290,107 +286,34 @@ function renderProductModal(product) {
     common: productCommonImage
   });
 
-  const isFirstTimeForThisKey = modalCurrentImageKey !== nextKey;
-  modalCurrentImageKey = nextKey;
-
-  carouselInner.innerHTML = '';
-  dotsRoot.innerHTML = '';
-  modalImageCount = imagesToShow.length;
-
   if (!imagesToShow.length) {
-    // нет картинок: SVG + подсказка
-    carouselInner.innerHTML =
-      '<div class="no-images h-64 flex items-center justify-center w-full bg-white">' +
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"' +
-        ' class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor">' +
-          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-          ' d="M3 5a2 2 0 012-2h14a2 2 0 012 2v11a2 2 0 01-2 2H7l-4 3V5z" />' +
-          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-          ' d="M8 11l2.5 3L14 10l3 4" />' +
-          '<circle cx="9" cy="7" r="1.5" stroke-width="2" />' +
-        '</svg>' +
-      '</div>';
-    prevBtn.style.display = 'none';
-    nextBtn.style.display = 'none';
+    // нет картинок — фон-плейсхолдер и подсказка
+    imgEl.style.opacity = '1';
+    imgEl.removeAttribute('src');
     imageHintEl.textContent =
       '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
-  } else {
-    // есть хотя бы одна фотка → hint не используем
+    modalCurrentImageKey = null;
+  } else if (modalCurrentImageKey !== nextKey) {
+    modalCurrentImageKey = nextKey;
     imageHintEl.textContent = '';
 
-    if (isFirstTimeForThisKey) {
-      // первый показ данного набора картинок — показываем SVG-плейсхолдер
-      carouselInner.innerHTML =
-        '<div class="absolute inset-0 flex items-center justify-center bg-white" id="modalImagePlaceholder">' +
-          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"' +
-          ' class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor">' +
-            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-            ' d="M3 5a2 2 0 012-2h14a2 2 0 012 2v11a2 2 0 01-2 2H7l-4 3V5z" />' +
-            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-            ' d="M8 11l2.5 3L14 10l3 4" />' +
-            '<circle cx="9" cy="7" r="1.5" stroke-width="2" />' +
-          '</svg>' +
-        '</div>' +
-        '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
-    } else {
-      // набор уже показывали → сразу рендерим слайды без плейсхолдера (нет промаргивания)
-      carouselInner.innerHTML =
-        '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
-    }
+    const url = imagesToShow[0];
 
-    const slidesWrapper = document.getElementById('modalSlidesWrapper');
+    // плавно скрываем текущую картинку
+    imgEl.style.opacity = '0';
 
-    slidesWrapper.innerHTML = imagesToShow
-      .map(
-        url =>
-          '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center">' +
-            '<img src="' + url + '" class="carousel-img w-full h-64 object-contain" alt="Product image" loading="lazy" />' +
-          '</div>'
-      )
-      .join('');
-
-    if (isFirstTimeForThisKey) {
-      const placeholder = document.getElementById('modalImagePlaceholder');
-      const imgs = slidesWrapper.querySelectorAll('img');
-      let loadedCount = 0;
-
-      imgs.forEach(img => {
-        const finish = () => {
-          loadedCount++;
-          if (loadedCount === imgs.length && placeholder) {
-            placeholder.style.opacity = '0';
-            placeholder.style.pointerEvents = 'none';
-            setTimeout(() => {
-              placeholder.remove();
-            }, 150);
-          }
-        };
-        img.onload = finish;
-        img.onerror = finish;
+    const tmp = new Image();
+    tmp.onload = () => {
+      imgEl.src = url;
+      requestAnimationFrame(() => {
+        imgEl.style.opacity = '1';
       });
-    }
-
-    modalCurrentIndex = 0;
-
-    if (imagesToShow.length > 1) {
-      dotsRoot.innerHTML = imagesToShow
-        .map(
-          (_, idx) =>
-            '<div class="dot' +
-            (idx === modalCurrentIndex ? ' active' : '') +
-            '" onclick="modalGoTo(' +
-            idx +
-            '); event.stopPropagation()"></div>'
-        )
-        .join('');
-      prevBtn.style.display = '';
-      nextBtn.style.display = '';
-      initModalCarousel(imagesToShow.length);
-    } else {
-      dotsRoot.innerHTML = '';
-      prevBtn.style.display = 'none';
-      nextBtn.style.display = 'none';
-    }
+    };
+    tmp.onerror = () => {
+      imgEl.removeAttribute('src');
+      imgEl.style.opacity = '1';
+    };
+    tmp.src = url;
   }
 
   // === ТЕЛО МОДАЛКИ (опции, количество) ===
@@ -491,43 +414,9 @@ function renderProductModal(product) {
   }
 }
 
-// Карусель
+// Карусель сейчас не используется, но можно оставить задел:
 function initModalCarousel(imageCount) {
-  if (imageCount <= 1) return;
-  modalImageCount = imageCount;
-  const inner =
-    document.getElementById('modalSlidesWrapper') ||
-    document.getElementById('modalCarouselInner');
-  if (!inner) return;
-
-  function updateModalCarousel() {
-    inner.style.transform = 'translateX(-' + modalCurrentIndex * 100 + '%)';
-    const dots = document.querySelectorAll('#modalDots .dot');
-    dots.forEach((dot, idx) => {
-      dot.classList.toggle('active', idx === modalCurrentIndex);
-    });
-  }
-
-  window.modalNext = function () {
-    modalCurrentIndex = (modalCurrentIndex + 1) % modalImageCount;
-    updateModalCarousel();
-    tg?.HapticFeedback?.selectionChanged();
-  };
-
-  window.modalPrev = function () {
-    modalCurrentIndex =
-      modalCurrentIndex === 0 ? modalImageCount - 1 : modalCurrentIndex - 1;
-    updateModalCarousel();
-    tg?.HapticFeedback?.selectionChanged();
-  };
-
-  window.modalGoTo = function (i) {
-    modalCurrentIndex = i;
-    updateModalCarousel();
-    tg?.HapticFeedback?.selectionChanged();
-  };
-
-  updateModalCarousel();
+  // пусто или старая логика, если потом вернёшь несколько картинок
 }
 
 function initModalSwipe() {

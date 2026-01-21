@@ -368,11 +368,15 @@ function renderShop() {
       '</div>' +
     '</div>';
 
-  setupHandlers();
-  preloadAllImages(list.slice(0, showCount));
-  setupImageCarousels();
-  setupInfiniteScroll();
-  setupImageTimeoutsForGrid();
+// после root.innerHTML = ...;
+setupHandlers();
+preloadAllImages(list.slice(0, showCount));
+setupImageCarousels();
+setupInfiniteScroll();
+setupImageTimeoutsForGrid();
+
+// сбрасываем флаг после первого нормального рендера
+isFirstShopRender = false;
 }
 
 

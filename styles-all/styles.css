@@ -18,6 +18,11 @@ select {
   cursor: pointer !important;
 }
 
+input,
+textarea {
+  caret-color: #111827; /* тёмный, как в light theme */
+}
+
 /* Таббар: фиксированная высота */
 :root {
   --tabbar-height: 70px;

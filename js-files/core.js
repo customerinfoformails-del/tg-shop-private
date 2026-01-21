@@ -162,7 +162,14 @@ function initTabBar() {
   document.querySelectorAll('#tabBar .tab-item').forEach(tab => {
     tab.onclick = e => {
       e.preventDefault();
-      switchTab(tab.dataset.tab);
+      if (isTabChanging) return;              // блокируем, пока идёт switchTab
+
+      const tabName = tab.dataset.tab;
+      if (!tabName || tabName === currentTab) {
+        return;                               // игнорируем клик по уже активному табу
+      }
+
+      switchTab(tabName);                     // всегда только через switchTab
     };
   });
   updateCartBadge();

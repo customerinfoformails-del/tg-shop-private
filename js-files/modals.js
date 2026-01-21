@@ -297,62 +297,52 @@ function renderProductModal(product) {
     dotsRoot.innerHTML = '';
     modalImageCount = imagesToShow.length;
 
-    // единый SVG-шаблон (как при полном отсутствии картинок)
-    const bigPlaceholderHTML =
-      '<div class="no-images h-64 flex items-center justify-center w-full bg-white">' +
-        '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"' +
-        ' class="w-12 h-12 modal-placeholder-svg text-gray-400">' +
-          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-          ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
-        '</svg>' +
-      '</div>';
-
     if (!imagesToShow.length) {
-      // вообще нет картинок → большой плейсхолдер
-      carouselInner.innerHTML = bigPlaceholderHTML;
+      carouselInner.innerHTML =
+        '<div class="no-images h-64 flex items-center justify-center w-full bg-white">' +
+          '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-12 h-12 text-gray-400">' +
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+            ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+          '</svg>' +
+        '</div>';
       prevBtn.style.display = 'none';
       nextBtn.style.display = 'none';
-    } else {
-      // есть URL'ы → пытаемся грузить, при 404 подменяем весь контейнер тем же bigPlaceholderHTML
+      // текст здесь НЕ пишем
+    }
+     else {
+      // есть фотки → сразу показываем, с inline-SVG fallback при ошибке
       imageHintEl.textContent = '';
 
       carouselInner.innerHTML =
-        '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
+  '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
 
-      const slidesWrapper = document.getElementById('modalSlidesWrapper');
+const slidesWrapper = document.getElementById('modalSlidesWrapper');
 
-      slidesWrapper.innerHTML = imagesToShow
-        .map(
-          url =>
-            '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center relative bg-white">' +
-              bigPlaceholderHTML +
-              '<img src="' + url + '"' +
-              ' class="carousel-img w-full h-64 object-contain absolute inset-0 z-10"' +
-              ' alt="Product image" loading="lazy" />' +
-            '</div>'
-        )
-        .join('');
+slidesWrapper.innerHTML = imagesToShow
+  .map(
+    url =>
+      '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center relative bg-white">' +
+        '<div class="absolute inset-0 flex items-center justify-center pointer-events-none">' +
+          '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"' +
+          ' class="w-12 h-12 modal-placeholder-svg text-gray-400">' +
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+            ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+          '</svg>' +
+        '</div>' +
+        '<img src="' + url + '"' +
+        ' class="carousel-img w-full h-64 object-contain relative z-10"' +
+        ' alt="Product image" loading="lazy" />' +
+      '</div>'
+  )
+  .join('');
 
-      const imgs = slidesWrapper.querySelectorAll('img');
-      imgs.forEach(img => {
-        const slide = img.parentNode; // сам слайд
-
-        img.onload = function () {
-          // при успехе фон белый, плейсхолдер «исчезает» (делаем прозрачным)
-          slide.style.backgroundColor = '#ffffff';
-          const svg = slide.querySelector('.modal-placeholder-svg');
-          if (svg) {
-            svg.style.opacity = '0';
-          }
-        };
-
-        img.onerror = function () {
-          // при ошибке → заменяем весь карусельный контейнер на bigPlaceholderHTML
-          carouselInner.innerHTML = bigPlaceholderHTML;
-          prevBtn.style.display = 'none';
-          nextBtn.style.display = 'none';
-        };
-      });
+// onerror: просто прячем img, SVG уже под ним → без моргания
+const imgs = slidesWrapper.querySelectorAll('img');
+imgs.forEach(img => {
+  img.onerror = function () {
+    this.style.display = 'none';
+  };
+});
 
       modalCurrentIndex = 0;
 
@@ -376,13 +366,12 @@ function renderProductModal(product) {
         nextBtn.style.display = 'none';
       }
     }
-
     if (!complete || !filteredImages.length) {
       imageHintEl.textContent =
         '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
     } else {
       imageHintEl.textContent = '';
-    }
+    }    
   }
 
   // === ТЕЛО МОДАЛКИ (опции, количество) ===

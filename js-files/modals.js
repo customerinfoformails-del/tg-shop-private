@@ -274,6 +274,13 @@ function renderProductModal(product) {
   const carouselInner = document.getElementById('modalCarouselInner');
   const dotsRoot = document.getElementById('modalDots');
   const imageHintEl = document.getElementById('modalImageHint');
+
+  // по умолчанию ничего не показываем
+if (imagesToShow.length) {
+  // если есть хоть одна картинка — вообще не трогаем hint в дальнейшем
+  imageHintEl.textContent = '';
+}
+
   const prevBtn = document.getElementById('modalPrevBtn');
   const nextBtn = document.getElementById('modalNextBtn');
 
@@ -300,30 +307,36 @@ function renderProductModal(product) {
     modalImageCount = imagesToShow.length;
 
     if (!imagesToShow.length) {
-      // только SVG-заглушка
+      // только SVG-заглушка (исправленный SVG)
       carouselInner.innerHTML =
         '<div class="no-images h-64 flex items-center justify-center w-full bg-white">' +
-          '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-12 h-12 text-gray-400">' +
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"' +
+          ' class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-            ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+            ' d="M3 5a2 2 0 012-2h14a2 2 0 012 2v11a2 2 0 01-2 2H7l-4 3V5z" />' +
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+            ' d="M8 11l2.5 3L14 10l3 4" />' +
+            '<circle cx="9" cy="7" r="1.5" stroke-width="2" />' +
           '</svg>' +
         '</div>';
       prevBtn.style.display = 'none';
       nextBtn.style.display = 'none';
     
-      // если вообще нет картинок — показываем подсказку
+      // подсказку показываем только в этом кейсе
       imageHintEl.textContent =
         '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
     } else {
-      // есть хотя бы одна фотка → текст-плейсхолдер НЕ показываем
-      imageHintEl.textContent = '';
-    
-      // дальше вся логика с placeholder поверх картинок и slidesWrapper как была
+      // есть хотя бы одна фотка → НИКОГДА не трогаем hint тут
+      // (никакого textContent = '' внутри этого блока)
       carouselInner.innerHTML =
         '<div class="absolute inset-0 flex items-center justify-center bg-white" id="modalImagePlaceholder">' +
-          '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-12 h-12 text-gray-400">' +
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"' +
+          ' class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-            ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+            ' d="M3 5a2 2 0 012-2h14a2 2 0 012 2v11a2 2 0 01-2 2H7l-4 3V5z" />' +
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+            ' d="M8 11l2.5 3L14 10l3 4" />' +
+            '<circle cx="9" cy="7" r="1.5" stroke-width="2" />' +
           '</svg>' +
         '</div>' +
         '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
@@ -379,7 +392,7 @@ function renderProductModal(product) {
         prevBtn.style.display = 'none';
         nextBtn.style.display = 'none';
       }
-    }    
+    }      
   }
 
   // === ТЕЛО МОДАЛКИ (опции, количество) ===

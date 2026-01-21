@@ -275,7 +275,7 @@ function renderProductModal(product) {
           (
             complete && filteredImages.length > 0
               ? '<div class="h-4 mb-2"></div>'
-              : '<p class="px-2 text-xs text-gray-500 mb-2 mb-1 text-center">' +
+              : '<p class="px-2 text-xs text-gray-500 mb-2 text-center">' +
                   '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.' +
                 '</p>'
           ) +
@@ -294,7 +294,7 @@ function renderProductModal(product) {
                   availableOptions[type].map(option => {
                     const isSelected = selectedOption[type] === option;
                     return (
-                      '<button class="option-btn px-3 py-1.5 text-xs font-medium rounded-full border scroll-item ' +
+                      '<button class="option-btn px-3 py-1.5 text-xs font-medium rounded-full border scroll-item w-[80px] ' +
                               (isSelected
                                 ? 'bg-blue-500 text-white border-blue-500 shadow-md font-bold'
                                 : 'bg-gray-100 border-gray-300 hover:bg-gray-200') +

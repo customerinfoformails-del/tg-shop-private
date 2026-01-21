@@ -240,7 +240,7 @@ function renderProductModal(product) {
         '<div class="flex-1 overflow-y-auto" id="modalScrollArea">' +
 
           '<div class="modal-image-section">' +
-            '<div class="w-full h-64 image-carousel rounded-xl overflow-hidden" id="modalCarousel">' +
+            '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden" id="modalCarousel">' +
               '<div class="image-carousel-inner w-full h-full flex items-center justify-center" id="modalCarouselInner">' +
                 '<div id="modalPlaceholder" class="no-images h-64 flex items-center justify-center w-full">' +
                   '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
@@ -259,7 +259,7 @@ function renderProductModal(product) {
 
         '<div class="modal-footer border-t bg-white">' +
           '<button id="modalAddButton"' +
-          ' class="w-full flex items-center justify-center gap-2 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all" onclick="addToCartFromModal(); return false;"></button>' +
+          ' class="w-full flex.items-center justify-center gap-2 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all" onclick="addToCartFromModal(); return false;"></button>' +
         '</div>' +
 
       '</div>';
@@ -282,7 +282,7 @@ function renderProductModal(product) {
   let nextImageKey;
 
   if (complete && filteredImages.length > 0) {
-    imagesForCarousel = filteredImages.slice();
+    imagesForCarousel = filteredImages.slice(0, 10);
     nextImageKey = 'variant:' + JSON.stringify(imagesForCarousel);
   } else if (productCommonImage) {
     imagesForCarousel = [productCommonImage];
@@ -306,14 +306,16 @@ function renderProductModal(product) {
         '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
     } else {
       if (carouselInner) {
-        let html = '';
-        imagesForCarousel.forEach((url, idx) => {
-          const safe = String(url).replace(/"/g, '&quot;');
-          html +=
-            '<img src="' + safe + '" ' +
-            'class="carousel-img object-contain w-full h-64" ' +
-            'alt="Фото ' + (idx + 1) + '">';
-        });
+        let html = imagesForCarousel
+          .map((url, idx) => {
+            const safe = String(url).replace(/"/g, '&quot;');
+            return (
+              '<img src="' + safe + '" ' +
+              'class="carousel-img object-contain w-full h-64" ' +
+              'alt="Фото ' + (idx + 1) + '">'
+            );
+          })
+          .join('');
         carouselInner.innerHTML = html;
       }
 
@@ -351,7 +353,7 @@ function renderProductModal(product) {
         '<div class="option-section ' +
           (isLocked ? 'locked' : 'unlocked') +
           '" data-section="' + type + '">' +
-          '<label class="text-sm font-semibold text-gray-700.capitalize mb-2 block">' +
+          '<label class="text-sm font-semibold text-gray-700 capitalize mb-2 block">' +
             getLabel(type) +
           '</label>' +
           '<div class="flex gap-2 scroll-carousel pb-1">' +
@@ -421,7 +423,7 @@ function renderProductModal(product) {
   if (isAddingToCart) {
     btn.innerHTML = '<span class="loader-circle"></span><span>Проверяю наличие...</span>';
     btn.className =
-      'w-full flex items-center justify-center.gap-2 bg-gray-400 text-white font-semibold px-4 rounded-2xl.shadow-lg transition-all cursor-not-allowed';
+      'w-full flex items-center justify-center gap-2 bg-gray-400 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all cursor-not-allowed';
     btn.disabled = true;
   } else if (complete && availableVariants.length > 0) {
     const sum = availableVariants[0].price
@@ -429,17 +431,17 @@ function renderProductModal(product) {
       : '';
     btn.innerHTML = '✅ В корзину RUB ' + sum;
     btn.className =
-      'w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all';
+      'w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 rounded-2xl shadow-lg.transition-all';
     btn.disabled = false;
   } else {
     btn.innerHTML = 'Выберите все опции';
     btn.className =
-      'w-full flex items-center justify-center gap-2 bg-gray-400 text-white.font-semibold px-4.rounded-2xl shadow-lg.transition-all cursor-not-allowed';
+      'w-full flex items-center justify-center gap-2 bg-gray-400 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all cursor-not-allowed';
     btn.disabled = true;
   }
-} 
+}
 
-// Карусель оставлена на будущее
+// Карусель
 function initModalCarousel(imageCount) {
   if (imageCount <= 1) return;
   modalImageCount = imageCount;

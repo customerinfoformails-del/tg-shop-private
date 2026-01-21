@@ -240,7 +240,7 @@ function renderProductModal(product) {
         '<div class="flex-1 overflow-y-auto" id="modalScrollArea">' +
 
           '<div class="modal-image-section">' +
-            '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden" id="modalCarousel">' +
+            '<div class="w-full h-64 image-carousel rounded-xl overflow-hidden" id="modalCarousel">' +
               '<div class="image-carousel-inner w-full h-full flex items-center justify-center" id="modalCarouselInner">' +
                 '<div id="modalPlaceholder" class="no-images h-64 flex items-center justify-center w-full">' +
                   '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
@@ -248,8 +248,8 @@ function renderProductModal(product) {
                     ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
                   '</svg>' +
                 '</div>' +
-                '<img id="modalImage" class="w-full h-64 object-contain hidden" alt="Product image">' +
               '</div>' +
+              '<div id="modalDots" class="carousel-dots"></div>' +
             '</div>' +
             '<div id="modalImageHint" class="px-3 pt-1 pb-2 text-xs text-gray-500 text-center"></div>' +
           '</div>' +
@@ -273,45 +273,63 @@ function renderProductModal(product) {
   document.getElementById('modalVariantCount').textContent =
     getVariantCountText(availableVariants.length);
 
-  const imgEl = document.getElementById('modalImage');
+  const carouselInner = document.getElementById('modalCarouselInner');
   const placeholderEl = document.getElementById('modalPlaceholder');
+  const dotsEl = document.getElementById('modalDots');
   const imageHintEl = document.getElementById('modalImageHint');
 
+  let imagesForCarousel = [];
   let nextImageKey;
-  let targetUrl = null;
 
   if (complete && filteredImages.length > 0) {
-    nextImageKey = 'variant:' + JSON.stringify(filteredImages);
-    targetUrl = filteredImages[0];
+    imagesForCarousel = filteredImages.slice();
+    nextImageKey = 'variant:' + JSON.stringify(imagesForCarousel);
   } else if (productCommonImage) {
+    imagesForCarousel = [productCommonImage];
     nextImageKey = 'common:' + productCommonImage;
-    targetUrl = productCommonImage;
   } else {
+    imagesForCarousel = [];
     nextImageKey = 'empty';
   }
 
   if (modalCurrentImageUrl !== nextImageKey) {
     modalCurrentImageUrl = nextImageKey;
 
-    if (!targetUrl) {
-      imgEl.classList.add('hidden');
+    if (!imagesForCarousel.length) {
+      if (carouselInner) {
+        carouselInner.innerHTML = '';
+        carouselInner.appendChild(placeholderEl);
+      }
       placeholderEl.classList.remove('hidden');
+      if (dotsEl) dotsEl.innerHTML = '';
       imageHintEl.textContent =
         '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
     } else {
-      placeholderEl.classList.remove('hidden');
-      imgEl.classList.add('hidden');
+      if (carouselInner) {
+        let html = '';
+        imagesForCarousel.forEach((url, idx) => {
+          const safe = String(url).replace(/"/g, '&quot;');
+          html +=
+            '<img src="' + safe + '" ' +
+            'class="carousel-img object-contain w-full h-64" ' +
+            'alt="Фото ' + (idx + 1) + '">';
+        });
+        carouselInner.innerHTML = html;
+      }
 
-      imgEl.onload = () => {
-        placeholderEl.classList.add('hidden');
-        imgEl.classList.remove('hidden');
-      };
-      imgEl.onerror = () => {
-        imgEl.classList.add('hidden');
-        placeholderEl.classList.remove('hidden');
-      };
+      placeholderEl.classList.add('hidden');
 
-      imgEl.src = targetUrl;
+      if (dotsEl) {
+        if (imagesForCarousel.length > 1) {
+          dotsEl.innerHTML = imagesForCarousel
+            .map((_, idx) =>
+              '<div class="dot' + (idx === 0 ? ' active' : '') + '" data-index="' + idx + '"></div>'
+            )
+            .join('');
+        } else {
+          dotsEl.innerHTML = '';
+        }
+      }
 
       if (complete && filteredImages.length > 0) {
         imageHintEl.textContent = '';
@@ -319,6 +337,8 @@ function renderProductModal(product) {
         imageHintEl.textContent =
           '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
       }
+
+      initModalCarousel(imagesForCarousel.length);
     }
   }
 
@@ -331,7 +351,7 @@ function renderProductModal(product) {
         '<div class="option-section ' +
           (isLocked ? 'locked' : 'unlocked') +
           '" data-section="' + type + '">' +
-          '<label class="text-sm font-semibold text-gray-700 capitalize mb-2 block">' +
+          '<label class="text-sm font-semibold text-gray-700.capitalize mb-2 block">' +
             getLabel(type) +
           '</label>' +
           '<div class="flex gap-2 scroll-carousel pb-1">' +
@@ -401,7 +421,7 @@ function renderProductModal(product) {
   if (isAddingToCart) {
     btn.innerHTML = '<span class="loader-circle"></span><span>Проверяю наличие...</span>';
     btn.className =
-      'w-full flex items-center justify-center gap-2 bg-gray-400 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all cursor-not-allowed';
+      'w-full flex items-center justify-center.gap-2 bg-gray-400 text-white font-semibold px-4 rounded-2xl.shadow-lg transition-all cursor-not-allowed';
     btn.disabled = true;
   } else if (complete && availableVariants.length > 0) {
     const sum = availableVariants[0].price
@@ -414,10 +434,10 @@ function renderProductModal(product) {
   } else {
     btn.innerHTML = 'Выберите все опции';
     btn.className =
-      'w-full flex items-center justify-center gap-2 bg-gray-400 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all cursor-not-allowed';
+      'w-full flex items-center justify-center gap-2 bg-gray-400 text-white.font-semibold px-4.rounded-2xl shadow-lg.transition-all cursor-not-allowed';
     btn.disabled = true;
   }
-}
+} 
 
 // Карусель оставлена на будущее
 function initModalCarousel(imageCount) {
@@ -425,6 +445,8 @@ function initModalCarousel(imageCount) {
   modalImageCount = imageCount;
   const inner = document.getElementById('modalCarouselInner');
   if (!inner) return;
+
+  modalCurrentIndex = 0;
 
   function updateModalCarousel() {
     inner.style.transform = 'translateX(-' + modalCurrentIndex * 100 + '%)';
@@ -450,6 +472,15 @@ function initModalCarousel(imageCount) {
     updateModalCarousel();
     tg?.HapticFeedback?.selectionChanged();
   };
+
+  document.querySelectorAll('#modalDots .dot').forEach((dot, idx) => {
+    dot.onclick = function (e) {
+      e.stopPropagation();
+      modalCurrentIndex = idx;
+      updateModalCarousel();
+      tg?.HapticFeedback?.selectionChanged();
+    };
+  });
 
   updateModalCarousel();
 }

@@ -290,34 +290,36 @@ function renderProductModal(product) {
     common: productCommonImage
   });
 
-  if (modalCurrentImageKey !== nextKey) {
-    modalCurrentImageKey = nextKey;
+  const isFirstTimeForThisKey = modalCurrentImageKey !== nextKey;
+  modalCurrentImageKey = nextKey;
 
-    carouselInner.innerHTML = '';
-    dotsRoot.innerHTML = '';
-    modalImageCount = imagesToShow.length;
+  carouselInner.innerHTML = '';
+  dotsRoot.innerHTML = '';
+  modalImageCount = imagesToShow.length;
 
-    if (!imagesToShow.length) {
-      // только SVG + подсказка
-      carouselInner.innerHTML =
-        '<div class="no-images h-64 flex items-center justify-center w-full bg-white">' +
-          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"' +
-          ' class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor">' +
-            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-            ' d="M3 5a2 2 0 012-2h14a2 2 0 012 2v11a2 2 0 01-2 2H7l-4 3V5z" />' +
-            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-            ' d="M8 11l2.5 3L14 10l3 4" />' +
-            '<circle cx="9" cy="7" r="1.5" stroke-width="2" />' +
-          '</svg>' +
-        '</div>';
-      prevBtn.style.display = 'none';
-      nextBtn.style.display = 'none';
-      imageHintEl.textContent =
-        '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
-    } else {
-      // есть фотки → SVG-плейсхолдер поверх, текст под ним не трогаем
-      imageHintEl.textContent = '';
+  if (!imagesToShow.length) {
+    // нет картинок: SVG + подсказка
+    carouselInner.innerHTML =
+      '<div class="no-images h-64 flex items-center justify-center w-full bg-white">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"' +
+        ' class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor">' +
+          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+          ' d="M3 5a2 2 0 012-2h14a2 2 0 012 2v11a2 2 0 01-2 2H7l-4 3V5z" />' +
+          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+          ' d="M8 11l2.5 3L14 10l3 4" />' +
+          '<circle cx="9" cy="7" r="1.5" stroke-width="2" />' +
+        '</svg>' +
+      '</div>';
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+    imageHintEl.textContent =
+      '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
+  } else {
+    // есть хотя бы одна фотка → hint не используем
+    imageHintEl.textContent = '';
 
+    if (isFirstTimeForThisKey) {
+      // первый показ данного набора картинок — показываем SVG-плейсхолдер
       carouselInner.innerHTML =
         '<div class="absolute inset-0 flex items-center justify-center bg-white" id="modalImagePlaceholder">' +
           '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"' +
@@ -330,18 +332,24 @@ function renderProductModal(product) {
           '</svg>' +
         '</div>' +
         '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
+    } else {
+      // набор уже показывали → сразу рендерим слайды без плейсхолдера (нет промаргивания)
+      carouselInner.innerHTML =
+        '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
+    }
 
-      const slidesWrapper = document.getElementById('modalSlidesWrapper');
+    const slidesWrapper = document.getElementById('modalSlidesWrapper');
 
-      slidesWrapper.innerHTML = imagesToShow
-        .map(
-          url =>
-            '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center">' +
-              '<img src="' + url + '" class="carousel-img w-full h-64 object-contain" alt="Product image" loading="lazy" />' +
-            '</div>'
-        )
-        .join('');
+    slidesWrapper.innerHTML = imagesToShow
+      .map(
+        url =>
+          '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center">' +
+            '<img src="' + url + '" class="carousel-img w-full h-64 object-contain" alt="Product image" loading="lazy" />' +
+          '</div>'
+      )
+      .join('');
 
+    if (isFirstTimeForThisKey) {
       const placeholder = document.getElementById('modalImagePlaceholder');
       const imgs = slidesWrapper.querySelectorAll('img');
       let loadedCount = 0;
@@ -360,28 +368,28 @@ function renderProductModal(product) {
         img.onload = finish;
         img.onerror = finish;
       });
+    }
 
-      modalCurrentIndex = 0;
+    modalCurrentIndex = 0;
 
-      if (imagesToShow.length > 1) {
-        dotsRoot.innerHTML = imagesToShow
-          .map(
-            (_, idx) =>
-              '<div class="dot' +
-              (idx === modalCurrentIndex ? ' active' : '') +
-              '" onclick="modalGoTo(' +
-              idx +
-              '); event.stopPropagation()"></div>'
-          )
-          .join('');
-        prevBtn.style.display = '';
-        nextBtn.style.display = '';
-        initModalCarousel(imagesToShow.length);
-      } else {
-        dotsRoot.innerHTML = '';
-        prevBtn.style.display = 'none';
-        nextBtn.style.display = 'none';
-      }
+    if (imagesToShow.length > 1) {
+      dotsRoot.innerHTML = imagesToShow
+        .map(
+          (_, idx) =>
+            '<div class="dot' +
+            (idx === modalCurrentIndex ? ' active' : '') +
+            '" onclick="modalGoTo(' +
+            idx +
+            '); event.stopPropagation()"></div>'
+        )
+        .join('');
+      prevBtn.style.display = '';
+      nextBtn.style.display = '';
+      initModalCarousel(imagesToShow.length);
+    } else {
+      dotsRoot.innerHTML = '';
+      prevBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
     }
   }
 
@@ -465,7 +473,7 @@ function renderProductModal(product) {
   if (isAddingToCart) {
     btn.innerHTML = '<span class="loader-circle"></span><span>Проверяю наличие...</span>';
     btn.className =
-      'w-full flex itemscenter justify-center gap-2 bg-gray-400 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all cursor-not-allowed';
+      'w-full flex items-center justify-center gap-2 bg-gray-400 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all cursor-not-allowed';
     btn.disabled = true;
   } else if (complete && availableVariants.length > 0) {
     const sum = availableVariants[0].price

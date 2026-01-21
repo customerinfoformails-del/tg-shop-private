@@ -300,61 +300,76 @@ function renderProductModal(product) {
     if (!imagesToShow.length) {
       // только SVG + подсказка
       carouselInner.innerHTML =
-        '<div class="no-images h-64 flex items-center justify-center w-full bg-white">' +
-'<div class="no-images h-64">' +
-  '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-    ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
-  '</svg>' +
-'</div>'
+        '<div class="no-images h-64 flex flex-col items-center justify-center w-full bg-white px-3 text-center">' +
+          '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-12 h-12 text-gray-400">' +
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+            ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+          '</svg>' +
+          '<div class="mt-2 text-xs text-gray-500">' +
+            '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.' +
+          '</div>' +
         '</div>';
       prevBtn.style.display = 'none';
       nextBtn.style.display = 'none';
-      imageHintEl.textContent =
-        '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
-      } else {
-        // есть фотки → сразу показываем, с fallback на SVG-файл
-        imageHintEl.textContent = '';
-      
-        carouselInner.innerHTML =
-          '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
-      
-        const slidesWrapper = document.getElementById('modalSlidesWrapper');
-      
-        slidesWrapper.innerHTML = imagesToShow
+      imageHintEl.textContent = '';
+    } else {
+      // есть фотки → сразу показываем, с inline-SVG fallback при ошибке
+      imageHintEl.textContent = '';
+
+      carouselInner.innerHTML =
+        '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
+
+      const slidesWrapper = document.getElementById('modalSlidesWrapper');
+
+      slidesWrapper.innerHTML = imagesToShow
         .map(
           url =>
             '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center">' +
               '<img src="' + url + '"' +
               ' class="carousel-img w-full h-64 object-contain"' +
-              ' alt="Product image" loading="lazy"' +
-              ' onerror="this.onerror=null; this.src=\'/assets/no-image.svg\';" />' +
+              ' alt="Product image" loading="lazy" />' +
             '</div>'
         )
-        .join('');      
-      
-        modalCurrentIndex = 0;
-      
-        if (imagesToShow.length > 1) {
-          dotsRoot.innerHTML = imagesToShow
-            .map(
-              (_, idx) =>
-                '<div class="dot' +
-                (idx === modalCurrentIndex ? ' active' : '') +
-                '" onclick="modalGoTo(' +
-                idx +
-                '); event.stopPropagation()"></div>'
-            )
-            .join('');
-          prevBtn.style.display = '';
-          nextBtn.style.display = '';
-          initModalCarousel(imagesToShow.length);
-        } else {
-          dotsRoot.innerHTML = '';
-          prevBtn.style.display = 'none';
-          nextBtn.style.display = 'none';
-        }
-      }         
+        .join('');
+
+      // onerror → заменить img на SVG
+      const imgs = slidesWrapper.querySelectorAll('img');
+      imgs.forEach(img => {
+        img.onerror = function () {
+          const wrapper = this.parentNode;
+          if (!wrapper) return;
+          wrapper.innerHTML =
+            '<div class="no-images h-64 flex items-center justify-center w-full bg-white">' +
+              '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-12 h-12 text-gray-400">' +
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+                ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+              '</svg>' +
+            '</div>';
+        };
+      });
+
+      modalCurrentIndex = 0;
+
+      if (imagesToShow.length > 1) {
+        dotsRoot.innerHTML = imagesToShow
+          .map(
+            (_, idx) =>
+              '<div class="dot' +
+              (idx === modalCurrentIndex ? ' active' : '') +
+              '" onclick="modalGoTo(' +
+              idx +
+              '); event.stopPropagation()"></div>'
+          )
+          .join('');
+        prevBtn.style.display = '';
+        nextBtn.style.display = '';
+        initModalCarousel(imagesToShow.length);
+      } else {
+        dotsRoot.innerHTML = '';
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+      }
+    }
   }
 
   // === ТЕЛО МОДАЛКИ (опции, количество) ===

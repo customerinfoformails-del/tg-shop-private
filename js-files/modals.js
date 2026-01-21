@@ -154,7 +154,7 @@ window.addToCartFromModal = async function () {
       '\n' +
       'Количество: ' +
       selectedQuantity +
-      '\n$' +
+      '\nRUB ' +
       selectedVariant.price * selectedQuantity
   );
   isAddingToCart = false;
@@ -205,11 +205,11 @@ function renderProductModal(product) {
   let headerSuffix = '';
 
   if (!complete) {
-    headerPriceText = 'от $' + currentMinPrice;
+    headerPriceText = 'от RUB ' + currentMinPrice;
     headerSuffix = 'за единицу';
   } else if (complete && availableVariants.length > 0) {
     const priceToShow = availableVariants[0].price;
-    headerPriceText = '$' + priceToShow;
+    headerPriceText = 'RUB ' + priceToShow;
     headerSuffix = 'за единицу';
   } else {
     headerPriceText = 'Нет вариантов';
@@ -254,7 +254,7 @@ function renderProductModal(product) {
 
     '<div class="flex-1 overflow-y-auto">' +
     '<div class="modal-image-section">' +
-    '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden mb-4" id="modalCarousel">' +
+    '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden" id="modalCarousel">' +
     (complete && filteredImages.length > 0
       ? '<div class="image-carousel-inner" id="modalCarouselInner">' +
         filteredImages
@@ -402,7 +402,7 @@ function renderProductModal(product) {
     (isAddingToCart
       ? '<span class="loader-circle"></span><span>Проверяю наличие...</span>'
       : complete && availableVariants.length > 0
-      ? '✅ В корзину $' +
+      ? '✅ В корзину RUB ' +
         (availableVariants[0] && availableVariants[0].price
           ? availableVariants[0].price * selectedQuantity
           : '')

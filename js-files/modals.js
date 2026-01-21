@@ -297,20 +297,23 @@ function renderProductModal(product) {
     dotsRoot.innerHTML = '';
     modalImageCount = imagesToShow.length;
 
+    // единый SVG-шаблон (как при полном отсутствии картинок)
+    const bigPlaceholderHTML =
+      '<div class="no-images h-64 flex items-center justify-center w-full bg-white">' +
+        '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"' +
+        ' class="w-12 h-12 modal-placeholder-svg text-gray-400">' +
+          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+          ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+        '</svg>' +
+      '</div>';
+
     if (!imagesToShow.length) {
-      // единый SVG когда вообще нет картинок
-      carouselInner.innerHTML =
-        '<div class="no-images h-64 flex items-center justify-center w-full bg-white">' +
-          '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"' +
-          ' class="w-12 h-12 modal-placeholder-svg text-gray-400">' +
-            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-            ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
-          '</svg>' +
-        '</div>';
+      // вообще нет картинок → большой плейсхолдер
+      carouselInner.innerHTML = bigPlaceholderHTML;
       prevBtn.style.display = 'none';
       nextBtn.style.display = 'none';
     } else {
-      // есть фотки → SVG под картинкой, inline fallback
+      // есть URL'ы → пытаемся грузить, при 404 подменяем весь контейнер тем же bigPlaceholderHTML
       imageHintEl.textContent = '';
 
       carouselInner.innerHTML =
@@ -322,15 +325,9 @@ function renderProductModal(product) {
         .map(
           url =>
             '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center relative bg-white">' +
-              '<div class="absolute inset-0 flex items-center justify-center pointer-events-none">' +
-                '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"' +
-                ' class="w-12 h-12 modal-placeholder-svg text-gray-400">' +
-                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-                  ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
-                '</svg>' +
-              '</div>' +
+              bigPlaceholderHTML +
               '<img src="' + url + '"' +
-              ' class="carousel-img w-full h-64 object-contain relative z-10"' +
+              ' class="carousel-img w-full h-64 object-contain absolute inset-0 z-10"' +
               ' alt="Product image" loading="lazy" />' +
             '</div>'
         )
@@ -338,22 +335,22 @@ function renderProductModal(product) {
 
       const imgs = slidesWrapper.querySelectorAll('img');
       imgs.forEach(img => {
-        const wrapper = img.parentNode;
-        const svg = wrapper.querySelector('.modal-placeholder-svg');
+        const slide = img.parentNode; // сам слайд
 
         img.onload = function () {
+          // при успехе фон белый, плейсхолдер «исчезает» (делаем прозрачным)
+          slide.style.backgroundColor = '#ffffff';
+          const svg = slide.querySelector('.modal-placeholder-svg');
           if (svg) {
-            svg.style.color = '#ffffff';
-            svg.style.stroke = 'currentColor';
+            svg.style.opacity = '0';
           }
         };
 
         img.onerror = function () {
-          if (svg) {
-            svg.style.color = '#9ca3af';
-            svg.style.stroke = 'currentColor';
-          }
-          this.style.display = 'none';
+          // при ошибке → заменяем весь карусельный контейнер на bigPlaceholderHTML
+          carouselInner.innerHTML = bigPlaceholderHTML;
+          prevBtn.style.display = 'none';
+          nextBtn.style.display = 'none';
         };
       });
 

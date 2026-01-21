@@ -162,14 +162,14 @@ function initTabBar() {
   document.querySelectorAll('#tabBar .tab-item').forEach(tab => {
     tab.onclick = e => {
       e.preventDefault();
-      if (isTabChanging) return;              // блокируем, пока идёт switchTab
+      if (isTabChanging) return;               // защита от дабл-клика
 
       const tabName = tab.dataset.tab;
       if (!tabName || tabName === currentTab) {
-        return;                               // игнорируем клик по уже активному табу
+        return;                                // клики по текущему игнорим
       }
 
-      switchTab(tabName);                     // всегда только через switchTab
+      switchTab(tabName);                      // только через switchTab
     };
   });
   updateCartBadge();
@@ -203,10 +203,10 @@ function switchTab(tabName) {
       }
       currentTab = tabName;
       document
-        .querySelectorAll('#tabBar .tab-item')
-        .forEach(t => t.classList.remove('active'));
-      const currentEl = document.querySelector('[data-tab="' + tabName + '"]');
-      if (currentEl) currentEl.classList.add('active');
+      .querySelectorAll('#tabBar .tab-item')
+      .forEach(t => t.classList.remove('active'));
+    const currentEl = document.querySelector('[data-tab="' + tabName + '"]');
+    if (currentEl) currentEl.classList.add('active');    
     })
     .catch(err => {
       console.error('[core] switchTab error', err);

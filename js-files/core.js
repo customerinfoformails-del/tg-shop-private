@@ -420,6 +420,7 @@ window.handleProductImageLoad = function (img, url) {
     const wrapper = img.closest('.image-carousel');
     const skeleton = wrapper ? wrapper.querySelector('[data-skeleton="image"]') : null;
 
+    const alreadyLoaded = loadedImageUrls.has(url);
     loadedImageUrls.add(url);
     failedImageUrls.delete(url);
 
@@ -430,13 +431,8 @@ window.handleProductImageLoad = function (img, url) {
     delete img.dataset.loadTimeoutAttached;
 
     img.classList.remove('fade-in-once', 'no-fade');
-    if (isFirstShopRender) {
-      img.classList.add('fade-in-once');   // только на самом первом показе
-    } else {
-      img.classList.add('no-fade');        // дальше без анимации
-    }
-
-    img.style.opacity = '1'; // можно убрать, если opacity управляется классами
+    img.classList.add(alreadyLoaded ? 'no-fade' : 'fade-in-once');
+    // НЕ ставим img.style.opacity = '1'; — всё делает класс
 
     if (wrapper) {
       const phWrapper = wrapper.querySelector('.placeholder-wrapper');

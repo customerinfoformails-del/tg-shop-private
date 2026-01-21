@@ -312,46 +312,49 @@ function renderProductModal(product) {
       nextBtn.style.display = 'none';
       imageHintEl.textContent =
         '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
-    } else {
-      // есть фотки → сразу показываем их, без overlay
-      imageHintEl.textContent = '';
-    
-      carouselInner.innerHTML =
-        '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
-    
-      const slidesWrapper = document.getElementById('modalSlidesWrapper');
-    
-      slidesWrapper.innerHTML = imagesToShow
-        .map(
-          url =>
-            '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center">' +
-              '<img src="' + url + '" class="carousel-img w-full h-64 object-contain" alt="Product image" loading="lazy" />' +
-            '</div>'
-        )
-        .join('');
-    
-      modalCurrentIndex = 0;
-    
-      if (imagesToShow.length > 1) {
-        dotsRoot.innerHTML = imagesToShow
+      } else {
+        // есть фотки → сразу показываем, с fallback на SVG-файл
+        imageHintEl.textContent = '';
+      
+        carouselInner.innerHTML =
+          '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
+      
+        const slidesWrapper = document.getElementById('modalSlidesWrapper');
+      
+        slidesWrapper.innerHTML = imagesToShow
           .map(
-            (_, idx) =>
-              '<div class="dot' +
-              (idx === modalCurrentIndex ? ' active' : '') +
-              '" onclick="modalGoTo(' +
-              idx +
-              '); event.stopPropagation()"></div>'
+            url =>
+              '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center">' +
+                '<img src="' + url + '"' +
+                ' class="carousel-img w-full h-64 object-contain"' +
+                ' alt="Product image" loading="lazy"' +
+                ' onerror="this.onerror=null; this.src=\'/assets/no-image.svg\';" />' +
+              '</div>'
           )
           .join('');
-        prevBtn.style.display = '';
-        nextBtn.style.display = '';
-        initModalCarousel(imagesToShow.length);
-      } else {
-        dotsRoot.innerHTML = '';
-        prevBtn.style.display = 'none';
-        nextBtn.style.display = 'none';
-      }
-    }    
+      
+        modalCurrentIndex = 0;
+      
+        if (imagesToShow.length > 1) {
+          dotsRoot.innerHTML = imagesToShow
+            .map(
+              (_, idx) =>
+                '<div class="dot' +
+                (idx === modalCurrentIndex ? ' active' : '') +
+                '" onclick="modalGoTo(' +
+                idx +
+                '); event.stopPropagation()"></div>'
+            )
+            .join('');
+          prevBtn.style.display = '';
+          nextBtn.style.display = '';
+          initModalCarousel(imagesToShow.length);
+        } else {
+          dotsRoot.innerHTML = '';
+          prevBtn.style.display = 'none';
+          nextBtn.style.display = 'none';
+        }
+      }         
   }
 
   // === ТЕЛО МОДАЛКИ (опции, количество) ===

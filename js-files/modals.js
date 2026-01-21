@@ -274,13 +274,6 @@ function renderProductModal(product) {
   const carouselInner = document.getElementById('modalCarouselInner');
   const dotsRoot = document.getElementById('modalDots');
   const imageHintEl = document.getElementById('modalImageHint');
-
-  // по умолчанию ничего не показываем
-if (imagesToShow.length) {
-  // если есть хоть одна картинка — вообще не трогаем hint в дальнейшем
-  imageHintEl.textContent = '';
-}
-
   const prevBtn = document.getElementById('modalPrevBtn');
   const nextBtn = document.getElementById('modalNextBtn');
 
@@ -289,8 +282,6 @@ if (imagesToShow.length) {
     imagesToShow = filteredImages.slice(0, 10);
   } else if (productCommonImage) {
     imagesToShow = [productCommonImage];
-  } else {
-    imagesToShow = [];
   }
 
   const nextKey = JSON.stringify({
@@ -307,7 +298,7 @@ if (imagesToShow.length) {
     modalImageCount = imagesToShow.length;
 
     if (!imagesToShow.length) {
-      // только SVG-заглушка (исправленный SVG)
+      // только SVG + подсказка
       carouselInner.innerHTML =
         '<div class="no-images h-64 flex items-center justify-center w-full bg-white">' +
           '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"' +
@@ -321,13 +312,12 @@ if (imagesToShow.length) {
         '</div>';
       prevBtn.style.display = 'none';
       nextBtn.style.display = 'none';
-    
-      // подсказку показываем только в этом кейсе
       imageHintEl.textContent =
         '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
     } else {
-      // есть хотя бы одна фотка → НИКОГДА не трогаем hint тут
-      // (никакого textContent = '' внутри этого блока)
+      // есть фотки → SVG-плейсхолдер поверх, текст под ним не трогаем
+      imageHintEl.textContent = '';
+
       carouselInner.innerHTML =
         '<div class="absolute inset-0 flex items-center justify-center bg-white" id="modalImagePlaceholder">' +
           '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"' +
@@ -340,9 +330,9 @@ if (imagesToShow.length) {
           '</svg>' +
         '</div>' +
         '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
-    
+
       const slidesWrapper = document.getElementById('modalSlidesWrapper');
-    
+
       slidesWrapper.innerHTML = imagesToShow
         .map(
           url =>
@@ -351,11 +341,11 @@ if (imagesToShow.length) {
             '</div>'
         )
         .join('');
-    
+
       const placeholder = document.getElementById('modalImagePlaceholder');
       const imgs = slidesWrapper.querySelectorAll('img');
       let loadedCount = 0;
-    
+
       imgs.forEach(img => {
         const finish = () => {
           loadedCount++;
@@ -370,9 +360,9 @@ if (imagesToShow.length) {
         img.onload = finish;
         img.onerror = finish;
       });
-    
+
       modalCurrentIndex = 0;
-    
+
       if (imagesToShow.length > 1) {
         dotsRoot.innerHTML = imagesToShow
           .map(
@@ -392,7 +382,7 @@ if (imagesToShow.length) {
         prevBtn.style.display = 'none';
         nextBtn.style.display = 'none';
       }
-    }      
+    }
   }
 
   // === ТЕЛО МОДАЛКИ (опции, количество) ===
@@ -475,7 +465,7 @@ if (imagesToShow.length) {
   if (isAddingToCart) {
     btn.innerHTML = '<span class="loader-circle"></span><span>Проверяю наличие...</span>';
     btn.className =
-      'w-full flex items-center justify-center gap-2 bg-gray-400 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all cursor-not-allowed';
+      'w-full flex itemscenter justify-center gap-2 bg-gray-400 text-white font-semibold px-4 rounded-2xl shadow-lg transition-all cursor-not-allowed';
     btn.disabled = true;
   } else if (complete && availableVariants.length > 0) {
     const sum = availableVariants[0].price
@@ -497,7 +487,9 @@ if (imagesToShow.length) {
 function initModalCarousel(imageCount) {
   if (imageCount <= 1) return;
   modalImageCount = imageCount;
-  const inner = document.getElementById('modalSlidesWrapper') || document.getElementById('modalCarouselInner');
+  const inner =
+    document.getElementById('modalSlidesWrapper') ||
+    document.getElementById('modalCarouselInner');
   if (!inner) return;
 
   function updateModalCarousel() {
@@ -515,7 +507,8 @@ function initModalCarousel(imageCount) {
   };
 
   window.modalPrev = function () {
-    modalCurrentIndex = modalCurrentIndex === 0 ? modalImageCount - 1 : modalCurrentIndex - 1;
+    modalCurrentIndex =
+      modalCurrentIndex === 0 ? modalImageCount - 1 : modalCurrentIndex - 1;
     updateModalCarousel();
     tg?.HapticFeedback?.selectionChanged();
   };

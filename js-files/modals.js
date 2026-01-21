@@ -317,36 +317,36 @@ function renderProductModal(product) {
       imageHintEl.textContent = '';
 
       carouselInner.innerHTML =
-        '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
+  '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
 
-      const slidesWrapper = document.getElementById('modalSlidesWrapper');
+const slidesWrapper = document.getElementById('modalSlidesWrapper');
 
-      slidesWrapper.innerHTML = imagesToShow
-        .map(
-          url =>
-            '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center">' +
-              '<img src="' + url + '"' +
-              ' class="carousel-img w-full h-64 object-contain"' +
-              ' alt="Product image" loading="lazy" />' +
-            '</div>'
-        )
-        .join('');
+slidesWrapper.innerHTML = imagesToShow
+  .map(
+    url =>
+      '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center relative bg-white">' +
+        // SVG-плейсхолдер уже есть под картинкой
+        '<div class="absolute inset-0 flex items-center justify-center pointer-events-none">' +
+          '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-12 h-12 text-gray-400">' +
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+            ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+          '</svg>' +
+        '</div>' +
+        // Картинка поверх
+        '<img src="' + url + '"' +
+        ' class="carousel-img w-full h-64 object-contain relative z-10"' +
+        ' alt="Product image" loading="lazy" />' +
+      '</div>'
+  )
+  .join('');
 
-      // onerror → заменить img на SVG
-      const imgs = slidesWrapper.querySelectorAll('img');
-      imgs.forEach(img => {
-        img.onerror = function () {
-          const wrapper = this.parentNode;
-          if (!wrapper) return;
-          wrapper.innerHTML =
-            '<div class="no-images h-64 flex items-center justify-center w-full bg-white">' +
-              '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-12 h-12 text-gray-400">' +
-                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-                ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
-              '</svg>' +
-            '</div>';
-        };
-      });
+// onerror: просто прячем img, SVG уже под ним → без моргания
+const imgs = slidesWrapper.querySelectorAll('img');
+imgs.forEach(img => {
+  img.onerror = function () {
+    this.style.display = 'none';
+  };
+});
 
       modalCurrentIndex = 0;
 

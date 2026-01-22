@@ -259,8 +259,7 @@ img,
   background: #ffffff; /* белый фон вокруг карусели */
 }
 
-/* Состояние, когда нет изображений
-   → теперь просто белое поле с маленькой иконкой */
+/* Состояние, когда нет изображений → белое поле с маленькой иконкой */
 .no-images {
   display: flex;
   flex-direction: column;
@@ -378,18 +377,26 @@ img,
   position: relative;
 }
 
+/* base-placeholder сейчас не используем, но оставляем */
 .modal-base-placeholder {
   position: absolute;
   inset: 0;
 }
 
+/* Плавное появление фото в модалке (0.3s, как у Apple) */
 .modal-photo {
   position: absolute;
   inset: 0;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  opacity: 1;
+  transition: opacity 0.3s ease;
 }
 
-.modal-photo.loaded {
+/* Скрытое состояние (перед загрузкой / при смене) */
+.modal-photo-hidden {
+  opacity: 0;
+}
+
+/* Явно видимое (после load) */
+.modal-photo-visible {
   opacity: 1;
 }

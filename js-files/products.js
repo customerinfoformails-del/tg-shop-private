@@ -216,6 +216,44 @@ function renderShopHeader(list, showCount) {
 }
 
 
+function handleProductImageLoaded(img, imageSrc) {
+  // пометили, что изображение загружено
+  if (typeof loadedImageUrls !== 'undefined') {
+    loadedImageUrls.add(imageSrc);
+  }
+
+  // находим контейнер изображений
+  const imgLayer = img.closest('.image-layer');
+  if (!imgLayer) return;
+
+  // у SVG-плейсхолдера добавляем класс fade-out
+  const svgPlaceholder = imgLayer.querySelector('.image-placeholder-svg');
+  if (svgPlaceholder) {
+    svgPlaceholder.classList.add('svg-fade-out');
+  }
+
+  // изображение плавно появляется после фейда SVG
+  setTimeout(() => {
+    img.classList.add('fade-in-image');
+  }, 500); // 0.5s — длительность фейда SVG
+}
+
+function handleProductImageFailed(img, imageSrc) {
+  if (typeof failedImageUrls !== 'undefined') {
+    failedImageUrls.add(imageSrc);
+  }
+
+  const imgLayer = img.closest('.image-layer');
+  if (imgLayer) {
+    img.style.display = 'none';
+    const svgPlaceholder = document.createElement('div');
+    svgPlaceholder.className = 'image-placeholder-svg';
+    svgPlaceholder.innerHTML = getPlainSvgPlaceholder();
+    imgLayer.appendChild(svgPlaceholder);
+  }
+}
+
+
 // ---------- карточка товара ----------
 
 function productCard(product) {
@@ -226,59 +264,53 @@ function productCard(product) {
   const commonImage = product.commonImage || variants[0]?.commonImage || '';
   const hasImage = !!commonImage;
   const safeMainImage = hasImage ? commonImage.replace(/'/g, "\\'") : '';
-
-  const cheapestVariant = variants.reduce(
-    (min, p) => (p.price < min.price ? p : min),
-    variants[0]
-  );
   const carouselId = 'carousel_' + Math.random().toString(36).substr(2, 9);
 
-  const isLoaded =
-    hasImage &&
-    typeof loadedImageUrls !== 'undefined' &&
-    loadedImageUrls.has(safeMainImage);
-
-  const isFailed =
-    hasImage &&
-    typeof failedImageUrls !== 'undefined' &&
-    failedImageUrls.has(safeMainImage);
-
-  const shouldShowSvgImmediately = !hasImage || isFailed;
+  const isLoaded = hasImage && loadedImageUrls && loadedImageUrls.has(safeMainImage);
+  const isFailed = hasImage && failedImageUrls && failedImageUrls.has(safeMainImage);
+  const shouldShowSvgInitially = !hasImage || isFailed;
 
   return (
     '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
       ' data-product-name="' + escapeHtml(product.name) + '"' +
       ' data-carousel-id="' + carouselId + '">' +
 
-      // фон сразу серый, чтобы не было белой вспышки
+      // фон-контейнер для карусели
       '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden relative bg-gray-100">' +
 
-        // Шиммер только если есть валидный URL и он ещё не загружался и не упал
-        (!isLoaded && !isFailed && hasImage
-          ? '<div class="w-full h-full rounded-xl placeholder-shimmer absolute inset-0" data-skeleton="image"></div>'
-          : ''
-        ) +
+        // контейнер для SVG + изображений
+        '<div class="image-placeholder-container relative w-full h-full">' +
 
-        '<div class="image-carousel-inner relative w-full h-full" data-carousel="' +
-          carouselId + '" data-current="0">' +
+          // SVG-плейсхолдер
+          '<div class="image-placeholder absolute inset-0">' +
+            getPlainSvgPlaceholder() +
+          '</div>' +
 
-          (shouldShowSvgImmediately
-            ? getPlainSvgPlaceholder()
-            : (
-              // SVG как фон + img поверх, чтобы не было белого кадра
-              getPlainSvgPlaceholder() +
-              '<img src="' + commonImage + '" ' +
-                  'class="carousel-img product-image absolute inset-0 object-contain ' +
-                    (isLoaded ? 'no-fade' : '') + '" ' +
+          // слой изображений
+          '<div class="image-layer absolute inset-0">' +
+            (shouldShowSvgInitially
+              ? '<div class="image-placeholder-svg">' + getPlainSvgPlaceholder() + '</div>'
+              : (
+                '<img src="' + commonImage + '" ' +
+                  'class="carousel-img product-image absolute inset-0 w-full h-full object-contain opacity-0" ' +
                   'alt="Product" ' +
                   'data-src="' + safeMainImage + '" ' +
-                  'onload="handleProductImageLoad(this, \'' + safeMainImage + '\')" ' +
-                  'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" />'
-            )
-          ) +
+                  'data-carousel-id="' + carouselId + '" ' +
+                  'onload="handleProductImageLoaded(this, \'' + safeMainImage + '\')" ' +
+                  'onerror="handleProductImageFailed(this, \'' + safeMainImage + '\')" />'
+              )
+            ) +
+          '</div>' +
+
         '</div>' +
+
+        // карусельная навигация
+        '<div class="image-carousel-inner relative w-full h-full" data-carousel="' + carouselId + '" data-current="0">' +
+        '</div>' +
+
       '</div>' +
 
+      // ... остальная карточка (название, цена и т.д.)
       '<div class="font-bold text-base mb-1 truncate">' +
         escapeHtml(product.name) +
       '</div>' +

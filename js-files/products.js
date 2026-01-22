@@ -322,10 +322,6 @@ function productCard(product) {
       '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden relative bg-gray-100">' +
 
         // shimmer, если есть нормальный URL и ещё не загружено/не упало
-        (!isLoaded && !isFailed && hasImage
-          ? '<div class="w-full h-full rounded-xl placeholder-shimmer absolute inset-0" data-skeleton="image"></div>'
-          : ''
-        ) +
 
         // общий контейнер для SVG и img
         '<div class="image-placeholder-container relative w-full h-full">' +

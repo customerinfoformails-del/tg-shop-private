@@ -156,7 +156,7 @@ window.addToCartFromModal = async function () {
       if (scB) scB.scrollTop = prevA;
     }
   }
-};
+};  
 
 function renderProductModal(product) {
   currentProduct = product;

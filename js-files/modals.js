@@ -294,134 +294,145 @@ function renderProductModal(product) {
   });
 
   if (modalCurrentImageKey !== nextKey) {
-    modalCurrentImageKey = nextKey;
-
-    carouselInner.innerHTML =
-      '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
-    dotsRoot.innerHTML = '';
-    modalImageCount = imagesToShow.length;
-
-    const slidesWrapper = document.getElementById('modalSlidesWrapper');
-
-    const svgPlaceholder =
-      '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"' +
-      ' class="w-12 h-12 text-gray-400">' +
-        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-        ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
-      '</svg>';
-
-    function makeSlideContent(url, mode) {
-      // mode: 'photo' | 'placeholder' | 'empty'
-      const hasPhoto = mode === 'photo' && url;
-      const showPlaceholder = mode === 'placeholder';
-
-      if (hasPhoto) {
-        return (
-          '<img src="' + url + '"' +
-          ' class="carousel-img w-full h-64 object-contain modal-photo modal-photo-hidden"' +
-          ' alt="Product image" loading="lazy" />'
-        );
+    const slidesWrapperOld = document.getElementById('modalSlidesWrapper');
+  
+    // 1) если уже есть слайды → делаем fade‑out
+    if (slidesWrapperOld) {
+      const activeLayers = slidesWrapperOld.querySelectorAll('.modal-photo-visible');
+      activeLayers.forEach(el => {
+        el.classList.remove('modal-photo-visible');
+        el.classList.add('modal-photo-hidden');
+      });
+    }
+  
+    // 2) ждём 0.5s (длительность transition), потом реально меняем контент
+    setTimeout(() => {
+      modalCurrentImageKey = nextKey;
+  
+      carouselInner.innerHTML =
+        '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
+      dotsRoot.innerHTML = '';
+      modalImageCount = imagesToShow.length;
+  
+      const slidesWrapper = document.getElementById('modalSlidesWrapper');
+  
+      const svgPlaceholder =
+        '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"' +
+        ' class="w-12 h-12 text-gray-400">' +
+          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+          ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+        '</svg>';
+  
+      function makeSlideContent(url, mode) {
+        const hasPhoto = mode === 'photo' && url;
+        const showPlaceholder = mode === 'placeholder';
+  
+        if (hasPhoto) {
+          return (
+            '<img src="' + url + '"' +
+            ' class="carousel-img w-full h-64 object-contain modal-photo modal-photo-hidden"' +
+            ' alt="Product image" loading="lazy" />'
+          );
+        }
+        if (showPlaceholder) {
+          return (
+            '<div class="modal-photo modal-photo-hidden flex items-center justify-center">' +
+              svgPlaceholder +
+            '</div>'
+          );
+        }
+        return '';
       }
-      if (showPlaceholder) {
+  
+      function makeSlide(url, mode) {
         return (
-          '<div class="modal-photo modal-photo-hidden flex items-center justify-center">' +
-            svgPlaceholder +
+          '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center relative bg-white">' +
+            makeSlideContent(url, mode) +
           '</div>'
         );
       }
-      return '';
-    }
-
-    function makeSlide(url, mode) {
-      return (
-        '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center relative bg-white">' +
-          makeSlideContent(url, mode) +
-        '</div>'
-      );
-    }
-
-    // 1) старт: всегда чистый белый фон
-    if (!imagesToShow.length) {
-      slidesWrapper.innerHTML = makeSlide('', 'empty');
-      prevBtn.style.display = 'none';
-      nextBtn.style.display = 'none';
-
-      // через animation frame рисуем placeholder
-      requestAnimationFrame(() => {
-        const slide = slidesWrapper.firstElementChild;
-        slide.innerHTML = makeSlideContent('', 'placeholder');
-        const layer = slide.querySelector('.modal-photo');
-        layer.classList.remove('modal-photo-hidden');
-        layer.classList.add('modal-photo-visible');
-      });
-    } else {
-      // есть URL'ы
-      slidesWrapper.innerHTML = imagesToShow
-        .map(url => makeSlide(url, 'empty'))
-        .join('');
-
-      const slideEls = slidesWrapper.children;
-
-      imagesToShow.forEach((url, idx) => {
-        const slide = slideEls[idx];
-
-        if (!url || brokenImageMap.get(url)) {
-          // заранее известен как пустой/битый → сразу подложка
-          slide.innerHTML = makeSlideContent('', 'placeholder');
-          const ph = slide.querySelector('.modal-photo');
-          ph.classList.remove('modal-photo-hidden');
-          ph.classList.add('modal-photo-visible');
-          return;
-        }
-
-        // ставим фото как fade-слой
-        slide.innerHTML = makeSlideContent(url, 'photo');
-        const img = slide.querySelector('img');
-
-        img.addEventListener('load', () => {
-          img.classList.remove('modal-photo-hidden');
-          img.classList.add('modal-photo-visible');
-        });
-
-        img.addEventListener('error', () => {
-          brokenImageMap.set(url, true);
-          slide.innerHTML = makeSlideContent('', 'placeholder');
-          const ph = slide.querySelector('.modal-photo');
-          ph.classList.remove('modal-photo-hidden');
-          ph.classList.add('modal-photo-visible');
-        });
-      });
-
-      modalCurrentIndex = 0;
-
-      if (imagesToShow.length > 1) {
-        dotsRoot.innerHTML = imagesToShow
-          .map(
-            (_, idx) =>
-              '<div class="dot' +
-              (idx === modalCurrentIndex ? ' active' : '') +
-              '" onclick="modalGoTo(' +
-              idx +
-              '); event.stopPropagation()"></div>'
-          )
-          .join('');
-        prevBtn.style.display = '';
-        nextBtn.style.display = '';
-        initModalCarousel(imagesToShow.length);
-      } else {
-        dotsRoot.innerHTML = '';
+  
+      // дальше оставляешь ТВОЙ существующий код от:
+      // "if (!imagesToShow.length) { ... } else { ... }"
+      // без изменений
+      if (!imagesToShow.length) {
+        slidesWrapper.innerHTML = makeSlide('', 'empty');
         prevBtn.style.display = 'none';
         nextBtn.style.display = 'none';
+  
+        requestAnimationFrame(() => {
+          const slide = slidesWrapper.firstElementChild;
+          slide.innerHTML = makeSlideContent('', 'placeholder');
+          const layer = slide.querySelector('.modal-photo');
+          layer.classList.remove('modal-photo-hidden');
+          layer.classList.add('modal-photo-visible');
+        });
+      } else {
+        slidesWrapper.innerHTML = imagesToShow
+          .map(url => makeSlide(url, 'empty'))
+          .join('');
+  
+        const slideEls = slidesWrapper.children;
+  
+        imagesToShow.forEach((url, idx) => {
+          const slide = slideEls[idx];
+  
+          if (!url || brokenImageMap.get(url)) {
+            slide.innerHTML = makeSlideContent('', 'placeholder');
+            const ph = slide.querySelector('.modal-photo');
+            ph.classList.remove('modal-photo-hidden');
+            ph.classList.add('modal-photo-visible');
+            return;
+          }
+  
+          slide.innerHTML = makeSlideContent(url, 'photo');
+          const img = slide.querySelector('img');
+  
+          img.addEventListener('load', () => {
+            img.classList.remove('modal-photo-hidden');
+            img.classList.add('modal-photo-visible');
+          });
+  
+          img.addEventListener('error', () => {
+            brokenImageMap.set(url, true);
+            slide.innerHTML = makeSlideContent('', 'placeholder');
+            const ph = slide.querySelector('.modal-photo');
+            ph.classList.remove('modal-photo-hidden');
+            ph.classList.add('modal-photo-visible');
+          });
+        });
+  
+        modalCurrentIndex = 0;
+  
+        if (imagesToShow.length > 1) {
+          dotsRoot.innerHTML = imagesToShow
+            .map(
+              (_, idx) =>
+                '<div class="dot' +
+                (idx === modalCurrentIndex ? ' active' : '') +
+                '" onclick="modalGoTo(' +
+                idx +
+                '); event.stopPropagation()"></div>'
+            )
+            .join('');
+          prevBtn.style.display = '';
+          nextBtn.style.display = '';
+          initModalCarousel(imagesToShow.length);
+        } else {
+          dotsRoot.innerHTML = '';
+          prevBtn.style.display = 'none';
+          nextBtn.style.display = 'none';
+        }
       }
-    }
-
-    if (!complete || !filteredImages.length) {
-      imageHintEl.textContent =
-        '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
-    } else {
-      imageHintEl.textContent = '';
-    }
-  }
+  
+      if (!complete || !filteredImages.length) {
+        imageHintEl.textContent =
+          '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
+      } else {
+        imageHintEl.textContent = '';
+      }
+    }, 500); // 0.5s = время fade-out
+  }  
 
   // === ТЕЛО МОДАЛКИ (опции, количество) ===
   const body = document.getElementById('modalBodyDynamic');

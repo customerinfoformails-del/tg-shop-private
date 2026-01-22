@@ -253,64 +253,110 @@ function handleProductImageFailed(img, imageSrc) {
   }
 }
 
+function handleProductImageSequentialLoad(img, imageSrc) {
+  if (typeof loadedImageUrls !== 'undefined') {
+    loadedImageUrls.add(imageSrc);
+  }
 
-// ---------- карточка товара ----------
+  const container = img.closest('.image-placeholder-container');
+  if (!container) return;
+
+  const svg = container.querySelector('.image-placeholder-svg');
+  if (!svg) {
+    // если SVG не найден — просто показываем картинку
+    img.classList.add('fade-in-image');
+    return;
+  }
+
+  // сначала 0.5s гасим SVG
+  svg.classList.add('svg-fade-out');
+
+  // потом 0.5s зажигаем картинку
+  setTimeout(() => {
+    img.classList.add('fade-in-image');
+  }, 500);
+}
+
+function handleProductImageError(img, imageSrc) {
+  if (typeof failedImageUrls !== 'undefined') {
+    failedImageUrls.add(imageSrc);
+  }
+  // можно просто скрыть img — SVG останется
+  img.style.display = 'none';
+}
+
 
 function productCard(product) {
   const allVariants = getProductVariants(product.name);
   const variants = allVariants.filter(v => v.inStock);
   if (!variants.length) return '';
 
+  const cheapestVariant = variants.reduce(
+    (min, p) => (p.price < min.price ? p : min),
+    variants[0]
+  );
+
   const commonImage = product.commonImage || variants[0]?.commonImage || '';
   const hasImage = !!commonImage;
   const safeMainImage = hasImage ? commonImage.replace(/'/g, "\\'") : '';
   const carouselId = 'carousel_' + Math.random().toString(36).substr(2, 9);
 
-  const isLoaded = hasImage && loadedImageUrls && loadedImageUrls.has(safeMainImage);
-  const isFailed = hasImage && failedImageUrls && failedImageUrls.has(safeMainImage);
-  const shouldShowSvgInitially = !hasImage || isFailed;
+  const isLoaded =
+    hasImage &&
+    typeof loadedImageUrls !== 'undefined' &&
+    loadedImageUrls.has(safeMainImage);
+
+  const isFailed =
+    hasImage &&
+    typeof failedImageUrls !== 'undefined' &&
+    failedImageUrls.has(safeMainImage);
+
+  const shouldShowSvgImmediately = !hasImage || isFailed;
 
   return (
     '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
       ' data-product-name="' + escapeHtml(product.name) + '"' +
       ' data-carousel-id="' + carouselId + '">' +
 
-      // фон-контейнер для карусели
+      // контейнер изображения
       '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden relative bg-gray-100">' +
 
-        // контейнер для SVG + изображений
+        // shimmer, если есть нормальный URL и ещё не загружено/не упало
+        (!isLoaded && !isFailed && hasImage
+          ? '<div class="w-full h-full rounded-xl placeholder-shimmer absolute inset-0" data-skeleton="image"></div>'
+          : ''
+        ) +
+
+        // общий контейнер для SVG и img
         '<div class="image-placeholder-container relative w-full h-full">' +
 
-          // SVG-плейсхолдер
-          '<div class="image-placeholder absolute inset-0">' +
+          // SVG-плейсхолдер (нижний слой)
+          '<div class="image-placeholder-svg absolute inset-0">' +
             getPlainSvgPlaceholder() +
           '</div>' +
 
-          // слой изображений
-          '<div class="image-layer absolute inset-0">' +
-            (shouldShowSvgInitially
-              ? '<div class="image-placeholder-svg">' + getPlainSvgPlaceholder() + '</div>'
-              : (
-                '<img src="' + commonImage + '" ' +
-                  'class="carousel-img product-image absolute inset-0 w-full h-full object-contain opacity-0" ' +
-                  'alt="Product" ' +
-                  'data-src="' + safeMainImage + '" ' +
-                  'data-carousel-id="' + carouselId + '" ' +
-                  'onload="handleProductImageLoaded(this, \'' + safeMainImage + '\')" ' +
-                  'onerror="handleProductImageFailed(this, \'' + safeMainImage + '\')" />'
-              )
-            ) +
-          '</div>' +
+          // слой с картинкой
+          (shouldShowSvgImmediately
+            ? '' // если картинки нет / упала — останется только SVG
+            : (
+              '<img src="' + commonImage + '" ' +
+                'class="carousel-img product-image absolute inset-0 object-contain" ' +
+                'alt="Product" ' +
+                'data-src="' + safeMainImage + '" ' +
+                'onload="handleProductImageSequentialLoad(this, \'' + safeMainImage + '\')" ' +
+                'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" />'
+            )
+          ) +
 
         '</div>' +
 
-        // карусельная навигация
-        '<div class="image-carousel-inner relative w-full h-full" data-carousel="' + carouselId + '" data-current="0">' +
+        // внутренняя обёртка карусели (если будут доп. изображения)
+        '<div class="image-carousel-inner relative w-full h-full" data-carousel="' +
+          carouselId + '" data-current="0">' +
         '</div>' +
 
       '</div>' +
 
-      // ... остальная карточка (название, цена и т.д.)
       '<div class="font-bold text-base mb-1 truncate">' +
         escapeHtml(product.name) +
       '</div>' +

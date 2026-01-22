@@ -373,6 +373,7 @@ img,
 }
 
 /* Для модалки — базовый фон и фото поверх */
+/* Для модалки — базовый фон и фото поверх */
 #modalCarouselInner {
   position: relative;
 }
@@ -383,20 +384,18 @@ img,
   inset: 0;
 }
 
-/* Плавное появление фото в модалке (0.3s, как у Apple) */
+/* слой для картинки или подложки в модалке */
 .modal-photo {
   position: absolute;
   inset: 0;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-
-/* Скрытое состояние (перед загрузкой / при смене) */
-.modal-photo-hidden {
   opacity: 0;
+  transition: opacity 0.5s ease;
 }
 
-/* Явно видимое (после load) */
 .modal-photo-visible {
   opacity: 1;
+}
+
+.modal-photo-hidden {
+  opacity: 0;
 }

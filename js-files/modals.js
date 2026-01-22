@@ -303,73 +303,92 @@ function renderProductModal(product) {
 
     const slidesWrapper = document.getElementById('modalSlidesWrapper');
 
-    // SVG-заглушка (маленькая иконка)
     const svgPlaceholder =
       '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"' +
-      ' class="w-12 h-12 modal-placeholder-svg text-gray-400">' +
+      ' class="w-12 h-12 text-gray-400">' +
         '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
         ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
       '</svg>';
 
-    // === helper: один слайд (белый фон + svg + img поверх с fade 0.3s) ===
-    function makeSlide(url) {
-      const broken = !url || brokenImageMap.get(url);
+    function makeSlideContent(url, mode) {
+      // mode: 'photo' | 'placeholder' | 'empty'
+      const hasPhoto = mode === 'photo' && url;
+      const showPlaceholder = mode === 'placeholder';
 
+      if (hasPhoto) {
+        return (
+          '<img src="' + url + '"' +
+          ' class="carousel-img w-full h-64 object-contain modal-photo modal-photo-hidden"' +
+          ' alt="Product image" loading="lazy" />'
+        );
+      }
+      if (showPlaceholder) {
+        return (
+          '<div class="modal-photo modal-photo-hidden flex items-center justify-center">' +
+            svgPlaceholder +
+          '</div>'
+        );
+      }
+      return '';
+    }
+
+    function makeSlide(url, mode) {
       return (
         '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center relative bg-white">' +
-          '<div class="absolute inset-0 flex items-center justify-center pointer-events-none placeholder-layer">' +
-            svgPlaceholder +
-          '</div>' +
-          '<img src="' + (url || '') + '"' +
-          ' class="carousel-img w-full h-64 object-contain relative z-10 modal-photo' +
-          (broken ? '' : ' modal-photo-hidden') + '"' +
-          (broken ? ' style="display:none;"' : '') +
-          ' alt="Product image" loading="lazy" />' +
+          makeSlideContent(url, mode) +
         '</div>'
       );
     }
 
-    // === 1–2: если фоток нет или пустая строка / раньше упала с ошибкой → только заглушка ===
-    if (!imagesToShow.length || !imagesToShow[0]) {
-      slidesWrapper.innerHTML = makeSlide('');
+    // 1) старт: всегда чистый белый фон
+    if (!imagesToShow.length) {
+      slidesWrapper.innerHTML = makeSlide('', 'empty');
       prevBtn.style.display = 'none';
       nextBtn.style.display = 'none';
+
+      // через animation frame рисуем placeholder
+      requestAnimationFrame(() => {
+        const slide = slidesWrapper.firstElementChild;
+        slide.innerHTML = makeSlideContent('', 'placeholder');
+        const layer = slide.querySelector('.modal-photo');
+        layer.classList.remove('modal-photo-hidden');
+        layer.classList.add('modal-photo-visible');
+      });
     } else {
-      // есть URL'ы → отрисовываем с fade
-      slidesWrapper.innerHTML = imagesToShow.map(url => makeSlide(url)).join('');
+      // есть URL'ы
+      slidesWrapper.innerHTML = imagesToShow
+        .map(url => makeSlide(url, 'empty'))
+        .join('');
 
-      const imgs = slidesWrapper.querySelectorAll('img');
+      const slideEls = slidesWrapper.children;
 
-      imgs.forEach(img => {
-        const url = img.getAttribute('src');
-        const slide = img.parentNode;
-        const placeholderLayer = slide.querySelector('.placeholder-layer');
+      imagesToShow.forEach((url, idx) => {
+        const slide = slideEls[idx];
 
-        if (brokenImageMap.get(url)) {
-          // уже знаем, что битая → сразу оставляем только заглушку
-          img.style.display = 'none';
-          if (placeholderLayer) placeholderLayer.style.opacity = '1';
+        if (!url || brokenImageMap.get(url)) {
+          // заранее известен как пустой/битый → сразу подложка
+          slide.innerHTML = makeSlideContent('', 'placeholder');
+          const ph = slide.querySelector('.modal-photo');
+          ph.classList.remove('modal-photo-hidden');
+          ph.classList.add('modal-photo-visible');
           return;
         }
 
-        // старт: скрыто (opacity 0) → CSS .modal-photo-hidden
+        // ставим фото как fade-слой
+        slide.innerHTML = makeSlideContent(url, 'photo');
+        const img = slide.querySelector('img');
+
         img.addEventListener('load', () => {
-          // 3) фотка есть: из белого рисуем фото, SVG плавно исчезает
           img.classList.remove('modal-photo-hidden');
           img.classList.add('modal-photo-visible');
-          if (placeholderLayer) {
-            placeholderLayer.style.transition = 'opacity 0.3s ease';
-            placeholderLayer.style.opacity = '0';
-          }
         });
 
         img.addEventListener('error', () => {
-          // 1) onerror: показываем заглушку и запоминаем URL, чтобы потом не пробовать снова
           brokenImageMap.set(url, true);
-          img.style.display = 'none';
-          if (placeholderLayer) {
-            placeholderLayer.style.opacity = '1';
-          }
+          slide.innerHTML = makeSlideContent('', 'placeholder');
+          const ph = slide.querySelector('.modal-photo');
+          ph.classList.remove('modal-photo-hidden');
+          ph.classList.add('modal-photo-visible');
         });
       });
 

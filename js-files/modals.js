@@ -293,7 +293,7 @@ function renderProductModal(product) {
     common: productCommonImage
   });
 
-  const FADE_DURATION_MS = 1000; // 1s как в CSS .modal-photo
+  const FADE_DURATION_MS = 500; // 1s как в CSS .modal-photo
 
   function buildSlides() {
     carouselInner.innerHTML =
@@ -330,6 +330,7 @@ function renderProductModal(product) {
       }
       return '';
     }
+    
 
     function makeSlide(url, mode) {
       return (
@@ -445,11 +446,12 @@ function renderProductModal(product) {
   }
 
   if (modalCurrentImageKey === null) {
-    // первое открытие: без ожидания FADE_DURATION_MS
+    // первое открытие: только fade-in 0.5s
     modalCurrentImageKey = nextKey;
-    buildSlides();
+    buildSlides(); // внутри уже есть rAF → hidden → visible с 0.5s
   } else if (modalCurrentImageKey !== nextKey) {
-    // смена опций: сначала fade-out старых слоёв
+    // смена опций: 0.5s fade-out старого + 0.5s fade-in нового
+  
     const slidesWrapperOld = document.getElementById('modalSlidesWrapper');
     if (slidesWrapperOld) {
       const activeLayers = slidesWrapperOld.querySelectorAll(
@@ -457,16 +459,16 @@ function renderProductModal(product) {
       );
       activeLayers.forEach(el => {
         el.classList.remove('modal-photo-visible');
-        el.classList.add('modal-photo-hidden'); // fade-out 1s
+        el.classList.add('modal-photo-hidden'); // fade-out 0.5s
       });
     }
-
+  
     modalCurrentImageKey = nextKey;
-
+  
     setTimeout(() => {
-      buildSlides();
+      buildSlides(); // внутри снова rAF → hidden → visible (fade-in 0.5s)
     }, FADE_DURATION_MS);
-  }
+  }  
 
   // === ТЕЛО МОДАЛКИ (опции, количество) ===
   const body = document.getElementById('modalBodyDynamic');
@@ -651,5 +653,6 @@ window.closeModal = function () {
   selectedOption = {};
   currentProduct = null;
   selectedQuantity = 1;
+  modalCurrentImageKey = null; // ← добавь эту строку
   tg?.HapticFeedback?.impactOccurred('light');
 };

@@ -339,7 +339,7 @@ function renderProductModal(product) {
           );
         }
         return '';
-      }      
+      }        
 
     function makeSlide(url, mode) {
       return (
@@ -351,15 +351,17 @@ function renderProductModal(product) {
 
     // 1) открытие / нет картинок → белый фон → подложка
 // 1) открытие / нет картинок → белый фон → подложка
+// 1) открытие / нет картинок → сразу placeholder с fade-in
 if (!imagesToShow.length) {
-  slidesWrapper.innerHTML = makeSlide('', 'empty');
+  // сразу рисуем слайд с placeholder, без промежуточного empty
+  slidesWrapper.innerHTML = makeSlide('', 'placeholder');
   prevBtn.style.display = 'none';
   nextBtn.style.display = 'none';
 
   requestAnimationFrame(() => {
     const slide = slidesWrapper.firstElementChild;
-    slide.innerHTML = makeSlideContent('', 'placeholder');
     const layer = slide.querySelector('.modal-photo');
+    if (!layer) return;
     layer.classList.remove('modal-photo-hidden');
     layer.classList.add('modal-photo-visible');
   });

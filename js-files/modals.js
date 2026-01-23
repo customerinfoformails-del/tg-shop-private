@@ -293,37 +293,41 @@ function renderProductModal(product) {
     common: productCommonImage
   });
 
+  const FADE_DURATION_MS = 1000; // 1s как в CSS .modal-photo
+
   if (modalCurrentImageKey !== nextKey) {
-    // fade-out старых слоёв, если есть
     const slidesWrapperOld = document.getElementById('modalSlidesWrapper');
     if (slidesWrapperOld) {
-      const activeLayers = slidesWrapperOld.querySelectorAll('.modal-photo-visible');
+      const activeLayers = slidesWrapperOld.querySelectorAll(
+        '.modal-photo-visible, .modal-photo-hidden'
+      );
       activeLayers.forEach(el => {
         el.classList.remove('modal-photo-visible');
-        el.classList.add('modal-photo-hidden');
+        el.classList.add('modal-photo-hidden'); // запускаем fade-out 1s
       });
     }
 
     modalCurrentImageKey = nextKey;
 
-    carouselInner.innerHTML =
-      '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
-    dotsRoot.innerHTML = '';
-    modalImageCount = imagesToShow.length;
+    setTimeout(() => {
+      carouselInner.innerHTML =
+        '<div class="flex w-full h-full" id="modalSlidesWrapper"></div>';
+      dotsRoot.innerHTML = '';
+      modalImageCount = imagesToShow.length;
 
-    const slidesWrapper = document.getElementById('modalSlidesWrapper');
+      const slidesWrapper = document.getElementById('modalSlidesWrapper');
 
-    const svgPlaceholder =
-      '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"' +
-      ' class="w-12 h-12 text-gray-400">' +
-        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-        ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
-      '</svg>';
+      const svgPlaceholder =
+        '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"' +
+        ' class="w-12 h-12 text-gray-400">' +
+          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+          ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+        '</svg>';
 
       function makeSlideContent(url, mode) {
         const hasPhoto = mode === 'photo' && url;
         const showPlaceholder = mode === 'placeholder';
-      
+
         if (hasPhoto) {
           return (
             '<img src="' + url + '"' +
@@ -339,105 +343,100 @@ function renderProductModal(product) {
           );
         }
         return '';
-      }         
+      }
 
-    function makeSlide(url, mode) {
-      return (
-        '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center relative bg-white">' +
-          makeSlideContent(url, mode) +
-        '</div>'
-      );
-    }
+      function makeSlide(url, mode) {
+        return (
+          '<div class="w-full h-64 flex-shrink-0 flex items-center justify-center relative bg-white">' +
+            makeSlideContent(url, mode) +
+          '</div>'
+        );
+      }
 
-    // 1) открытие / нет картинок → белый фон → подложка
-// 1) открытие / нет картинок → белый фон → подложка
-// 1) открытие / нет картинок → сразу placeholder с fade-in
-if (!imagesToShow.length) {
-  slidesWrapper.innerHTML = makeSlide('', 'placeholder');
-  prevBtn.style.display = 'none';
-  nextBtn.style.display = 'none';
-
-  requestAnimationFrame(() => {
-    setTimeout(() => {
-      const slide = slidesWrapper.firstElementChild;
-      if (!slide) return;
-      const layer = slide.querySelector('.modal-photo');
-      if (!layer) return;
-      layer.classList.remove('modal-photo-hidden');
-      layer.classList.add('modal-photo-visible');
-    }, 200); // 100 ms задержка
-  });
-} else {
-      // есть URL'ы
-      slidesWrapper.innerHTML = imagesToShow
-        .map(url => makeSlide(url, 'empty'))
-        .join('');
-
-      const slideEls = slidesWrapper.children;
-
-      imagesToShow.forEach((url, idx) => {
-        const slide = slideEls[idx];
-      
-        if (!url || brokenImageMap.get(url)) {
-          // заранее знаем, что фотки не будет → сразу подложка
-          slide.innerHTML = makeSlideContent('', 'placeholder');
-          const ph = slide.querySelector('.modal-photo');
-          requestAnimationFrame(() => {
-            ph.classList.remove('modal-photo-hidden');
-            ph.classList.add('modal-photo-visible');
-          });
-          return;
-        }
-      
-        // нормальная фотка
-        slide.innerHTML = makeSlideContent(url, 'photo');
-        const img = slide.querySelector('img');
-      
-        img.addEventListener('load', () => {
-          img.classList.remove('modal-photo-hidden');
-          img.classList.add('modal-photo-visible');
-        });
-      
-        img.addEventListener('error', () => {
-          brokenImageMap.set(url, true);
-          slide.innerHTML = makeSlideContent('', 'placeholder');
-          const ph = slide.querySelector('.modal-photo');
-          requestAnimationFrame(() => {
-            ph.classList.remove('modal-photo-hidden');
-            ph.classList.add('modal-photo-visible');
-          });
-        });
-      });      
-
-      modalCurrentIndex = 0;
-
-      if (imagesToShow.length > 1) {
-        dotsRoot.innerHTML = imagesToShow
-          .map(
-            (_, idx) =>
-              '<div class="dot' +
-              (idx === modalCurrentIndex ? ' active' : '') +
-              '" onclick="modalGoTo(' +
-              idx +
-              '); event.stopPropagation()"></div>'
-          )
-          .join('');
-        prevBtn.style.display = '';
-        nextBtn.style.display = '';
-        initModalCarousel(imagesToShow.length);
-      } else {
-        dotsRoot.innerHTML = '';
+      if (!imagesToShow.length) {
+        slidesWrapper.innerHTML = makeSlide('', 'placeholder');
         prevBtn.style.display = 'none';
         nextBtn.style.display = 'none';
-      }
-    }
 
-    if (!complete || !filteredImages.length) {
-      imageHintEl.textContent =
-        '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
-    } else {
-      imageHintEl.textContent = '';
-    }
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            const slide = slidesWrapper.firstElementChild;
+            if (!slide) return;
+            const layer = slide.querySelector('.modal-photo');
+            if (!layer) return;
+            layer.classList.remove('modal-photo-hidden');
+            layer.classList.add('modal-photo-visible');
+          }, 100);
+        });
+      } else {
+        slidesWrapper.innerHTML = imagesToShow
+          .map(url => makeSlide(url, 'empty'))
+          .join('');
+
+        const slideEls = slidesWrapper.children;
+
+        imagesToShow.forEach((url, idx) => {
+          const slide = slideEls[idx];
+
+          if (!url || brokenImageMap.get(url)) {
+            slide.innerHTML = makeSlideContent('', 'placeholder');
+            const ph = slide.querySelector('.modal-photo');
+            requestAnimationFrame(() => {
+              ph.classList.remove('modal-photo-hidden');
+              ph.classList.add('modal-photo-visible');
+            });
+            return;
+          }
+
+          slide.innerHTML = makeSlideContent(url, 'photo');
+          const img = slide.querySelector('img');
+
+          img.addEventListener('load', () => {
+            img.classList.remove('modal-photo-hidden');
+            img.classList.add('modal-photo-visible');
+          });
+
+          img.addEventListener('error', () => {
+            brokenImageMap.set(url, true);
+            slide.innerHTML = makeSlideContent('', 'placeholder');
+            const ph = slide.querySelector('.modal-photo');
+            requestAnimationFrame(() => {
+              ph.classList.remove('modal-photo-hidden');
+              ph.classList.add('modal-photo-visible');
+            });
+          });
+        });
+
+        modalCurrentIndex = 0;
+
+        if (imagesToShow.length > 1) {
+          dotsRoot.innerHTML = imagesToShow
+            .map(
+              (_, idx) =>
+                '<div class="dot' +
+                (idx === modalCurrentIndex ? ' active' : '') +
+                '" onclick="modalGoTo(' +
+                idx +
+                '); event.stopPropagation()"></div>'
+            )
+            .join('');
+          prevBtn.style.display = '';
+          nextBtn.style.display = '';
+          initModalCarousel(imagesToShow.length);
+        } else {
+          dotsRoot.innerHTML = '';
+          prevBtn.style.display = 'none';
+          nextBtn.style.display = 'none';
+        }
+      }
+
+      if (!complete || !filteredImages.length) {
+        imageHintEl.textContent =
+          '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
+      } else {
+        imageHintEl.textContent = '';
+      }
+    }, FADE_DURATION_MS);
   }
 
   // === ТЕЛО МОДАЛКИ (опции, количество) ===

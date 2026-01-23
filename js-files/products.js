@@ -281,7 +281,6 @@ function productCard(product) {
     failedImageUrls.has(safeMainImage);
 
   const isInstant = isLoadedPersistently;
-  const shouldShowSvgImmediately = !hasImage || isFailed;
 
   return (
     '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
@@ -294,31 +293,41 @@ function productCard(product) {
         // общий контейнер для SVG и img
         '<div class="image-placeholder-container relative w-full h-full">' +
 
-          // SVG-плейсхолдер: только если есть картинка и мы не в instant‑режиме
-          (!shouldShowSvgImmediately && !isInstant
-            ? '<div class="image-placeholder-svg absolute inset-0">' +
-                getPlainSvgPlaceholder() +
-              '</div>'
-            : ''
+          // SVG:
+          // 1) если нет картинки → всегда SVG
+          // 2) если картинка есть, но не instant и не упала → SVG для фейда
+          (
+            !hasImage
+              ? '<div class="image-placeholder-svg absolute inset-0">' +
+                  getPlainSvgPlaceholder() +
+                '</div>'
+              : (
+                !isInstant && !isFailed
+                  ? '<div class="image-placeholder-svg absolute inset-0">' +
+                      getPlainSvgPlaceholder() +
+                    '</div>'
+                  : ''
+              )
           ) +
 
-          // слой с картинкой
-          (shouldShowSvgImmediately
-            ? '' // нет картинки / упала — только SVG
-            : (
-              '<img src="' + commonImage + '" ' +
-                'class="carousel-img product-image absolute inset-0 object-contain ' +
-                  (isInstant ? '' : 'animatable') +
-                '" ' +
-                'alt="Product" ' +
-                'data-src="' + safeMainImage + '" ' +
-                (isInstant
-                  ? '' // уже когда‑то показывали — сразу без анимации и SVG
-                  : 'onload="handleProductImageSequentialLoad(this, \'' + safeMainImage + '\', \'' + cacheKey + '\')" ' +
-                    'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" '
-                ) +
-              '/>'
-            )
+          // слой с картинкой (только если есть URL и он не помечен как упавший)
+          (
+            !hasImage || isFailed
+              ? ''
+              : (
+                '<img src="' + commonImage + '" ' +
+                  'class="carousel-img product-image absolute inset-0 object-contain ' +
+                    (isInstant ? '' : 'animatable') +
+                  '" ' +
+                  'alt="Product" ' +
+                  'data-src="' + safeMainImage + '" ' +
+                  (isInstant
+                    ? '' // уже когда‑то показывали — сразу без анимации и SVG
+                    : 'onload="handleProductImageSequentialLoad(this, \'' + safeMainImage + '\', \'' + cacheKey + '\')" ' +
+                      'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" '
+                  ) +
+                '/>'
+              )
           ) +
 
         '</div>' +

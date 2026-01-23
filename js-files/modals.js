@@ -339,7 +339,7 @@ function renderProductModal(product) {
           );
         }
         return '';
-      }        
+      }         
 
     function makeSlide(url, mode) {
       return (

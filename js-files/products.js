@@ -215,63 +215,28 @@ function renderShopHeader(list, showCount) {
   );
 }
 
-
-function handleProductImageLoaded(img, imageSrc) {
-  // пометили, что изображение загружено
-  if (typeof loadedImageUrls !== 'undefined') {
-    loadedImageUrls.add(imageSrc);
-  }
-
-  // находим контейнер изображений
-  const imgLayer = img.closest('.image-layer');
-  if (!imgLayer) return;
-
-  // у SVG-плейсхолдера добавляем класс fade-out
-  const svgPlaceholder = imgLayer.querySelector('.image-placeholder-svg');
-  if (svgPlaceholder) {
-    svgPlaceholder.classList.add('svg-fade-out');
-  }
-
-  // изображение плавно появляется после фейда SVG
-  setTimeout(() => {
-    img.classList.add('fade-in-image');
-  }, 500); // 0.5s — длительность фейда SVG
-}
-
-function handleProductImageFailed(img, imageSrc) {
-  if (typeof failedImageUrls !== 'undefined') {
-    failedImageUrls.add(imageSrc);
-  }
-
-  const imgLayer = img.closest('.image-layer');
-  if (imgLayer) {
-    img.style.display = 'none';
-    const svgPlaceholder = document.createElement('div');
-    svgPlaceholder.className = 'image-placeholder-svg';
-    svgPlaceholder.innerHTML = getPlainSvgPlaceholder();
-    imgLayer.appendChild(svgPlaceholder);
-  }
-}
-
-function handleProductImageSequentialLoad(img, imageSrc) {
-  if (typeof loadedImageUrls !== 'undefined') {
+function handleProductImageSequentialLoad(img, imageSrc, cacheKey) {
+  if (typeof markImageAsLoaded === 'function' && cacheKey) {
+    markImageAsLoaded(cacheKey);
+  } else if (typeof loadedImageUrls !== 'undefined' && imageSrc) {
     loadedImageUrls.add(imageSrc);
   }
 
   const container = img.closest('.image-placeholder-container');
-  if (!container) return;
-
-  const svg = container.querySelector('.image-placeholder-svg');
-  if (!svg) {
-    // если SVG не найден — просто показываем картинку
+  if (!container) {
     img.classList.add('fade-in-image');
     return;
   }
 
-  // сначала 0.5s гасим SVG
+  const svg = container.querySelector('.image-placeholder-svg');
+
+  if (!svg) {
+    img.classList.add('fade-in-image');
+    return;
+  }
+
   svg.classList.add('svg-fade-out');
 
-  // потом 0.5s зажигаем картинку
   setTimeout(() => {
     img.classList.add('fade-in-image');
   }, 500);
@@ -301,16 +266,21 @@ function productCard(product) {
   const safeMainImage = hasImage ? commonImage.replace(/'/g, "\\'") : '';
   const carouselId = 'carousel_' + Math.random().toString(36).substr(2, 9);
 
-  const isLoaded =
+  // ключ для persistent‑кэша
+  const cacheKey = hasImage ? getImageCacheKey(product, safeMainImage) : '';
+
+  const isLoadedPersistently =
     hasImage &&
-    typeof loadedImageUrls !== 'undefined' &&
-    loadedImageUrls.has(safeMainImage);
+    cacheKey &&
+    typeof loadedImageCacheKeys !== 'undefined' &&
+    loadedImageCacheKeys.has(cacheKey);
 
   const isFailed =
     hasImage &&
     typeof failedImageUrls !== 'undefined' &&
     failedImageUrls.has(safeMainImage);
 
+  const isInstant = isLoadedPersistently;
   const shouldShowSvgImmediately = !hasImage || isFailed;
 
   return (
@@ -321,32 +291,39 @@ function productCard(product) {
       // контейнер изображения
       '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden relative bg-gray-100">' +
 
-        // shimmer, если есть нормальный URL и ещё не загружено/не упало
-
         // общий контейнер для SVG и img
         '<div class="image-placeholder-container relative w-full h-full">' +
 
-          // SVG-плейсхолдер (нижний слой)
-          '<div class="image-placeholder-svg absolute inset-0">' +
-            getPlainSvgPlaceholder() +
-          '</div>' +
+          // SVG-плейсхолдер: только если есть картинка и мы не в instant‑режиме
+          (!shouldShowSvgImmediately && !isInstant
+            ? '<div class="image-placeholder-svg absolute inset-0">' +
+                getPlainSvgPlaceholder() +
+              '</div>'
+            : ''
+          ) +
 
           // слой с картинкой
           (shouldShowSvgImmediately
-            ? '' // если картинки нет / упала — останется только SVG
+            ? '' // нет картинки / упала — только SVG
             : (
               '<img src="' + commonImage + '" ' +
-                'class="carousel-img product-image absolute inset-0 object-contain" ' +
+                'class="carousel-img product-image absolute inset-0 object-contain ' +
+                  (isInstant ? '' : 'animatable') +
+                '" ' +
                 'alt="Product" ' +
                 'data-src="' + safeMainImage + '" ' +
-                'onload="handleProductImageSequentialLoad(this, \'' + safeMainImage + '\')" ' +
-                'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" />'
+                (isInstant
+                  ? '' // уже когда‑то показывали — сразу без анимации и SVG
+                  : 'onload="handleProductImageSequentialLoad(this, \'' + safeMainImage + '\', \'' + cacheKey + '\')" ' +
+                    'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" '
+                ) +
+              '/>'
             )
           ) +
 
         '</div>' +
 
-        // внутренняя обёртка карусели (если будут доп. изображения)
+        // внутренняя обёртка карусели (пока пустая)
         '<div class="image-carousel-inner relative w-full h-full" data-carousel="' +
           carouselId + '" data-current="0">' +
         '</div>' +
@@ -372,6 +349,12 @@ function renderShopList(list, showCount) {
 
 
 let isFirstShopRender = true;
+
+function getImageCacheKey(product, url) {
+  // подставь сюда реальную версию/время, если есть в данных
+  const version = product.imageVersion || product.updatedAt || '';
+  return url + '|' + version;
+}
 
 
 function renderShop() {

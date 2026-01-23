@@ -332,10 +332,10 @@ async function fetchAndUpdateProducts(showLoader = false) {
 // ---------- Загрузка изображений с таймаутом ----------
 
 // URL, по которым хотя бы раз успешно загрузилась картинка
-const loadedImageUrls = new Set();
+let loadedImageUrls = new Set();
 
 // URL, по которым была ошибка или таймаут
-const failedImageUrls = new Set();
+let failedImageUrls = new Set();
 
 function getPlainSvgPlaceholder() {
   return (
@@ -621,6 +621,42 @@ function setupInfiniteScroll() {
   scrollObserver.observe(sentinel);
 }
 
+// ---------- localStorage (кэш картинок) ----------
+
+let loadedImageCacheKeys = new Set();
+const IMAGE_CACHE_KEY = 'shopLoadedImages_v1';
+
+function loadPersistentImageCache() {
+  try {
+    const raw = localStorage.getItem(IMAGE_CACHE_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(arr)) {
+      loadedImageCacheKeys = new Set(arr);
+    } else {
+      loadedImageCacheKeys = new Set();
+    }
+  } catch (e) {
+    console.log('[core] loadPersistentImageCache error', e);
+    loadedImageCacheKeys = new Set();
+  }
+}
+
+function savePersistentImageCache() {
+  try {
+    const arr = Array.from(loadedImageCacheKeys || []);
+    localStorage.setItem(IMAGE_CACHE_KEY, JSON.stringify(arr));
+  } catch (e) {
+    console.log('[core] savePersistentImageCache error', e);
+  }
+}
+
+function markImageAsLoaded(cacheKey) {
+  if (!cacheKey) return;
+  if (!loadedImageCacheKeys) loadedImageCacheKeys = new Set();
+  loadedImageCacheKeys.add(cacheKey);
+  savePersistentImageCache();
+}
+
 // ---------- Инициализация ----------
 
 async function initApp() {
@@ -639,6 +675,8 @@ async function initApp() {
     loadAddressesFromStorage();
     loadCartFromStorage();
     logStage('after localStorage', t0);
+
+    loadPersistentImageCache();
 
     await fetchAndUpdateProducts(true);
     logStage('after fetchAndUpdateProducts', t0);

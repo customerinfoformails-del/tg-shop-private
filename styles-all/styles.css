@@ -357,21 +357,6 @@ img,
   box-sizing: border-box;
 }
 
-/* Плавное появление только при первой загрузке карточек (если нужно) */
-.product-image {
-  opacity: 0;
-  transition: opacity 0.25s ease-in;
-}
-
-.product-image.fade-in-once {
-  opacity: 1;
-}
-
-.product-image.no-fade {
-  opacity: 1;
-  transition: none;
-}
-
 /* Для модалки — базовый фон и фото поверх */
 /* Для модалки — базовый фон и фото поверх */
 #modalCarouselInner {
@@ -424,12 +409,41 @@ img,
   opacity: 0;
 }
 
-/* картинка: изначально скрыта, потом плавно появляется за 0.5s */
+/* Базовая картинка — без анимации по умолчанию */
 .product-image {
+  opacity: 1;
+  transition: none;
+}
+
+/* Для анимируемых случаев (svg → fade-out, image → fade-in) */
+.product-image.animatable {
   opacity: 0;
   transition: opacity 0.5s ease;
 }
 
-.fade-in-image {
+.product-image.animatable.fade-in-image {
   opacity: 1;
+}
+
+/* SVG-плейсхолдер */
+.image-placeholder-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.image-placeholder-svg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  border-radius: 12px;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.svg-fade-out {
+  opacity: 0;
 }

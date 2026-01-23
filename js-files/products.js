@@ -289,7 +289,7 @@ function productCard(product) {
       ' data-carousel-id="' + carouselId + '">' +
 
       // контейнер изображения
-      '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden relative bg-gray-100">' +
+      '<div class="w-full h-32 rounded-xl mb-3 image-carousel cursor-pointer overflow-hidden relative">' +
 
         // общий контейнер для SVG и img
         '<div class="image-placeholder-container relative w-full h-full">' +

@@ -261,7 +261,6 @@ function handleProductImageError(img, imageSrc) {
   img.style.display = 'none';
 }
 
-
 function productCard(product) {
   const allVariants = getProductVariants(product.name);
   const variants = allVariants.filter(v => v.inStock);
@@ -304,16 +303,18 @@ function productCard(product) {
         // общий контейнер для SVG и img
         '<div class="image-placeholder-container relative w-full h-full">' +
 
-          // SVG:
-          // 1) если нет картинки → всегда SVG
-          // 2) если картинка есть, но не instant и не упала → SVG для фейда
+          // SVG-слой:
+          // 1) нет URL → всегда SVG
+          // 2) есть URL и:
+          //    - не instant → SVG для фейда
+          //    - ИЛИ уже помечен как failed → SVG как единственный слой
           (
             !hasImage
               ? '<div class="image-placeholder-svg absolute inset-0">' +
                   getPlainSvgPlaceholder() +
                 '</div>'
               : (
-                !isInstant && !isFailed
+                (!isInstant || isFailed)
                   ? '<div class="image-placeholder-svg absolute inset-0">' +
                       getPlainSvgPlaceholder() +
                     '</div>'
@@ -321,7 +322,7 @@ function productCard(product) {
               )
           ) +
 
-          // слой с картинкой (только если есть URL и он не помечен как упавший)
+          // IMG-слой (только если есть URL и он не помечен как упавший)
           (
             !hasImage || isFailed
               ? ''
@@ -333,7 +334,7 @@ function productCard(product) {
                   'alt="Product" ' +
                   'data-src="' + safeMainImage + '" ' +
                   (isInstant
-                    ? '' // уже когда‑то показывали — сразу без анимации и SVG
+                    ? '' // уже когда‑то показывали — сразу без анимации и без SVG поверх
                     : 'onload="handleProductImageSequentialLoad(this, \'' + safeMainImage + '\', \'' + cacheKey + '\')" ' +
                       'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" '
                   ) +

@@ -353,17 +353,19 @@ function renderProductModal(product) {
 // 1) открытие / нет картинок → белый фон → подложка
 // 1) открытие / нет картинок → сразу placeholder с fade-in
 if (!imagesToShow.length) {
-  // сразу рисуем слайд с placeholder, без промежуточного empty
   slidesWrapper.innerHTML = makeSlide('', 'placeholder');
   prevBtn.style.display = 'none';
   nextBtn.style.display = 'none';
 
   requestAnimationFrame(() => {
-    const slide = slidesWrapper.firstElementChild;
-    const layer = slide.querySelector('.modal-photo');
-    if (!layer) return;
-    layer.classList.remove('modal-photo-hidden');
-    layer.classList.add('modal-photo-visible');
+    setTimeout(() => {
+      const slide = slidesWrapper.firstElementChild;
+      if (!slide) return;
+      const layer = slide.querySelector('.modal-photo');
+      if (!layer) return;
+      layer.classList.remove('modal-photo-hidden');
+      layer.classList.add('modal-photo-visible');
+    }, 100); // 100 ms задержка
   });
 } else {
       // есть URL'ы

@@ -441,9 +441,9 @@ function renderProductModal(product) {
   }
 
   if (modalCurrentImageKey === null) {
-    // первое открытие: fade-in 750ms
-    modalCurrentImageKey = nextKey;
-    buildSlides();
+    // первое открытие: fade-in 1500ms
+    buildSlides();              // сначала строим с modalCurrentImageKey === null
+    modalCurrentImageKey = nextKey; // потом запоминаем ключ
   } else if (modalCurrentImageKey !== nextKey) {
     // смена опций: 500ms fade-out старого + 500ms fade-in нового
     const slidesWrapperOld = document.getElementById('modalSlidesWrapper');
@@ -456,13 +456,13 @@ function renderProductModal(product) {
         el.classList.add('modal-photo-hidden'); // fade-out 0.5s (CSS)
       });
     }
-
+  
     modalCurrentImageKey = nextKey;
-
+  
     setTimeout(() => {
       buildSlides(); // внутри fade-in 500ms
     }, SWAP_FADE_MS);
-  }
+  }  
 
   // === ТЕЛО МОДАЛКИ (опции, количество) ===
   const body = document.getElementById('modalBodyDynamic');

@@ -216,6 +216,14 @@ function renderShopHeader(list, showCount) {
 }
 
 function handleProductImageSequentialLoad(img, imageSrc, cacheKey) {
+  // если эта картинка уже помечена как failed, не считаем её успешной
+  if (typeof failedImageUrls !== 'undefined' && failedImageUrls.has(imageSrc)) {
+    // принудительно запустим ошибку, если браузер почему‑то отдал onload
+    handleProductImageError(img, imageSrc);
+    return;
+  }
+
+  // сюда попадаем только при реальном onload
   if (typeof markImageAsLoaded === 'function' && cacheKey) {
     markImageAsLoaded(cacheKey);
   } else if (typeof loadedImageUrls !== 'undefined' && imageSrc) {
@@ -229,7 +237,6 @@ function handleProductImageSequentialLoad(img, imageSrc, cacheKey) {
   }
 
   const svg = container.querySelector('.image-placeholder-svg');
-
   if (!svg) {
     img.classList.add('fade-in-image');
     return;
@@ -246,6 +253,10 @@ function handleProductImageError(img, imageSrc) {
   if (typeof failedImageUrls !== 'undefined') {
     failedImageUrls.add(imageSrc);
   }
+
+  // если был таймер/какие‑то флаги — можно тут же чистить, но главное:
+  // не вызывать markImageAsLoaded и не трогать loadedImageCacheKeys
+
   // можно просто скрыть img — SVG останется
   img.style.display = 'none';
 }

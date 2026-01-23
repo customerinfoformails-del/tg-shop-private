@@ -386,17 +386,16 @@ function renderProductModal(product) {
 
         slide.innerHTML = makeSlideContent(url, 'photo');
         const img = slide.querySelector('img');
-
-        // симметричный fade-in для картинки
+        
         requestAnimationFrame(() => {
           if (!img) return;
           img.classList.remove('modal-photo-visible');
           img.classList.add('modal-photo-hidden');
           requestAnimationFrame(() => {
             img.classList.remove('modal-photo-hidden');
-            img.classList.add('modal-photo-visible'); // fade-in 1s
+            img.classList.add('modal-photo-visible'); // всегда запустит fade-in, кэш не важен
           });
-        });
+        });        
 
         img.addEventListener('error', () => {
           brokenImageMap.set(url, true);

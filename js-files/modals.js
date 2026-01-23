@@ -365,7 +365,7 @@ if (!imagesToShow.length) {
       if (!layer) return;
       layer.classList.remove('modal-photo-hidden');
       layer.classList.add('modal-photo-visible');
-    }, 100); // 100 ms задержка
+    }, 1000); // 100 ms задержка
   });
 } else {
       // есть URL'ы

@@ -320,26 +320,26 @@ function renderProductModal(product) {
         ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
       '</svg>';
 
-    function makeSlideContent(url, mode) {
-      const hasPhoto = mode === 'photo' && url;
-      const showPlaceholder = mode === 'placeholder';
-
-      if (hasPhoto) {
-        return (
-          '<img src="' + url + '"' +
-          ' class="carousel-img w-full h-64 object-contain modal-photo modal-photo-hidden"' +
-          ' alt="Product image" loading="lazy" />'
-        );
-      }
-      if (showPlaceholder) {
-        return (
-          '<div class="modal-photo modal-photo-hidden flex items-center justify-center">' +
-            svgPlaceholder +
-          '</div>'
-        );
-      }
-      return '';
-    }
+      function makeSlideContent(url, mode) {
+        const hasPhoto = mode === 'photo' && url;
+        const showPlaceholder = mode === 'placeholder';
+      
+        if (hasPhoto) {
+          return (
+            '<img src="' + url + '"' +
+            ' class="carousel-img w-full h-64 object-contain modal-photo modal-photo-hidden"' +
+            ' alt="Product image" loading="lazy" />'
+          );
+        }
+        if (showPlaceholder) {
+          return (
+            '<div class="modal-photo modal-photo-hidden flex items-center justify-center">' +
+              svgPlaceholder +
+            '</div>'
+          );
+        }
+        return '';
+      }      
 
     function makeSlide(url, mode) {
       return (
@@ -350,19 +350,20 @@ function renderProductModal(product) {
     }
 
     // 1) открытие / нет картинок → белый фон → подложка
-    if (!imagesToShow.length) {
-      slidesWrapper.innerHTML = makeSlide('', 'empty');
-      prevBtn.style.display = 'none';
-      nextBtn.style.display = 'none';
+// 1) открытие / нет картинок → белый фон → подложка
+if (!imagesToShow.length) {
+  slidesWrapper.innerHTML = makeSlide('', 'empty');
+  prevBtn.style.display = 'none';
+  nextBtn.style.display = 'none';
 
-      requestAnimationFrame(() => {
-        const slide = slidesWrapper.firstElementChild;
-        slide.innerHTML = makeSlideContent('', 'placeholder');
-        const layer = slide.querySelector('.modal-photo');
-        layer.classList.remove('modal-photo-hidden');
-        layer.classList.add('modal-photo-visible');
-      });
-    } else {
+  requestAnimationFrame(() => {
+    const slide = slidesWrapper.firstElementChild;
+    slide.innerHTML = makeSlideContent('', 'placeholder');
+    const layer = slide.querySelector('.modal-photo');
+    layer.classList.remove('modal-photo-hidden');
+    layer.classList.add('modal-photo-visible');
+  });
+} else {
       // есть URL'ы
       slidesWrapper.innerHTML = imagesToShow
         .map(url => makeSlide(url, 'empty'))
@@ -372,7 +373,7 @@ function renderProductModal(product) {
 
       imagesToShow.forEach((url, idx) => {
         const slide = slideEls[idx];
-
+      
         if (!url || brokenImageMap.get(url)) {
           // заранее знаем, что фотки не будет → сразу подложка
           slide.innerHTML = makeSlideContent('', 'placeholder');
@@ -383,16 +384,16 @@ function renderProductModal(product) {
           });
           return;
         }
-
+      
         // нормальная фотка
         slide.innerHTML = makeSlideContent(url, 'photo');
         const img = slide.querySelector('img');
-
+      
         img.addEventListener('load', () => {
           img.classList.remove('modal-photo-hidden');
           img.classList.add('modal-photo-visible');
         });
-
+      
         img.addEventListener('error', () => {
           brokenImageMap.set(url, true);
           slide.innerHTML = makeSlideContent('', 'placeholder');
@@ -402,7 +403,7 @@ function renderProductModal(product) {
             ph.classList.add('modal-photo-visible');
           });
         });
-      });
+      });      
 
       modalCurrentIndex = 0;
 

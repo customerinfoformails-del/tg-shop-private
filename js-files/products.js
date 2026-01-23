@@ -420,9 +420,7 @@ function renderShop() {
           'Показано: <span class="font-semibold">' + showCount + '</span> из ' + list.length +
         '</div>' +
       '</div>' +
-      '<div class="product-grid" id="productGrid">' +
-        renderShopList(list, showCount) +
-      '</div>' +
+      '<div class="product-grid" id="productGrid"></div>' +
       '<div id="scrollSentinel" class="h-10 flex items-center justify-center mt-4">' +
         (showCount < list.length
           ? '<div class="w-full">' +
@@ -434,15 +432,18 @@ function renderShop() {
       '</div>' +
     '</div>';
 
-// после root.innerHTML = ...;
-setupHandlers();
-preloadAllImages(list.slice(0, showCount));
-setupImageCarousels();
-setupInfiniteScroll();
-setupImageTimeoutsForGrid();
+  const grid = document.getElementById('productGrid');
+  if (grid) {
+    // рендерим только первые showCount, остальное подгрузит infinite scroll
+    grid.innerHTML = renderShopList(list, showCount);
+    preloadAllImages(list.slice(0, showCount));
+  }
 
-// сбрасываем флаг после первого нормального рендера
-isFirstShopRender = false;
+  setupHandlers();
+  setupImageCarousels();
+  setupInfiniteScroll();
+
+  isFirstShopRender = false;
 }
 
 
@@ -483,14 +484,41 @@ function setupHandlers() {
         const list = getVisibleProducts();
         const showCount = Math.min(loadedCount, list.length);
         const grid = document.getElementById('productGrid');
+        const sentinelEl = document.getElementById('scrollSentinel');
+
         if (grid) {
           grid.innerHTML = renderShopList(list, showCount);
           preloadAllImages(list.slice(0, showCount));
           setupImageCarousels();
-          setupHandlers();
-          setupInfiniteScroll();
-          setupImageTimeoutsForGrid();
+          // карточки новые → нужно навесить клики по ним
+          document.querySelectorAll('[data-product-name]').forEach(card => {
+            card.onclick = function (e) {
+              if (e.target.closest('button') || e.target.closest('.dot')) {
+                return;
+              }
+              const productName = card.dataset.productName;
+              const product = productsData.find(p => p.name === productName);
+              if (product) {
+                selectedOption = {};
+                selectedQuantity = 1;
+                showModal(product);
+                tg?.HapticFeedback?.impactOccurred('medium');
+              }
+            };
+          });
         }
+
+        if (sentinelEl) {
+          sentinelEl.innerHTML =
+            showCount < list.length
+              ? '<div class="w-full">' +
+                  '<div class="h-4 w-3/4 mx-auto mb-2 rounded placeholder-shimmer"></div>' +
+                  '<div class="h-4 w-1/2 mx-auto rounded placeholder-shimmer"></div>' +
+                '</div>'
+              : '';
+        }
+
+        setupInfiniteScroll();
       }, 500);
     };
 

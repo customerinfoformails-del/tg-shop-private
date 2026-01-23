@@ -562,6 +562,9 @@ function setupInfiniteScroll() {
   const list = getVisibleProducts();
   if (loadedCount >= list.length) return;
 
+  const grid = document.getElementById('productGrid');
+  if (!grid) return;
+
   scrollObserver = new IntersectionObserver(
     entries => {
       const entry = entries[0];
@@ -573,21 +576,41 @@ function setupInfiniteScroll() {
         return;
       }
 
+      const prevCount = loadedCount;
       loadedCount = Math.min(loadedCount + LOAD_STEP, all.length);
 
-      const grid = document.getElementById('productGrid');
-      if (!grid) return;
+      const showCount = loadedCount;
 
-      const showCount = Math.min(loadedCount, all.length);
-
-      // обновляем карточки
-      grid.innerHTML = renderShopList(all, showCount);
-      preloadAllImages(all.slice(0, showCount));
+      // добавляем только новые карточки
+      const newSlice = all.slice(prevCount, showCount);
+      grid.insertAdjacentHTML(
+        'beforeend',
+        newSlice.map(productCard).join('')
+      );
+      preloadAllImages(newSlice);
       setupImageCarousels();
-      setupHandlers();
-      setupImageTimeoutsForGrid();
 
-      // ОБНОВИТЬ СЧЁТЧИК "Показано"
+      // навесить клики по новым карточкам
+      document.querySelectorAll('[data-product-name]').forEach(card => {
+        if (!card.dataset.clickBound) {
+          card.dataset.clickBound = '1';
+          card.onclick = function (e) {
+            if (e.target.closest('button') || e.target.closest('.dot')) {
+              return;
+            }
+            const productName = card.dataset.productName;
+            const product = productsData.find(p => p.name === productName);
+            if (product) {
+              selectedOption = {};
+              selectedQuantity = 1;
+              showModal(product);
+              tg?.HapticFeedback?.impactOccurred('medium');
+            }
+          };
+        }
+      });
+
+      // обновить «Показано»
       const counterSpan = document.querySelector(
         '.mt-3.text-xs.text-gray-500 span.font-semibold'
       );
@@ -595,7 +618,7 @@ function setupInfiniteScroll() {
         counterSpan.textContent = String(showCount);
       }
 
-      // ОБНОВИТЬ ШИММЕР ВНИЗУ
+      // обновить shimmer внизу
       const sentinelEl = document.getElementById('scrollSentinel');
       if (sentinelEl) {
         sentinelEl.innerHTML =
@@ -621,30 +644,51 @@ function setupInfiniteScroll() {
   scrollObserver.observe(sentinel);
 }
 
+
 // ---------- localStorage (кэш картинок) ----------
 
-let loadedImageCacheKeys = new Set();
 const IMAGE_CACHE_KEY = 'shopLoadedImages_v1';
+const IMAGE_CACHE_TTL_MS = 24 * 60 * 60 * 1000 * 7; // 7 дней
+// Ключи картинок: cacheKey => firstSeenAt (timestamp)
+let imageCacheMeta = {}; // { [cacheKey]: number }
+let loadedImageCacheKeys = new Set();
+
 
 function loadPersistentImageCache() {
   try {
     const raw = localStorage.getItem(IMAGE_CACHE_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    if (Array.isArray(arr)) {
-      loadedImageCacheKeys = new Set(arr);
-    } else {
+    if (!raw) {
+      imageCacheMeta = {};
       loadedImageCacheKeys = new Set();
+      return;
     }
+
+    const parsed = JSON.parse(raw);
+    const meta = parsed && typeof parsed === 'object' ? parsed : {};
+    const now = Date.now();
+
+    imageCacheMeta = {};
+    loadedImageCacheKeys = new Set();
+
+    Object.keys(meta).forEach(key => {
+      const ts = meta[key];
+      if (typeof ts !== 'number') return;
+      if (now - ts <= IMAGE_CACHE_TTL_MS) {
+        imageCacheMeta[key] = ts;
+        loadedImageCacheKeys.add(key);
+      }
+      // если старше TTL — просто не копируем, т.е. очищаем
+    });
   } catch (e) {
     console.log('[core] loadPersistentImageCache error', e);
+    imageCacheMeta = {};
     loadedImageCacheKeys = new Set();
   }
 }
 
 function savePersistentImageCache() {
   try {
-    const arr = Array.from(loadedImageCacheKeys || []);
-    localStorage.setItem(IMAGE_CACHE_KEY, JSON.stringify(arr));
+    localStorage.setItem(IMAGE_CACHE_KEY, JSON.stringify(imageCacheMeta));
   } catch (e) {
     console.log('[core] savePersistentImageCache error', e);
   }
@@ -652,7 +696,15 @@ function savePersistentImageCache() {
 
 function markImageAsLoaded(cacheKey) {
   if (!cacheKey) return;
+  const now = Date.now();
+  if (!imageCacheMeta) imageCacheMeta = {};
   if (!loadedImageCacheKeys) loadedImageCacheKeys = new Set();
+
+  // если ключ уже есть, не трогаем firstSeenAt — TTL считается от первого показа
+  if (!imageCacheMeta[cacheKey]) {
+    imageCacheMeta[cacheKey] = now;
+  }
+
   loadedImageCacheKeys.add(cacheKey);
   savePersistentImageCache();
 }

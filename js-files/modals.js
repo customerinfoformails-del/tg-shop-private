@@ -293,7 +293,7 @@ function renderProductModal(product) {
     common: productCommonImage
   });
 
-  const INITIAL_FADE_MS = 1000; // первое открытие
+  const INITIAL_FADE_MS = 750; // первое открытие
   const SWAP_FADE_MS = 500;    // смена опций (совпадает с CSS 0.5s)
 
   function applyFadeIn(el, durationMs) {

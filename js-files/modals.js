@@ -156,7 +156,7 @@ window.addToCartFromModal = async function () {
       if (scB) scB.scrollTop = prevA;
     }
   }
-};  
+};
 
 function renderProductModal(product) {
   currentProduct = product;
@@ -293,7 +293,28 @@ function renderProductModal(product) {
     common: productCommonImage
   });
 
-  const FADE_DURATION_MS = 500; // 1s как в CSS .modal-photo
+  const INITIAL_FADE_MS = 750; // первое открытие
+  const SWAP_FADE_MS = 500;    // смена опций (совпадает с CSS 0.5s)
+
+  function applyFadeIn(el, durationMs) {
+    if (!el) return;
+    const prevTransition = el.style.transition;
+
+    if (durationMs !== SWAP_FADE_MS) {
+      el.style.transition = 'opacity ' + durationMs + 'ms ease';
+    }
+
+    el.classList.remove('modal-photo-visible');
+    el.classList.add('modal-photo-hidden');
+
+    requestAnimationFrame(() => {
+      el.classList.remove('modal-photo-hidden');
+      el.classList.add('modal-photo-visible');
+      setTimeout(() => {
+        el.style.transition = prevTransition;
+      }, durationMs);
+    });
+  }
 
   function buildSlides() {
     carouselInner.innerHTML =
@@ -330,7 +351,6 @@ function renderProductModal(product) {
       }
       return '';
     }
-    
 
     function makeSlide(url, mode) {
       return (
@@ -340,25 +360,18 @@ function renderProductModal(product) {
       );
     }
 
+    const durationForThisBuild =
+      modalCurrentImageKey === null ? INITIAL_FADE_MS : SWAP_FADE_MS;
+
     if (!imagesToShow.length) {
       slidesWrapper.innerHTML = makeSlide('', 'placeholder');
       prevBtn.style.display = 'none';
       nextBtn.style.display = 'none';
 
-      // без искусственной задержки на первое появление
       requestAnimationFrame(() => {
         const slide = slidesWrapper.firstElementChild;
-        if (!slide) return;
-        const layer = slide.querySelector('.modal-photo');
-        if (!layer) return;
-
-        layer.classList.remove('modal-photo-visible');
-        layer.classList.add('modal-photo-hidden');
-
-        requestAnimationFrame(() => {
-          layer.classList.remove('modal-photo-hidden');
-          layer.classList.add('modal-photo-visible'); // fade-in 1s
-        });
+        const layer = slide?.querySelector('.modal-photo');
+        applyFadeIn(layer, durationForThisBuild);
       });
     } else {
       slidesWrapper.innerHTML = imagesToShow
@@ -374,42 +387,24 @@ function renderProductModal(product) {
           slide.innerHTML = makeSlideContent('', 'placeholder');
           const ph = slide.querySelector('.modal-photo');
           requestAnimationFrame(() => {
-            if (!ph) return;
-            ph.classList.remove('modal-photo-visible');
-            ph.classList.add('modal-photo-hidden');
-            requestAnimationFrame(() => {
-              ph.classList.remove('modal-photo-hidden');
-              ph.classList.add('modal-photo-visible'); // fade-in 1s
-            });
+            applyFadeIn(ph, durationForThisBuild);
           });
           return;
         }
 
         slide.innerHTML = makeSlideContent(url, 'photo');
         const img = slide.querySelector('img');
-        
+
         requestAnimationFrame(() => {
-          if (!img) return;
-          img.classList.remove('modal-photo-visible');
-          img.classList.add('modal-photo-hidden');
-          requestAnimationFrame(() => {
-            img.classList.remove('modal-photo-hidden');
-            img.classList.add('modal-photo-visible'); // всегда запустит fade-in, кэш не важен
-          });
-        });        
+          applyFadeIn(img, durationForThisBuild);
+        });
 
         img.addEventListener('error', () => {
           brokenImageMap.set(url, true);
           slide.innerHTML = makeSlideContent('', 'placeholder');
           const ph = slide.querySelector('.modal-photo');
           requestAnimationFrame(() => {
-            if (!ph) return;
-            ph.classList.remove('modal-photo-visible');
-            ph.classList.add('modal-photo-hidden');
-            requestAnimationFrame(() => {
-              ph.classList.remove('modal-photo-hidden');
-              ph.classList.add('modal-photo-visible');
-            });
+            applyFadeIn(ph, durationForThisBuild);
           });
         });
       });
@@ -446,12 +441,11 @@ function renderProductModal(product) {
   }
 
   if (modalCurrentImageKey === null) {
-    // первое открытие: только fade-in 0.5s
+    // первое открытие: fade-in 750ms
     modalCurrentImageKey = nextKey;
-    buildSlides(); // внутри уже есть rAF → hidden → visible с 0.5s
+    buildSlides();
   } else if (modalCurrentImageKey !== nextKey) {
-    // смена опций: 0.5s fade-out старого + 0.5s fade-in нового
-  
+    // смена опций: 500ms fade-out старого + 500ms fade-in нового
     const slidesWrapperOld = document.getElementById('modalSlidesWrapper');
     if (slidesWrapperOld) {
       const activeLayers = slidesWrapperOld.querySelectorAll(
@@ -459,16 +453,16 @@ function renderProductModal(product) {
       );
       activeLayers.forEach(el => {
         el.classList.remove('modal-photo-visible');
-        el.classList.add('modal-photo-hidden'); // fade-out 0.5s
+        el.classList.add('modal-photo-hidden'); // fade-out 0.5s (CSS)
       });
     }
-  
+
     modalCurrentImageKey = nextKey;
-  
+
     setTimeout(() => {
-      buildSlides(); // внутри снова rAF → hidden → visible (fade-in 0.5s)
-    }, FADE_DURATION_MS);
-  }  
+      buildSlides(); // внутри fade-in 500ms
+    }, SWAP_FADE_MS);
+  }
 
   // === ТЕЛО МОДАЛКИ (опции, количество) ===
   const body = document.getElementById('modalBodyDynamic');
@@ -533,7 +527,7 @@ function renderProductModal(product) {
           getVariantCountText(availableVariants.length) +
         '</span>' +
         (complete && availableVariants.length === 1
-          ? '<div class="text-xs mt-1 bg-blue-50 border border-blue-200 rounded-xl p-2">' +
+          ? '<div class="text-xs mt-1 bg-blue-50 border border-blue-200 rounded-xl п-2">' +
             '✅ Выбран: ' +
             availableVariants[0].storage +
             ' | ' +
@@ -653,6 +647,6 @@ window.closeModal = function () {
   selectedOption = {};
   currentProduct = null;
   selectedQuantity = 1;
-  modalCurrentImageKey = null; // ← добавь эту строку
+  modalCurrentImageKey = null;
   tg?.HapticFeedback?.impactOccurred('light');
 };

@@ -296,6 +296,7 @@ function productCard(product) {
 
 // сколько раз за эту сессию уже приходил onload для этого cacheKey
 const sessionCount = cacheKey ? (sessionImageLoads.get(cacheKey) || 0) : 0;
+const inSet = typeof loadedImageCacheKeys !== 'undefined' ? loadedImageCacheKeys.has(cacheKey): null
 
 // instant — только если картинка уже была persist и хотя бы раз загружалась в эту сессию
 const isInstant = isLoadedPersistently && sessionCount > 0;
@@ -312,9 +313,7 @@ const isInstant = isLoadedPersistently && sessionCount > 0;
     hasImage,
     cacheKey,
     cacheSetDefined: typeof loadedImageCacheKeys !== 'undefined',
-    inSet: typeof loadedImageCacheKeys !== 'undefined'
-      ? loadedImageCacheKeys.has(cacheKey)
-      : null,
+    inSet,
     isLoadedPersistently
   });
 
@@ -340,7 +339,7 @@ const isInstant = isLoadedPersistently && sessionCount > 0;
                   getPlainSvgPlaceholder() +
                 '</div>'
               : (
-                (!isInstant || isFailed)
+                ((!isInstant && !inSet) || isFailed)
                   ? '<div class="image-placeholder-svg absolute inset-0">' +
                       getPlainSvgPlaceholder() +
                     '</div>'

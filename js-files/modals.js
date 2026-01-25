@@ -245,12 +245,14 @@ function renderProductModal(product) {
         '<div class="flex-1 overflow-y-auto" id="modalScrollArea">' +
 
 '<div class="modal-image-section">' +
-  '<div class="w-full image-carousel h-64 rounded-xl overflow-hidden relative bg-white" id="modalCarousel">' +
+  '<div class="w-full image-carousel h-64 rounded-xl overflow-hidden bg-white" id="modalCarousel">' +
     '<div class="image-carousel-inner w-full h-full flex items-center justify-center" id="modalCarouselInner"></div>' +
+    '<div class="modal-carousel-footer">' +
+      '<div class="carousel-dots" id="modalDots"></div>' +
+      '<div id="modalImageHint" class="px-3 pt-1 pb-0 text-xs text-gray-500 text-center"></div>' +
+    '</div>' +
     '<button class="nav-btn nav-prev" id="modalPrevBtn" onclick="modalPrev(); event.stopPropagation()">‹</button>' +
     '<button class="nav-btn nav-next" id="modalNextBtn" onclick="modalNext(); event.stopPropagation()">›</button>' +
-    '<div class="carousel-dots" id="modalDots"></div>' +
-    '<div id="modalImageHint" class="px-3 pt-1 pb-2 text-xs text-gray-500 text-center"></div>' +
   '</div>' +
 '</div>' +
 '<div id="modalBodyDynamic" class="px-4 pt-0 pb-4 space-y-4"></div>' +

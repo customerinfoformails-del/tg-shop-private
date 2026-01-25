@@ -2,7 +2,7 @@ body {
   font-family: system-ui, -apple-system;
 }
 
-/* Глобальный дефолтный курсор (делаем обычный чёрный/системный) */
+/* Глобальный дефолтный курсор */
 * {
   cursor: default !important;
 }
@@ -20,7 +20,7 @@ select {
 
 input,
 textarea {
-  caret-color: #111827; /* тёмный, как в light theme */
+  caret-color: #111827;
 }
 
 /* Таббар: фиксированная высота */
@@ -46,7 +46,7 @@ body {
   100% { background-position: -200% 0; }
 }
 
-/* Мини-лоадер в кнопках */
+/* Мини‑лоадер в кнопках */
 .loader-circle {
   width: 16px;
   height: 16px;
@@ -60,7 +60,7 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* Анимация появления (общая) */
+/* Общая анимация появления (если вдруг нужна) */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -92,7 +92,7 @@ img,
   position: relative;
   overflow: hidden;
   border-radius: 12px;
-  background: #ffffff; /* базовый белый фон под фото и placeholder */
+  background: #ffffff;
 }
 
 .image-carousel.h-32 { height: 128px; }
@@ -106,14 +106,21 @@ img,
   align-items: center;
 }
 
+/* Картинка в карусели (catalog) */
 .carousel-img {
   width: 100%;
-  height: 95%;
+  height: 95%;          /* чуть меньше, чтобы не упираться в низ */
   object-fit: contain;
   flex-shrink: 0;
 }
 
 /* Карусель в модалке */
+#modalCarousel {
+  height: 260px;        /* фиксируем высоту блока с фото+dots+hint */
+  position: relative;
+}
+
+/* Внутренняя лента слайдов */
 #modalCarousel .image-carousel-inner {
   display: flex;
   height: 100%;
@@ -122,6 +129,7 @@ img,
   align-items: center;
 }
 
+/* Картинка в модалке */
 #modalCarousel .carousel-img {
   width: 100%;
   height: 95%;
@@ -129,21 +137,22 @@ img,
   flex-shrink: 0;
 }
 
-/* Хинт под картинкой: фиксируем высоту и даём класс для скрытия */
+/* Хинт под картинкой: сидит внизу карусели, не мешает свайпу */
 #modalImageHint {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;              /* поверх нижней части карусели */
+  bottom: 0;
   padding: 4px 12px 8px;
   font-size: 0.75rem;
   text-align: center;
   color: #6b7280;
-  pointer-events: none;   /* чтобы не мешал свайпу */
+  pointer-events: none;
 }
 
+/* Когда хинта нет — просто скрываем текст, высота карусели неизменна */
 .modal-image-hint-hidden {
-  visibility: hidden; /* место остаётся, текст не виден */
+  visibility: hidden;
 }
 
 /* Кнопки навигации карусели */
@@ -374,7 +383,6 @@ img,
   box-sizing: border-box;
 }
 
-/* Для модалки — базовый фон и фото поверх */
 /* Для модалки — базовый фон и фото поверх */
 #modalCarouselInner {
   height: 260px;

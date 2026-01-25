@@ -215,6 +215,9 @@ function renderShopHeader(list, showCount) {
   );
 }
 
+// сколько раз за текущую сессию загружался каждый cacheKey
+let sessionImageLoads = new Map();
+
 function handleProductImageSequentialLoad(img, imageSrc, cacheKey, animation) {
   // если эта картинка уже помечена как failed, не считаем её успешной
   if (typeof failedImageUrls !== 'undefined' && failedImageUrls.has(imageSrc)) {
@@ -228,6 +231,18 @@ function handleProductImageSequentialLoad(img, imageSrc, cacheKey, animation) {
     markImageAsLoaded(cacheKey);
   } else if (typeof loadedImageUrls !== 'undefined' && imageSrc) {
     loadedImageUrls.add(imageSrc);
+  }
+
+  if (cacheKey) {
+    const prev = sessionImageLoads.get(cacheKey) || 0;
+    const current = prev + 1;
+    sessionImageLoads.set(cacheKey, current);
+
+    console.log('[session-load]', {
+      cacheKey,
+      count: current,
+      animation,
+    });
   }
 
   const container = img.closest('.image-placeholder-container');
@@ -287,17 +302,23 @@ function productCard(product) {
   const cacheKey = hasImage ? getImageCacheKey(product, safeMainImage) : '';
 
   const isLoadedPersistently =
-    hasImage &&
-    cacheKey &&
-    typeof loadedImageCacheKeys !== 'undefined' &&
-    loadedImageCacheKeys.has(cacheKey);
+  hasImage &&
+  cacheKey &&
+  typeof loadedImageCacheKeys !== 'undefined' &&
+  loadedImageCacheKeys.has(cacheKey);
+
+// сколько раз за эту сессию уже приходил onload для этого cacheKey
+const sessionCount = cacheKey ? (sessionImageLoads.get(cacheKey) || 0) : 0;
+
+// instant — только если картинка уже была persist и хотя бы раз загружалась в эту сессию
+const isInstant = isLoadedPersistently && sessionCount > 0;
+
 
   const isFailed =
     hasImage &&
     typeof failedImageUrls !== 'undefined' &&
     failedImageUrls.has(safeMainImage);
 
-  const isInstant = isLoadedPersistently;
 
   console.log('[persist-debug]', {
     name: product.name,

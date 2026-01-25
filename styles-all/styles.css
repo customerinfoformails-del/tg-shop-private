@@ -116,7 +116,7 @@ img,
 
 /* Карусель в модалке */
 #modalCarousel {
-  height: 260px;        /* фиксируем высоту блока с фото+dots+hint */
+  height: 290px;        /* фиксируем высоту блока с фото+dots+hint */
   position: relative;
 }
 
@@ -385,7 +385,7 @@ img,
 
 /* Для модалки — базовый фон и фото поверх */
 #modalCarouselInner {
-  height: 260px;
+  height: 290px;
   position: relative;
 }
 

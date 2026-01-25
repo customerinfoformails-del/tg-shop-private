@@ -237,12 +237,6 @@ function handleProductImageSequentialLoad(img, imageSrc, cacheKey, animation) {
     const prev = sessionImageLoads.get(cacheKey) || 0;
     const current = prev + 1;
     sessionImageLoads.set(cacheKey, current);
-
-    console.log('[session-load]', {
-      cacheKey,
-      count: current,
-      animation,
-    });
   }
 
   const container = img.closest('.image-placeholder-container');
@@ -250,13 +244,6 @@ function handleProductImageSequentialLoad(img, imageSrc, cacheKey, animation) {
     img.classList.add('fade-in-image');
     return;
   }
-
-  if (!animation) {
-    img.classList.remove('animatable'); // убираем анимационный класс
-    img.style.opacity = '1';            // напрямую делаем видимой
-    console.log('animation = false');
-    return;
-  }  
 
   const svg = container.querySelector('.image-placeholder-svg');
   if (!svg) {
@@ -368,13 +355,13 @@ const isInstant = isLoadedPersistently && sessionCount > 0;
               : (
                 '<img src="' + commonImage + '" ' +
                   'class="carousel-img product-image absolute inset-0 object-contain ' +
-                    (isInstant ? 'animatable' : 'animatable') +
+                    (isInstant ? '' : 'animatable') +
                   '" ' +
                   'alt="Product" ' +
                   'data-src="' + safeMainImage + '" ' +
                   (isInstant
-                    ? 'onload="handleProductImageSequentialLoad(this, \'' + safeMainImage + '\', \'' + cacheKey + '\', false)" '
-                    : 'onload="handleProductImageSequentialLoad(this, \'' + safeMainImage + '\', \'' + cacheKey + '\', true)" ' +
+                    ? ''
+                    : 'onload="handleProductImageSequentialLoad(this, \'' + safeMainImage + '\', \'' + cacheKey + '\')" ' +
                       'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" '
                   ) +
                 '/>'

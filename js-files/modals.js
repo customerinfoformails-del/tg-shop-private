@@ -244,17 +244,16 @@ function renderProductModal(product) {
 
         '<div class="flex-1 overflow-y-auto" id="modalScrollArea">' +
 
-          '<div class="modal-image-section">' +
-            '<div class="w-full h-64 image-carousel h-64 rounded-xl overflow-hidden relative bg-white" id="modalCarousel">' +
-              '<div class="image-carousel-inner w-full h-full flex items-center justify-center" id="modalCarouselInner"></div>' +
-              '<button class="nav-btn nav-prev" id="modalPrevBtn" onclick="modalPrev(); event.stopPropagation()">‹</button>' +
-              '<button class="nav-btn nav-next" id="modalNextBtn" onclick="modalNext(); event.stopPropagation()">›</button>' +
-              '<div class="carousel-dots" id="modalDots"></div>' +
-            '</div>' +
-            '<div id="modalImageHint" class="px-3 pt-1 pb-2 text-xs text-gray-500 text-center"></div>' +
-          '</div>' +
-
-          '<div id="modalBodyDynamic" class="px-4 pt-0 pb-4 space-y-4"></div>' +
+'<div class="modal-image-section">' +
+  '<div class="w-full image-carousel h-64 rounded-xl overflow-hidden relative bg-white" id="modalCarousel">' +
+    '<div class="image-carousel-inner w-full h-full flex items-center justify-center" id="modalCarouselInner"></div>' +
+    '<button class="nav-btn nav-prev" id="modalPrevBtn" onclick="modalPrev(); event.stopPropagation()">‹</button>' +
+    '<button class="nav-btn nav-next" id="modalNextBtn" onclick="modalNext(); event.stopPropagation()">›</button>' +
+    '<div class="carousel-dots" id="modalDots"></div>' +
+    '<div id="modalImageHint" class="px-3 pt-1 pb-2 text-xs text-gray-500 text-center"></div>' +
+  '</div>' +
+'</div>' +
+'<div id="modalBodyDynamic" class="px-4 pt-0 pb-4 space-y-4"></div>' +
         '</div>' +
 
         '<div class="modal-footer border-t bg-white">' +
@@ -437,9 +436,9 @@ function renderProductModal(product) {
         '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
       imageHintEl.classList.remove('modal-image-hint-hidden');
     } else {
-      imageHintEl.textContent = ''; // можно оставить прошлый текст, если хочешь
+      imageHintEl.textContent = '';
       imageHintEl.classList.add('modal-image-hint-hidden');
-    }
+    }    
   }
 
   if (modalCurrentImageKey === null) {

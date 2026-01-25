@@ -1,37 +1,18 @@
 function renderProfileSkeleton() {
   root.innerHTML =
-    '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto.bg-gray-50">' +
-            // хедер профиля + хинт про заказы
-            '<div class="flex items-start gap-4 relative">' +
-            '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shrink-0">' +
-              '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-                ' d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>' +
-              '</svg>' +
-            '</div>' +
-            '<div class="flex flex-col min-w-0 flex-1">' +
-              '<div class="flex items-start justify-between gap-2">' +
-                '<div class="min-w-0">' +
-                  '<h2 class="text-xl font-bold leading-tight text-gray-900">Профиль</h2>' +
-                  '<p class="text-gray-500 text-sm mt-1 break-all">ID: ' +
-                    escapeHtml(displayId) +
-                  '</p>' +
-                '</div>' +
-                '<div class="shrink-0">' +
-                  '<button type="button"' +
-                    ' class="inline-flex items-center gap-1 text-[11px] text-gray-500 px-2.5 py-1 rounded-full bg-gray-100 border border-dashed border-gray-300">' +
-                    '<span class="text-[11px]">ℹ️</span>' +
-                    '<span class="leading-tight text-left hidden xs:inline">Заказы внизу</span>' +
-                  '</button>' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +    
+    '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto bg-gray-50">' +
+      '<div class="flex items-center gap-4">' +
+        '<div class="w-16 h-16 bg-gray-200 rounded-2xl placeholder-shimmer"></div>' +
+        '<div class="flex-1 space-y-2">' +
+          '<div class="h-4 w-24 bg-gray-200 rounded placeholder-shimmer"></div>' +
+          '<div class="h-3 w-40 bg-gray-200 rounded placeholder-shimmer"></div>' +
+        '</div>' +
+      '</div>' +
       '<div class="space-y-3">' +
         '<div class="h-4 w-32 bg-gray-200 rounded placeholder-shimmer"></div>' +
         '<div class="space-y-2">' +
           Array.from({ length: 3 }).map(() =>
-            '<div class="h-10 w-full bg-white border border-gray-200 rounded-2xl flex items-center px-3">' +
+            '<div class="h-10 w-full bg-white border border-gray-200 rounded-2xl.flex items-center px-3">' +
               '<div class="h-3 w-3/4 bg-gray-200 rounded placeholder-shimmer"></div>' +
             '</div>'
           ).join('') +
@@ -160,22 +141,20 @@ function showProfileTab() {
     : '<p class="text-sm text-gray-500">Сохранённых адресов нет</p>';
 
   root.innerHTML =
-    '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto bg-gray-50">' +
-      // хедер профиля
-      '<div class="flex items-center gap-4">' +
-        '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shrink-0">' +
-          '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-            ' d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>' +
-          '</svg>' +
-        '</div>' +
-        '<div class="flex flex-col min-w-0">' +
-          '<h2 class="text-xl font-bold leading-tight text-gray-900">Профиль</h2>' +
-          '<p class="text-gray-500 text-sm mt-1 break-all">ID: ' +
-            escapeHtml(displayId) +
-          '</p>' +
-        '</div>' +
+  '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto bg-gray-50">' +
+    // хедер профиля
+    '<div class="flex items-center gap-4">' +
+      '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shrink-0">' +
+        '<svg class="w-8 h-8 text-white" ...>' +
+        '</svg>' +
       '</div>' +
+      '<div class="flex flex-col min-w-0">' +
+        '<h2 class="text-xl font-bold leading-tight text-gray-900">Профиль</h2>' +
+        '<p class="text-gray-500 text-sm mt-1 break-all">ID: ' +
+          escapeHtml(displayId) +
+        '</p>' +
+      '</div>' +
+    '</div>' +
 
       // контакты по умолчанию
       '<div class="space-y-3">' +

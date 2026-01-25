@@ -159,7 +159,7 @@ function showProfileTab() {
           '</p>' +
         '</div>' +
         '<button type="button"' +
-          ' class="text-[11px] text-blue-600 underline underline-offset-2 decoration-dotted shrink-0"' +
+          ' class="text-[11px] font-semibold text-blue-600 px-2 py-1 rounded-full bg-blue-50 border border-blue-100 shrink-0"' +
           ' onclick="scrollToOrdersSection()">' +
           'Заказы' +
         '</button>' +
@@ -203,7 +203,7 @@ function showProfileTab() {
       // заказы
             // заказы
             '<div class="space-y-3" id="ordersSection">' +
-            '<h3 class="text-lg font-semibold text-gray-800">Заказы</h3>' +
+            '<h3 class="text-lg font-semibold text-gray-800">Предыдущие заказы</h3>' +
             '<div>' +
               ordersHtml +
             '</div>' +

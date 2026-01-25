@@ -33,9 +33,15 @@ let selectedCategory = 'Все',
   searchTimeout = null,
   currentTab = 'shop';
 
-let cartItems = [];
-let savedAddresses = [];
-let previousOrders = [];
+  let cartItems = [];
+  let savedAddresses = [];
+  let previousOrders = [];
+  
+  let savedProfile = {
+    name: '',
+    phone: '',
+    confirmed: false
+  };  
 
 let paymentType = 'cash';
 let pickupMode = false;
@@ -59,7 +65,8 @@ let cartFormState = {
   contactName: '',
   contactPhone: '',
   savedAddressValue: '',
-  pickupLocationValue: ''
+  pickupLocationValue: '',
+  contactConfirmed: false
 };
 
 const root = document.getElementById('root');
@@ -116,6 +123,36 @@ function loadAddressesFromStorage() {
     savedAddresses = [];
   }
   console.log('[core] savedAddresses loaded', savedAddresses);
+}
+
+function saveProfileToStorage() {
+  try {
+    localStorage.setItem('profile', JSON.stringify(savedProfile)); // [web:16][web:20][web:22]
+  } catch (e) {
+    console.log('[core] saveProfileToStorage error', e);
+  }
+}
+
+function loadProfileFromStorage() {
+  try {
+    const raw = localStorage.getItem('profile'); // [web:16][web:22][web:29]
+    if (!raw) {
+      savedProfile = { name: '', phone: '', confirmed: false };
+      return;
+    }
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') {
+      savedProfile = {
+        name: parsed.name || '',
+        phone: parsed.phone || '',
+        confirmed: !!parsed.confirmed
+      };
+    }
+  } catch (e) {
+    console.log('[core] loadProfileFromStorage.error', e);
+    savedProfile = { name: '', phone: '', confirmed: false };
+  }
+  console.log('[core] savedProfile loaded', savedProfile);
 }
 
 // заказы всегда только с сервера
@@ -725,6 +762,7 @@ async function initApp() {
 
     loadOrdersFromStorage(); // просто previousOrders = []
     loadAddressesFromStorage();
+    loadProfileFromStorage();
     loadCartFromStorage();
     logStage('after localStorage', t0);
 

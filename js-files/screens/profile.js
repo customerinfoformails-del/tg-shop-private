@@ -142,40 +142,80 @@ function showProfileTab() {
 
   root.innerHTML =
     '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto bg-gray-50">' +
-    '<div class="flex items-center gap-4">' +
-    '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shrink-0">' +
-    '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-    ' d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>' +
-    '</svg>' +
-    '</div>' +
-    '<div class="flex flex-col min-w-0">' +
-    '<h2 class="text-xl font-bold leading-tight text-gray-900">Профиль</h2>' +
-    '<p class="text-gray-500 text-sm mt-1 break-all">ID: ' +
-    escapeHtml(displayId) +
-    '</p>' +
-    '</div>' +
-    '</div>' +
-    '<div class="space-y-3">' +
-    '<h3 class="text-lg font-semibold text-gray-800">Сохранённые адреса</h3>' +
-    '<div id="addressesList">' +
-    addressesHtml +
-    '</div>' +
-    '<div class="space-y-2">' +
-    '<textarea id="newAddress" class="w-full bg-white border border-gray-300 rounded-2xl px-3 py-2 text-sm" rows="2" placeholder="Новый адрес..."></textarea>' +
-    '<button class="w-full bg-gray-900 hover:bg-black text-white font-bold py-2.5 px-4 rounded-2xl shadow-lg transition-all text-sm"' +
-    ' onclick="addAddress()">' +
-    'Сохранить адрес' +
-    '</button>' +
-    '</div>' +
-    '</div>' +
-    '<div class="space-y-3">' +
-    '<h3 class="text-lg font-semibold text-gray-800">Предыдущие заказы</h3>' +
-    '<div>' +
-    ordersHtml +
-    '</div>' +
-    '</div>' +
+      '<div class="flex items-center gap-4">' +
+        '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shrink-0">' +
+          '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+            ' d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>' +
+          '</svg>' +
+        '</div>' +
+        '<div class="flex flex-col min-w-0">' +
+          '<h2 class="text-xl font-bold leading-tight text-gray-900">Профиль</h2>' +
+          '<p class="text-gray-500 text-sm mt-1 break-all">ID: ' +
+            escapeHtml(displayId) +
+          '</p>' +
+        '</div>' +
+      '</div>' +
+
+      // НОВЫЙ БЛОК КОНТАКТОВ
+      '<div class="space-y-3">' +
+        '<h3 class="text-lg font-semibold text-gray-800">Контакты по умолчанию</h3>' +
+        '<div class="space-y-2 bg-white border border-gray-200 rounded-2xl p-3">' +
+          '<input id="profileName" type="text"' +
+            ' class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
+            ' placeholder="Имя для заказа">' +
+          '<input id="profilePhone" type="tel"' +
+            ' class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
+            ' placeholder="Телефон для связи">' +
+          '<label class="flex items-center gap-2 text-xs text-gray-600">' +
+            '<input id="profileConfirmed" type="checkbox">' +
+            '<span>Имя и телефон указаны верно, можно использовать по умолчанию</span>' +
+          '</label>' +
+          '<button class="w-full mt-2 bg-gray-900 hover:bg-black text-white font-bold py-2.5 px-4 rounded-2xl shadow-lg transition-all text-sm"' +
+            ' onclick="saveProfileContacts()">' +
+            'Сохранить контакты' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="space-y-3">' +
+        '<h3 class="text-lg font-semibold text-gray-800">Сохранённые адреса</h3>' +
+        '<div id="addressesList">' +
+          addressesHtml +
+        '</div>' +
+        '<div class="space-y-2">' +
+          '<textarea id="newAddress" class="w-full bg-white border border-gray-300 rounded-2xl px-3 py-2 text-sm" rows="2" placeholder="Новый адрес..."></textarea>' +
+          '<button class="w-full bg-gray-900 hover:bg-black text-white font-bold py-2.5 px-4 rounded-2xl.shadow-lg transition-all text-sm"' +
+            ' onclick="addAddress()">' +
+            'Сохранить адрес' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="space-y-3">' +
+        '<h3 class="text-lg font-semibold text-gray-800">Предыдущие заказы</h3>' +
+        '<div>' +
+          ordersHtml +
+        '</div>' +
+      '</div>' +
     '</div>';
+
+  // заполнение полей контактов из savedProfile
+  const profileNameEl = document.getElementById('profileName');
+  const profilePhoneEl = document.getElementById('profilePhone');
+  const profileConfirmedEl = document.getElementById('profileConfirmed');
+
+  if (profileNameEl) profileNameEl.value = savedProfile.name || '';
+  if (profilePhoneEl) profilePhoneEl.value = savedProfile.phone || '';
+  if (profileConfirmedEl) profileConfirmedEl.checked = !!savedProfile.confirmed;
+
+  if (profileNameEl) {
+    profileNameEl.addEventListener('focus', hideTabBar);
+    profileNameEl.addEventListener('blur', showTabBar);
+  }
+  if (profilePhoneEl) {
+    profilePhoneEl.addEventListener('focus', hideTabBar);
+    profilePhoneEl.addEventListener('blur', showTabBar);
+  }
 
   const newAddressEl = document.getElementById('newAddress');
   if (newAddressEl) {
@@ -206,4 +246,24 @@ window.removeAddress = function (index) {
   if (currentTab === 'profile') {
     showProfileTab();
   }
+};
+
+window.saveProfileContacts = function () {
+  const nameEl = document.getElementById('profileName');
+  const phoneEl = document.getElementById('profilePhone');
+  const confirmedEl = document.getElementById('profileConfirmed');
+  if (!nameEl || !phoneEl || !confirmedEl) return;
+
+  const name = nameEl.value.trim();
+  const phone = phoneEl.value.trim();
+  const confirmed = confirmedEl.checked;
+
+  if (!name || !phone) {
+    tg?.showAlert?.('Укажите имя и телефон');
+    return;
+  }
+
+  savedProfile = { name, phone, confirmed };
+  saveProfileToStorage();
+  tg?.showAlert?.('Контакты сохранены');
 };

@@ -224,6 +224,7 @@ function saveCartFormState() {
   const contactPhoneEl = document.getElementById('contactPhone');
   const savedAddress = document.getElementById('savedAddress');
   const pickupLocationEl = document.getElementById('pickupLocation');
+  const contactConfirmedEl = document.getElementById('contactConfirmed');
 
   cartFormState.addressText = deliveryAddress ? deliveryAddress.value : cartFormState.addressText;
   cartFormState.comment = deliveryComment ? deliveryComment.value : cartFormState.comment;
@@ -235,6 +236,9 @@ function saveCartFormState() {
   cartFormState.pickupLocationValue = pickupLocationEl
     ? pickupLocationEl.value
     : cartFormState.pickupLocationValue;
+  cartFormState.contactConfirmed = contactConfirmedEl
+    ? contactConfirmedEl.checked
+    : cartFormState.contactConfirmed;
 
   console.log('[cart] saveCartFormState', cartFormState);
 }
@@ -246,6 +250,7 @@ function restoreCartFormState() {
   const contactPhoneEl = document.getElementById('contactPhone');
   const savedAddress = document.getElementById('savedAddress');
   const pickupLocationEl = document.getElementById('pickupLocation');
+  const contactConfirmedEl = document.getElementById('contactConfirmed');
 
   if (deliveryAddress && cartFormState.addressText) {
     deliveryAddress.value = cartFormState.addressText;
@@ -264,6 +269,9 @@ function restoreCartFormState() {
   }
   if (pickupLocationEl && cartFormState.pickupLocationValue) {
     pickupLocationEl.value = cartFormState.pickupLocationValue;
+  }
+  if (contactConfirmedEl) {
+    contactConfirmedEl.checked = !!cartFormState.contactConfirmed;
   }
 
   console.log('[cart] restoreCartFormState applied');
@@ -486,14 +494,18 @@ function showCartTab() {
               '</div>') +
         '</div>' +
         '<div class="space-y-2">' +
-          '<label class="text-sm font-semibold text-gray-700 block">Контактные данные (необязательно)</label>' +
-          '<input id="contactName" type="text"' +
-            ' class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
-            ' placeholder="Имя">' +
-          '<input id="contactPhone" type="tel"' +
-            ' class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
-            ' placeholder="Телефон">' +
-        '</div>' +
+        '<label class="text-sm font-semibold text-gray-700 block">Контактные данные</label>' +
+        '<input id="contactName" type="text"' +
+          ' class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
+          ' placeholder="Имя">' +
+        '<input id="contactPhone" type="tel"' +
+          ' class="w-full.bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
+          ' placeholder="Телефон">' +
+        '<label class="flex items-center gap-2 text-xs text-gray-600">' +
+          '<input id="contactConfirmed" type="checkbox">' +
+          '<span>Имя и телефон указаны верно</span>' +
+        '</label>' +
+      '</div>' +
         '<div class="space-y-1 text-sm text-gray-700">' +
           '<div class="flex items-center justify-between">' +
             '<span>Сумма товаров</span>' +
@@ -536,9 +548,24 @@ function showCartTab() {
       '</div>' +
     '</div>';
 
-  restoreCartFormState();
-
-  ['deliveryAddress', 'deliveryComment', 'contactName', 'contactPhone'].forEach(id => {
+    const contactNameEl = document.getElementById('contactName');
+    const contactPhoneEl = document.getElementById('contactPhone');
+    const contactConfirmedEl = document.getElementById('contactConfirmed');
+  
+    // если в памяти формы пусто — подставляем профиль
+    if (!cartFormState.contactName && savedProfile.name && contactNameEl) {
+      contactNameEl.value = savedProfile.name;
+    }
+    if (!cartFormState.contactPhone && savedProfile.phone && contactPhoneEl) {
+      contactPhoneEl.value = savedProfile.phone;
+    }
+    if (!cartFormState.contactConfirmed && savedProfile.confirmed && contactConfirmedEl) {
+      contactConfirmedEl.checked = true;
+    }
+  
+    restoreCartFormState();
+  
+    ['deliveryAddress', 'deliveryComment', 'contactName', 'contactPhone'].forEach(id => {  
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('focus', hideTabBar);
@@ -606,6 +633,18 @@ window.placeOrder = async function () {
   const contactPhoneEl = document.getElementById('contactPhone');
   const contactName = contactNameEl ? contactNameEl.value.trim() || '' : '';
   const contactPhone = contactPhoneEl ? contactPhoneEl.value.trim() || '' : '';
+
+  const contactConfirmedEl = document.getElementById('contactConfirmed');
+  const contactConfirmed = contactConfirmedEl ? contactConfirmedEl.checked : false;
+
+  if (!contactName || !contactPhone) {
+    tg?.showAlert?.('Укажите имя и телефон для связи');
+    return;
+  }
+  if (!contactConfirmed) {
+    tg?.showAlert?.('Подтвердите, что имя и телефон указаны верно');
+    return;
+  }
 
   console.log('[placeOrder] address=', address, 'pickupMode=', pickupMode);
   console.log('[placeOrder] comment=', deliveryComment, 'contact=', contactName, contactPhone);
@@ -693,6 +732,19 @@ window.placeOrder = async function () {
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const commission = paymentType === 'card' ? Math.round(subtotal * 0.15) : 0;
     const total = subtotal + commission;
+
+        // сохраняем контакты в состояние и профиль
+        cartFormState.contactName = contactName;
+        cartFormState.contactPhone = contactPhone;
+        cartFormState.contactConfirmed = contactConfirmed;
+    
+        savedProfile = {
+          name: contactName,
+          phone: contactPhone,
+          confirmed: contactConfirmed
+        };
+        saveProfileToStorage();
+    
 
     const order = {
       id: Date.now(),

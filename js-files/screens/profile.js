@@ -160,8 +160,7 @@ function showProfileTab() {
             '</div>' +
             '<button type="button"' +
   ' class="inline-flex items-center gap-1 text-[11px] text-gray-500 px-2.5 py-1 rounded-full bg-gray-100 border border-dashed border-gray-300 shrink-0">' +
-  '<span class="text-[11px] font-semibold">i</span>' +
-  '<span class="leading-tight text-left">Заказы ниже</span>' +
+  '<span class="leading-tight text-left">История заказов ниже</span>' +
 '</button>' +
           '</div>' +
         '</div>' +

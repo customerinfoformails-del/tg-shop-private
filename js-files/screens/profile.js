@@ -143,7 +143,7 @@ function showProfileTab() {
   root.innerHTML =
     '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto bg-gray-50">' +
       // хедер профиля
-      '<div class="flex.items-center gap-4">' +
+      '<div class="flex items-center gap-4">' +
         '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shrink-0">' +
           '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +

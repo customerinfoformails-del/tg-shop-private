@@ -329,7 +329,7 @@ function productCard(product) {
               : (
                 '<img src="' + commonImage + '" ' +
                   'class="carousel-img product-image absolute inset-0 object-contain ' +
-                    (isInstant ? '' : 'animatable') +
+                    (isInstant ? 'animatable' : 'animatable') +
                   '" ' +
                   'alt="Product" ' +
                   'data-src="' + safeMainImage + '" ' +

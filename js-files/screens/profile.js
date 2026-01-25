@@ -203,7 +203,7 @@ function showProfileTab() {
       // заказы
             // заказы
             '<div class="space-y-3" id="ordersSection">' +
-            '<h3 class="text-lg font-semibold text-gray-800">Предыдущие заказы</h3>' +
+            '<h3 class="text-lg font-semibold text-gray-800">История заказов</h3>' +
             '<div>' +
               ordersHtml +
             '</div>' +
@@ -224,11 +224,18 @@ function showProfileTab() {
   if (profilePhoneEl) {
     profilePhoneEl.addEventListener('focus', () => {
       hideTabBar();
+      // если пусто или только пробелы — подставляем +7
       if (!profilePhoneEl.value.trim()) {
         profilePhoneEl.value = '+7 ';
       }
     });
-    profilePhoneEl.addEventListener('blur', showTabBar);
+
+    profilePhoneEl.addEventListener('blur', () => {
+      showTabBar();
+      // НЕ трогаем значение, даже если там только "+7 "
+      // если хочешь, можно при блюре чистить "голый" +7, но тогда не подставляй повторно
+      // if (profilePhoneEl.value.trim() === '+7') profilePhoneEl.value = '';
+    });
   }
 
   const newAddressEl = document.getElementById('newAddress');

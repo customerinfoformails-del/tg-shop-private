@@ -299,6 +299,17 @@ function productCard(product) {
 
   const isInstant = isLoadedPersistently;
 
+  console.log('[persist-debug]', {
+    name: product.name,
+    hasImage,
+    cacheKey,
+    cacheSetDefined: typeof loadedImageCacheKeys !== 'undefined',
+    inSet: typeof loadedImageCacheKeys !== 'undefined'
+      ? loadedImageCacheKeys.has(cacheKey)
+      : null,
+    isLoadedPersistently
+  });
+
   return (
     '<div class="bg-white rounded-2xl p-4 shadow-lg group cursor-pointer relative"' +
       ' data-product-name="' + escapeHtml(product.name) + '"' +

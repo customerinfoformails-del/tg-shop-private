@@ -503,7 +503,7 @@ function showCartTab() {
             ' placeholder="Телефон для связи">' +
           '<label class="flex items-center gap-2 text-xs text-gray-600">' +
             '<input id="contactConfirmed" type="checkbox">' +
-            '<span>Подтверждение правильности введенных данных</span>' +
+            '<span>Подтверждаю правильность введенных данных</span>' +
           '</label>' +
         '</div>' +
         '<div class="space-y-1 text-sm text-gray-700">' +
@@ -653,7 +653,7 @@ window.placeOrder = async function () {
     return;
   }
   if (!contactConfirmed) {
-    tg?.showAlert?.('Подтвердите, что имя и телефон указаны верно');
+    tg?.showAlert?.('Подтвердите правильность введенных данных');
     return;
   }
 

@@ -66,7 +66,8 @@ let cartFormState = {
   contactPhone: '',
   savedAddressValue: '',
   pickupLocationValue: '',
-  contactConfirmed: false
+  contactConfirmed: false,
+  contactEditedManually: false // новый флаг
 };
 
 const root = document.getElementById('root');

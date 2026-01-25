@@ -12,7 +12,7 @@ function renderProfileSkeleton() {
         '<div class="h-4 w-32 bg-gray-200 rounded placeholder-shimmer"></div>' +
         '<div class="space-y-2">' +
           Array.from({ length: 3 }).map(() =>
-            '<div class="h-10 w-full bg-white border border-gray-200 rounded-2xl.flex items-center px-3">' +
+            '<div class="h-10 w-full bg-white border border-gray-200 rounded-2xl flex items-center px-3">' +
               '<div class="h-3 w-3/4 bg-gray-200 rounded placeholder-shimmer"></div>' +
             '</div>'
           ).join('') +
@@ -24,7 +24,7 @@ function renderProfileSkeleton() {
           '<div class="bg-white border border-gray-200 rounded-2xl p-3 space-y-2">' +
             '<div class="h-3 w-1/2 bg-gray-200 rounded placeholder-shimmer"></div>' +
             '<div class="h-3 w-1/3 bg-gray-200 rounded placeholder-shimmer"></div>' +
-            '<div class="h-3 w-1/4 bg-gray-200 rounded placeholder-shimmer"></div>' +
+            '<div class="h-3 w-1/4 bg-gray-200 rounded.placeholder-shimmer"></div>' +
           '</div>'
         ).join('') +
       '</div>' +
@@ -140,11 +140,11 @@ function showProfileTab() {
         .join('')
     : '<p class="text-sm text-gray-500">Сохранённых адресов нет</p>';
 
-    root.innerHTML =
+  root.innerHTML =
     '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto bg-gray-50">' +
       // хедер профиля + хинт про заказы
       '<div class="flex items-start gap-4">' +
-        '<div class="w-16 h-16 bg-gradient-to-r from-blue-500.to-purple-600 rounded-2xl flex items-center justify-center shrink-0">' +
+        '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shrink-0">' +
           '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
             ' d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>' +
@@ -161,7 +161,7 @@ function showProfileTab() {
             '<button type="button"' +
               ' class="inline-flex items-center gap-1 text-[11px] text-gray-500 px-2.5 py-1 rounded-full bg-gray-100 border border-dashed border-gray-300 shrink-0">' +
               '<span class="text-[11px]">ℹ️</span>' +
-              '<span class="leading-tight text-left hidden sm:inline">Заказы внизу</span>' +
+              '<span class="leading-tight text-left hidden sm:inline">Заказы ниже</span>' +
             '</button>' +
           '</div>' +
         '</div>' +
@@ -275,6 +275,6 @@ window.saveProfileContacts = function () {
   }
 
   savedProfile = { name, phone, confirmed: true };
-  saveProfileToStorage(); // [web:25][web:27][web:84]
+  saveProfileToStorage();
   tg?.showAlert?.('Контакты сохранены');
 };

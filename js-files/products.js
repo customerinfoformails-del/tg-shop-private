@@ -215,7 +215,7 @@ function renderShopHeader(list, showCount) {
   );
 }
 
-function handleProductImageSequentialLoad(img, imageSrc, cacheKey) {
+function handleProductImageSequentialLoad(img, imageSrc, cacheKey, animation) {
   // если эта картинка уже помечена как failed, не считаем её успешной
   if (typeof failedImageUrls !== 'undefined' && failedImageUrls.has(imageSrc)) {
     // принудительно запустим ошибку, если браузер почему‑то отдал onload
@@ -232,6 +232,11 @@ function handleProductImageSequentialLoad(img, imageSrc, cacheKey) {
 
   const container = img.closest('.image-placeholder-container');
   if (!container) {
+    img.classList.add('fade-in-image');
+    return;
+  }
+
+  if (animation)
     img.classList.add('fade-in-image');
     return;
   }
@@ -334,8 +339,8 @@ function productCard(product) {
                   'alt="Product" ' +
                   'data-src="' + safeMainImage + '" ' +
                   (isInstant
-                    ? '' // уже когда‑то показывали — сразу без анимации и без SVG поверх
-                    : 'onload="handleProductImageSequentialLoad(this, \'' + safeMainImage + '\', \'' + cacheKey + '\')" ' +
+                    ? 'onload="handleProductImageSequentialLoad(this, \'' + safeMainImage + '\', \'' + cacheKey + '\', false)" '
+                    : 'onload="handleProductImageSequentialLoad(this, \'' + safeMainImage + '\', \'' + cacheKey + '\', true)" ' +
                       'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" '
                   ) +
                 '/>'

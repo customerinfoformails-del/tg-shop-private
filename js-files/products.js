@@ -296,11 +296,9 @@ function productCard(product) {
 
 // сколько раз за эту сессию уже приходил onload для этого cacheKey
 const sessionCount = cacheKey ? (sessionImageLoads.get(cacheKey) || 0) : 0;
-const inSet = typeof loadedImageCacheKeys !== 'undefined' ? loadedImageCacheKeys.has(cacheKey): null
 
 // instant — только если картинка уже была persist и хотя бы раз загружалась в эту сессию
 const isInstant = isLoadedPersistently && sessionCount > 0;
-
 
   const isFailed =
     hasImage &&
@@ -313,7 +311,7 @@ const isInstant = isLoadedPersistently && sessionCount > 0;
     hasImage,
     cacheKey,
     cacheSetDefined: typeof loadedImageCacheKeys !== 'undefined',
-    inSet,
+    inSet: typeof loadedImageCacheKeys !== 'undefined' ? loadedImageCacheKeys.has(cacheKey): null,
     isLoadedPersistently
   });
 
@@ -339,7 +337,7 @@ const isInstant = isLoadedPersistently && sessionCount > 0;
                   getPlainSvgPlaceholder() +
                 '</div>'
               : (
-                ((!isInstant && !inSet) || isFailed)
+                ((!isInstant && !isLoadedPersistently) || isFailed)
                   ? '<div class="image-placeholder-svg absolute inset-0">' +
                       getPlainSvgPlaceholder() +
                     '</div>'
@@ -358,11 +356,13 @@ const isInstant = isLoadedPersistently && sessionCount > 0;
                   '" ' +
                   'alt="Product" ' +
                   'data-src="' + safeMainImage + '" ' +
+                  // onload только когда НЕ instant (нужна анимация)
                   (isInstant
                     ? ''
-                    : 'onload="handleProductImageSequentialLoad(this, \'' + safeMainImage + '\', \'' + cacheKey + '\')" ' +
-                      'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" '
+                    : 'onload="handleProductImageSequentialLoad(this, \'' + safeMainImage + '\', \'' + cacheKey + '\')" '
                   ) +
+                  // onerror всегда, чтобы вернуть SVG даже для битого кеша
+                  'onerror="handleProductImageError(this, \'' + safeMainImage + '\')" ' +
                 '/>'
               )
           ) +

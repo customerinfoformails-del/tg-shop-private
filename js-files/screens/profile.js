@@ -152,23 +152,24 @@ function showProfileTab() {
         '</div>' +
         '<div class="flex flex-col min-w-0 flex-1">' +
           '<div class="flex items-start justify-between gap-2">' +
-            '<div class="min-w-0">' +
-              '<h2 class="text-xl font-bold leading-tight text-gray-900">Профиль</h2>' +
-              '<p class="text-gray-500 text-sm mt-1 break-all">ID: ' +
-                escapeHtml(displayId) +
-              '</p>' +
-            '</div>' +
-            '<button type="button"' +
-  ' class="inline-flex items-center gap-1 text-[11px] text-gray-500 px-2.5 py-1 rounded-full bg-gray-100 border border-dashed border-gray-300 shrink-0">' +
-  '<span class="leading-tight text-left">История заказов ниже</span>' +
-'</button>' +
+          '<div class="min-w-0">' +
+          '<h2 class="text-xl font-bold leading-tight text-gray-900">Профиль</h2>' +
+          '<p class="text-gray-500 text-sm mt-1 break-all">ID: ' +
+            escapeHtml(displayId) +
+          '</p>' +
+        '</div>' +
+        '<button type="button"' +
+          ' class="text-[11px] text-blue-600 underline underline-offset-2 decoration-dotted shrink-0"' +
+          ' onclick="scrollToOrdersSection()">' +
+          'Заказы' +
+        '</button>' +
           '</div>' +
         '</div>' +
       '</div>' +
 
       // контакты по умолчанию
       '<div class="space-y-3">' +
-        '<h3 class="text-lg font-semibold text-gray-800">Контакты по умолчанию</h3>' +
+        '<h3 class="text-lg font-semibold text-gray-800">Контактые данные</h3>' +
         '<div class="space-y-2 bg-white border border-gray-200 rounded-2xl p-3">' +
           '<input id="profileName" type="text"' +
             ' class="w-full bg-white border border-gray-300 rounded-2xl px-3 py-2 text-sm focus:outline-none"' +
@@ -200,12 +201,13 @@ function showProfileTab() {
       '</div>' +
 
       // заказы
-      '<div class="space-y-3">' +
-        '<h3 class="text-lg font-semibold text-gray-800">Предыдущие заказы</h3>' +
-        '<div>' +
-          ordersHtml +
-        '</div>' +
-      '</div>' +
+            // заказы
+            '<div class="space-y-3" id="ordersSection">' +
+            '<h3 class="text-lg font-semibold text-gray-800">Заказы</h3>' +
+            '<div>' +
+              ordersHtml +
+            '</div>' +
+          '</div>' +    
     '</div>';
 
   // заполнение полей контактов из savedProfile
@@ -276,4 +278,14 @@ window.saveProfileContacts = function () {
   savedProfile = { name, phone, confirmed: true };
   saveProfileToStorage();
   tg?.showAlert?.('Контакты сохранены');
+};
+
+window.scrollToOrdersSection = function () {
+  try {
+    const section = document.getElementById('ordersSection');
+    if (!section) return;
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) {
+    console.error('[profile] scrollToOrdersSection error', e);
+  }
 };

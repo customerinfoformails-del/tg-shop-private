@@ -236,7 +236,7 @@ function handleProductImageSequentialLoad(img, imageSrc, cacheKey, animation) {
     return;
   }
 
-  if (animation)
+  if (animation) {
     img.classList.add('fade-in-image');
     return;
   }

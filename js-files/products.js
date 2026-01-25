@@ -237,10 +237,11 @@ function handleProductImageSequentialLoad(img, imageSrc, cacheKey, animation) {
   }
 
   if (!animation) {
-    img.classList.add('fade-in-image');
-    console.log("animation = false")
+    img.classList.remove('animatable'); // убираем анимационный класс
+    img.style.opacity = '1';            // напрямую делаем видимой
+    console.log('animation = false');
     return;
-  }
+  }  
 
   const svg = container.querySelector('.image-placeholder-svg');
   if (!svg) {

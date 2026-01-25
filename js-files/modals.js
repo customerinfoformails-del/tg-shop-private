@@ -435,8 +435,10 @@ function renderProductModal(product) {
     if (!complete || !filteredImages.length) {
       imageHintEl.textContent =
         '❓ Чтобы посмотреть реальные фото товара, выберите все параметры устройства.';
+      imageHintEl.classList.remove('modal-image-hint-hidden');
     } else {
-      imageHintEl.textContent = '';
+      imageHintEl.textContent = ''; // можно оставить прошлый текст, если хочешь
+      imageHintEl.classList.add('modal-image-hint-hidden');
     }
   }
 

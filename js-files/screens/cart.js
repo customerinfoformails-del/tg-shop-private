@@ -503,7 +503,7 @@ function showCartTab() {
             ' placeholder="Телефон для связи">' +
           '<label class="flex items-center gap-2 text-xs text-gray-600">' +
             '<input id="contactConfirmed" type="checkbox">' +
-            '<span>Имя и телефон указаны верно</span>' +
+            '<span>Данные для связи указаны верно</span>' +
           '</label>' +
         '</div>' +
         '<div class="space-y-1 text-sm text-gray-700">' +

@@ -160,7 +160,7 @@ img,
 /* Индикаторы карусели */
 .carousel-dots {
   position: absolute;
-  bottom: -10px; /* или 2px / 0px, как нравится */
+  bottom: 0px; /* или 2px / 0px, как нравится */
   left: 50%;
   transform: translateX(-50%);
   display: flex;

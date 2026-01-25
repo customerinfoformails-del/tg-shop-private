@@ -1,6 +1,6 @@
 function renderProfileSkeleton() {
   root.innerHTML =
-    '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto bg-gray-50">' +
+    '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto.bg-gray-50">' +
       '<div class="flex items-center gap-4">' +
         '<div class="w-16 h-16 bg-gray-200 rounded-2xl placeholder-shimmer"></div>' +
         '<div class="flex-1 space-y-2">' +
@@ -38,7 +38,7 @@ window.toggleOrderDetails = function (index) {
 };
 
 function showProfileTab() {
-  console.log("isOrdersLoading on renderProfile", isOrdersLoading);
+  console.log('isOrdersLoading on renderProfile', isOrdersLoading);
   if (isOrdersLoading) {
     renderProfileSkeleton();
     return;
@@ -143,7 +143,7 @@ function showProfileTab() {
   root.innerHTML =
     '<div class="p-6 space-y-6 pb-[65px] max-w-md mx-auto bg-gray-50">' +
       // хедер профиля
-      '<div class="flex items-center gap-4">' +
+      '<div class="flex.items-center gap-4">' +
         '<div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shrink-0">' +
           '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
@@ -168,10 +168,6 @@ function showProfileTab() {
           '<input id="profilePhone" type="tel"' +
             ' class="w-full bg-white border border-gray-300 rounded-2xl px-3 py-2 text-sm focus:outline-none mt-2"' +
             ' placeholder="Телефон для связи">' +
-          '<label class="flex items-center gap-2 text-xs text-gray-600 mt-1">' +
-            '<input id="profileConfirmed" type="checkbox" class="shrink-0">' +
-            '<span class="leading-snug">Имя и телефон указаны верно, можно использовать по умолчанию</span>' +
-          '</label>' +
           '<button class="w-full mt-3 bg-gray-900 hover:bg-black text-white font-semibold py-2.5 px-4 rounded-2xl shadow-lg transition-all text-sm"' +
             ' onclick="saveProfileContacts()">' +
             'Сохранить контакты' +
@@ -207,18 +203,21 @@ function showProfileTab() {
   // заполнение полей контактов из savedProfile
   const profileNameEl = document.getElementById('profileName');
   const profilePhoneEl = document.getElementById('profilePhone');
-  const profileConfirmedEl = document.getElementById('profileConfirmed');
 
   if (profileNameEl) profileNameEl.value = savedProfile.name || '';
   if (profilePhoneEl) profilePhoneEl.value = savedProfile.phone || '';
-  if (profileConfirmedEl) profileConfirmedEl.checked = !!savedProfile.confirmed;
 
   if (profileNameEl) {
     profileNameEl.addEventListener('focus', hideTabBar);
     profileNameEl.addEventListener('blur', showTabBar);
   }
   if (profilePhoneEl) {
-    profilePhoneEl.addEventListener('focus', hideTabBar);
+    profilePhoneEl.addEventListener('focus', () => {
+      hideTabBar();
+      if (!profilePhoneEl.value.trim()) {
+        profilePhoneEl.value = '+7 ';
+      }
+    });
     profilePhoneEl.addEventListener('blur', showTabBar);
   }
 
@@ -256,19 +255,17 @@ window.removeAddress = function (index) {
 window.saveProfileContacts = function () {
   const nameEl = document.getElementById('profileName');
   const phoneEl = document.getElementById('profilePhone');
-  const confirmedEl = document.getElementById('profileConfirmed');
-  if (!nameEl || !phoneEl || !confirmedEl) return;
+  if (!nameEl || !phoneEl) return;
 
   const name = nameEl.value.trim();
   const phone = phoneEl.value.trim();
-  const confirmed = confirmedEl.checked;
 
   if (!name || !phone) {
     tg?.showAlert?.('Укажите имя и телефон');
     return;
   }
 
-  savedProfile = { name, phone, confirmed };
-  saveProfileToStorage();
+  savedProfile = { name, phone, confirmed: true };
+  saveProfileToStorage(); // [web:25][web:27][web:84]
   tg?.showAlert?.('Контакты сохранены');
 };

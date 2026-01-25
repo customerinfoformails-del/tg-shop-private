@@ -494,18 +494,18 @@ function showCartTab() {
               '</div>') +
         '</div>' +
         '<div class="space-y-2">' +
-        '<label class="text-sm font-semibold text-gray-700 block">Контактные данные</label>' +
-        '<input id="contactName" type="text"' +
-          ' class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
-          ' placeholder="Имя">' +
-        '<input id="contactPhone" type="tel"' +
-          ' class="w-full.bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
-          ' placeholder="Телефон">' +
-        '<label class="flex items-center gap-2 text-xs text-gray-600">' +
-          '<input id="contactConfirmed" type="checkbox">' +
-          '<span>Имя и телефон указаны верно</span>' +
-        '</label>' +
-      '</div>' +
+          '<label class="text-sm font-semibold text-gray-700 block">Контактные данные</label>' +
+          '<input id="contactName" type="text"' +
+            ' class="w-full bg-white border border-gray-300 rounded-2xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
+            ' placeholder="Имя">' +
+          '<input id="contactPhone" type="tel"' +
+            ' class="w-full bg-white border border-gray-300 rounded-2xl px-3 py-2 text-sm mb-2 focus:outline-none"' +
+            ' placeholder="Телефон для связи">' +
+          '<label class="flex items-center gap-2 text-xs text-gray-600">' +
+            '<input id="contactConfirmed" type="checkbox">' +
+            '<span>Имя и телефон указаны верно</span>' +
+          '</label>' +
+        '</div>' +
         '<div class="space-y-1 text-sm text-gray-700">' +
           '<div class="flex items-center justify-between">' +
             '<span>Сумма товаров</span>' +
@@ -564,13 +564,24 @@ function showCartTab() {
     }
   
     restoreCartFormState();
+
+    // автоподстановка +7 в телефоне корзины
+    if (contactPhoneEl) {
+      contactPhoneEl.addEventListener('focus', () => {
+        hideTabBar();
+        if (!contactPhoneEl.value.trim()) {
+          contactPhoneEl.value = '+7 ';
+        }
+      });
+      contactPhoneEl.addEventListener('blur', showTabBar);
+    }
   
-    ['deliveryAddress', 'deliveryComment', 'contactName', 'contactPhone'].forEach(id => {  
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('focus', hideTabBar);
-    el.addEventListener('blur', showTabBar);
-  });
+    ['deliveryAddress', 'deliveryComment', 'contactName'].forEach(id => {  
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('focus', hideTabBar);
+      el.addEventListener('blur', showTabBar);
+    });
 
   const savedSelect = document.getElementById('savedAddress');
   if (savedSelect) {

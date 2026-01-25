@@ -108,7 +108,7 @@ img,
 
 .carousel-img {
   width: 100%;
-  height: 100%;
+  height: calc(100% - 20px);
   object-fit: contain;
   flex-shrink: 0;
 }
@@ -160,7 +160,7 @@ img,
 /* Индикаторы карусели */
 .carousel-dots {
   position: absolute;
-  bottom: 0px; /* или 2px / 0px, как нравится */
+  bottom: 4px; /* или 2px / 0px, как нравится */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -256,6 +256,7 @@ img,
   padding: 12px 16px 0;
   border-bottom: 1px solid #e5e7eb;
   margin-bottom: 16px;
+  padding-bottom: 20px;
   background: #ffffff; /* белый фон вокруг карусели */
 }
 

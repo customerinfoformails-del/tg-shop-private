@@ -139,6 +139,50 @@ function saveProfileToStorage() {
   }
 }
 
+const DELIVERY_PREFS_KEY = 'deliveryPrefs_v1';
+
+let deliveryPrefs = {
+  paymentType: 'cash',
+  pickupMode: false,
+  pickupLocation: '',
+  savedAddressValue: ''
+};
+
+function loadDeliveryPrefs() {
+  try {
+    const raw = localStorage.getItem(DELIVERY_PREFS_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return;
+
+    deliveryPrefs.paymentType = parsed.paymentType ?? 'cash';
+    deliveryPrefs.pickupMode = !!parsed.pickupMode;
+    deliveryPrefs.pickupLocation = parsed.pickupLocation || '';
+    deliveryPrefs.savedAddressValue = parsed.savedAddressValue || '';
+
+    paymentType = deliveryPrefs.paymentType;
+    pickupMode = deliveryPrefs.pickupMode;
+    pickupLocation = deliveryPrefs.pickupLocation;
+    cartFormState.savedAddressValue = deliveryPrefs.savedAddressValue;
+  } catch (e) {
+    console.log('[core] loadDeliveryPrefs error', e);
+  }
+}
+
+function saveDeliveryPrefs() {
+  try {
+    const data = {
+      paymentType,
+      pickupMode,
+      pickupLocation,
+      savedAddressValue: cartFormState.savedAddressValue || ''
+    };
+    localStorage.setItem(DELIVERY_PREFS_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.log('[core] saveDeliveryPrefs error', e);
+  }
+}
+
 function loadProfileFromStorage() {
   try {
     const raw = localStorage.getItem('profile');
@@ -838,6 +882,7 @@ async function initApp() {
     loadAddressesFromStorage();
     loadProfileFromStorage();
     loadCartFromStorage();
+    loadDeliveryPrefs();
     logStage('after localStorage', t0);
 
     loadPersistentImageCache();

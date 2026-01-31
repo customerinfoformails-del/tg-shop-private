@@ -13,6 +13,28 @@ function updateCartBadge() {
   console.log('[cart] updateCartBadge count =', count);
 }
 
+function resetCartStateAfterOrder() {
+  cartItems = [];
+  saveCartToStorage();
+  updateCartBadge();
+
+  cartFormState = {
+    addressText: '',
+    comment: '',
+    contactName: '',
+    contactPhone: '',
+    savedAddressValue: deliveryPrefs.savedAddressValue || '',
+    pickupLocationValue: deliveryPrefs.pickupLocation || '',
+    contactConfirmed: false,
+    contactEditedManually: false
+  };
+
+  if (tabScrollTops && typeof tabScrollTops === 'object') {
+    tabScrollTops.cart = 0;
+  }
+}
+
+
 function addToCart(variant, quantity) {
   console.log('[cart] addToCart', variant, quantity);
   if (!productsData) {
@@ -282,6 +304,7 @@ function restoreCartFormState() {
 window.setPaymentType = function (type) {
   paymentType = type;
   console.log('[cart] setPaymentType', type);
+  saveDeliveryPrefs();
   if (currentTab === 'cart') {
     showCartTab();
   }
@@ -290,6 +313,7 @@ window.setPaymentType = function (type) {
 window.setPickupMode = function (mode) {
   pickupMode = !!mode;
   console.log('[cart] setPickupMode', pickupMode);
+  saveDeliveryPrefs();
   if (currentTab === 'cart') {
     showCartTab();
   }
@@ -298,6 +322,7 @@ window.setPickupMode = function (mode) {
 window.setPickupLocation = function (addr) {
   pickupLocation = addr;
   console.log('[cart] setPickupLocation', pickupLocation);
+  saveDeliveryPrefs();
 };
 
 window.onSavedAddressChange = function () {
@@ -305,12 +330,15 @@ window.onSavedAddressChange = function () {
   const wrapper = document.getElementById('deliveryAddressWrapper');
   if (!select || !wrapper) return;
   wrapper.style.display = select.value ? 'none' : 'block';
+
+  cartFormState.savedAddressValue = select.value || '';
+  saveDeliveryPrefs();
+
   console.log('[cart] onSavedAddressChange value=', select.value);
 };
 
 function showCartTab() {
   console.log('[cart] showCartTab, items=', cartItems.length, 'isPlacingOrder=', isPlacingOrder);
-  // сохранить текущие значения полей перед перерисовкой
   saveCartFormState();
 
   if (!cartItems.length) {
@@ -457,13 +485,17 @@ function showCartTab() {
                     addr =>
                       '<option value="' +
                       escapeHtml(addr) +
-                      '">' +
+                      '"' +
+                      (cartFormState.savedAddressValue === addr ? ' selected' : '') +
+                      '>' +
                       escapeHtml(addr) +
                       '</option>'
                   )
                   .join('') +
               '</select>' +
-              '<div id="deliveryAddressWrapper" class="mb-2">' +
+              '<div id="deliveryAddressWrapper" class="mb-2"' +
+                (cartFormState.savedAddressValue ? ' style="display:none"' : '') +
+              '>' +
                 '<textarea id="deliveryAddress" class="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm"' +
                   ' rows="3" placeholder="Введите адрес доставки..."></textarea>' +
               '</div>' +
@@ -546,10 +578,8 @@ function showCartTab() {
   const contactPhoneEl = document.getElementById('contactPhone');
   const contactConfirmedEl = document.getElementById('contactConfirmed');
 
-  // сначала восстановить, что было
   restoreCartFormState();
 
-  // если профиль подтверждён и корзинные контакты ещё НЕ редактировали — синхронизируем из профиля
   if (savedProfile && savedProfile.confirmed && !cartFormState.contactEditedManually) {
     if (contactNameEl && savedProfile.name) {
       contactNameEl.value = savedProfile.name;
@@ -563,7 +593,6 @@ function showCartTab() {
     contactConfirmedEl.checked = !!cartFormState.contactConfirmed;
   }
 
-  // автоподстановка +7
   if (contactPhoneEl) {
     contactPhoneEl.addEventListener('focus', () => {
       hideTabBar();
@@ -572,8 +601,6 @@ function showCartTab() {
       }
     });
     contactPhoneEl.addEventListener('blur', showTabBar);
-
-    // любое изменение телефона в корзине — считаем ручной правкой
     contactPhoneEl.addEventListener('input', () => {
       cartFormState.contactEditedManually = true;
     });
@@ -587,7 +614,6 @@ function showCartTab() {
     });
   }
 
-  // поля с клавиатурой — можем прятать таббар
   ['deliveryAddress', 'deliveryComment'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -595,7 +621,6 @@ function showCartTab() {
     el.addEventListener('blur', showTabBar);
   });
 
-  // select самовывоза таббар не трогает
   const pickupSelect = document.getElementById('pickupLocation');
   if (pickupSelect) {
     pickupSelect.addEventListener('focus', () => {});
@@ -890,26 +915,12 @@ window.placeOrder = async function () {
     console.log('[perf] placeOrder duration:', durationMs, 'ms');
 
     tg?.showAlert?.('✅ Заказ оформлен!');
-    cartItems = [];
-    saveCartToStorage();
-    updateCartBadge();
+resetCartStateAfterOrder();
 
-    // сбрасываем состояние формы корзины, чтобы новый заказ снова синхался с профилем
-    cartFormState = {
-      addressText: '',
-      comment: '',
-      contactName: '',
-      contactPhone: '',
-      savedAddressValue: '',
-      pickupLocationValue: '',
-      contactConfirmed: false,
-      contactEditedManually: false
-    };
-
-    isPlacingOrder = false;
-    if (currentTab === 'cart') {
-      showCartTab();
-    }
+isPlacingOrder = false;
+if (currentTab === 'cart') {
+  showCartTab();
+}
   } finally {
     clearTimeout(placeOrderTimeoutId);
     placeOrderTimeoutId = null;

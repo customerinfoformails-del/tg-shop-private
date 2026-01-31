@@ -347,9 +347,24 @@ img,
   position: relative;
 }
 
-.tab-item.active,
+.tab-item {
+  color: #6b7280;
+}
+
+/* hover без синего */
 .tab-item:hover {
+  color: #4b5563;
+}
+
+/* единственный синий источник */
+.tab-item.active {
   color: #3B82F6;
+}
+
+/* на всякий пожарный отключаем синий от :active/:focus */
+.tab-item:active,
+.tab-item:focus {
+  color: inherit;
 }
 
 .tab-item svg {

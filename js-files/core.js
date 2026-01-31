@@ -195,9 +195,11 @@ document.addEventListener(
 
 function initTabBar() {
   console.log('[core] initTabBar');
+
   document.querySelectorAll('#tabBar .tab-item').forEach(tab => {
-    tab.onclick = e => {
+    const handler = e => {
       e.preventDefault();
+      e.stopPropagation();
 
       if (isTabChanging) return;
 
@@ -207,7 +209,15 @@ function initTabBar() {
       isTabChanging = true;
       switchTab(tabName);
     };
+
+    tab.addEventListener('pointerdown', handler);
+    tab.addEventListener('click', e => {
+      // на всякий случай гасим click, чтобы не было дубля после pointerdown
+      e.preventDefault();
+      e.stopPropagation();
+    });
   });
+
   updateCartBadge();
 }
 

@@ -290,7 +290,6 @@ function requestTabSwitch(tabName) {
   });
 }
 
-
 function switchTab(tabName) {
   console.log('[core] switchTab from', currentTab, 'to', tabName);
 
@@ -353,83 +352,6 @@ function switchTab(tabName) {
       console.error('[core] switchTab error', err);
       currentTab = prevTab;
       updateTabBarActive();
-    });
-}
-
-function switchTab(tabName) {
-  console.log('[core] switchTab from', currentTab, 'to', tabName);
-
-  if (currentTab === tabName) {
-    isTabChanging = false;
-    setTabBarDisabled(false);
-    return;
-  }
-
-  const prevTab = currentTab;
-
-  saveCurrentTabScroll();
-
-  // спец‑логика выхода из shop (модалка)
-  if (currentTab === 'shop' && tabName !== 'shop') {
-    if (modal && !modal.classList.contains('hidden')) {
-      modalWasOpenOnShop = true;
-
-      const scrollContainer = document.querySelector('#modalContent .flex-1');
-      modalSavedScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
-
-      modal.classList.add('hidden');
-      document.body.style.overflow = '';
-    } else {
-      modalWasOpenOnShop = false;
-      modalSavedScrollTop = 0;
-    }
-  }
-
-  Promise.resolve()
-    .then(() => {
-      if (tabName === 'shop') {
-        renderShop();
-        restoreTabScroll('shop');
-
-        if (modalWasOpenOnShop && currentProduct) {
-          renderProductModal(currentProduct);
-          modal.classList.remove('hidden');
-          document.body.style.overflow = 'hidden';
-          tg?.expand();
-
-          const scrollContainer = document.querySelector('#modalContent .flex-1');
-          if (scrollContainer) scrollContainer.scrollTop = modalSavedScrollTop;
-        }
-
-      } else if (tabName === 'cart') {
-        showCartTab();
-        restoreTabScroll('cart');
-
-      } else if (tabName === 'sale') {
-        showSaleTab();
-        restoreTabScroll('sale');
-
-      } else if (tabName === 'profile') {
-        showProfileTab();
-        restoreTabScroll('profile');
-
-      } else if (tabName === 'about') {
-        showAboutTab();
-        restoreTabScroll('about');
-      }
-
-      // сначала обновляем currentTab, потом подсветку
-      currentTab = tabName;
-      updateTabBarActive();
-    })
-    .catch(err => {
-      console.error('[core] switchTab error', err);
-      currentTab = prevTab;
-      updateTabBarActive();
-    })
-    .finally(() => {
-      isTabChanging = false;
-      setTabBarDisabled(false);
     });
 }
 

@@ -1,4 +1,4 @@
-function escapeHtml(s) {
+  function escapeHtml(s) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' };
     return String(s).replace(/[&<>"']/g, m => map[m]);
   }
@@ -6,23 +6,24 @@ function escapeHtml(s) {
   function showError(message) {
     root.innerHTML =
       '<div class="flex flex-col items-center justify-center min-h-screen text-center p-8 pb-[65px]">' +
-      '<div class="w-20 h-20 bg-red-100 rounded-2xl flex.items-center justify-center.mb-6">' +
-      '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-      ' d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
-      '</svg>' +
-      '</div>' +
-      '<h2 class="text-2xl font-bold text-gray-800 mb-4">Ошибка загрузки</h2>' +
-      '<p class="text-lg text-red-600 mb-2">' +
-      escapeHtml(message) +
-      '</p>' +
-      '<button onclick="location.reload()"' +
-      ' class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
-      'Попробовать снова' +
-      '</button>' +
+        '<div class="w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center mb-6">' +
+          '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
+            ' d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
+          '</svg>' +
+        '</div>' +
+        '<h2 class="text-2xl font-bold text-gray-800 mb-4">Ошибка загрузки</h2>' +
+        '<p class="text-lg text-red-600 mb-2">' +
+          escapeHtml(message) +
+        '</p>' +
+        '<button onclick="location.reload()"' +
+          ' class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all">' +
+          'Попробовать снова' +
+        '</button>' +
       '</div>';
+  
     tg?.showAlert?.('❌ ' + message);
-  }
+  }  
   
   // Бэкдроп модалки
   if (modal) {

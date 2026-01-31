@@ -507,7 +507,7 @@ function showCartTab() {
           '</label>' +
         '</div>' +
         '<div class="space-y-1 text-sm text-gray-700">' +
-          '<div class="flex items-center justify_between">' +
+          '<div class="flex items-center justify-between">' +
             '<span>Сумма товаров</span>' +
             '<span>RUB ' + subtotal + '</span>' +
           '</div>' +

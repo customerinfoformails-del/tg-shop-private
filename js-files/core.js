@@ -248,10 +248,20 @@ function switchTab(tabName) {
   if (isTabChanging) return;
   if (currentTab === tabName) return;
 
-  // 1) сохраняем скролл текущего таба
+  isTabChanging = true;           // сразу блокируем
+  setTabBarDisabled(true);        // и визуально/кликабельно
+
+  // сразу подсветим нужный таб
+  document
+    .querySelectorAll('#tabBar .tab-item')
+    .forEach(t => t.classList.remove('active'));
+  const newTabEl = document.querySelector('[data-tab="' + tabName + '"]');
+  if (newTabEl) newTabEl.classList.add('active');
+
+  // сохраняем скролл текущего таба
   saveCurrentTabScroll();
 
-  // 2) спец‑логика выхода из shop (модалка)
+  // спец‑логика выхода из shop (модалка)
   if (currentTab === 'shop' && tabName !== 'shop') {
     if (modal && !modal.classList.contains('hidden')) {
       modalWasOpenOnShop = true;
@@ -268,8 +278,6 @@ function switchTab(tabName) {
   }
 
   const prevTab = currentTab;
-  isTabChanging = true;
-  setTabBarDisabled(true);
 
   Promise.resolve()
     .then(() => {
@@ -305,15 +313,17 @@ function switchTab(tabName) {
       }
 
       currentTab = tabName;
-      document
-        .querySelectorAll('#tabBar .tab-item')
-        .forEach(t => t.classList.remove('active'));
-      const currentEl = document.querySelector('[data-tab="' + tabName + '"]');
-      if (currentEl) currentEl.classList.add('active');
     })
     .catch(err => {
       console.error('[core] switchTab error', err);
       currentTab = prevTab;
+
+      // восстанавливаем подсветку предыдущего таба
+      document
+        .querySelectorAll('#tabBar .tab-item')
+        .forEach(t => t.classList.remove('active'));
+      const prevEl = document.querySelector('[data-tab="' + prevTab + '"]');
+      if (prevEl) prevEl.classList.add('active');
     })
     .finally(() => {
       isTabChanging = false;

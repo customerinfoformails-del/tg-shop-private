@@ -372,8 +372,14 @@ function syncCartWithProducts() {
 
 function syncProductsAndCart() {
   syncCartWithProducts();
-  if (currentTab === 'shop') renderShop();
-  if (currentTab === 'cart') showCartTab();
+  if (currentTab === 'shop') {
+    renderShop();
+    showTabBar()
+  }
+  if (currentTab === 'cart') {
+    showCartTab();
+    showTabBar()
+  }
 }
 
 // ---------- Метрики ----------

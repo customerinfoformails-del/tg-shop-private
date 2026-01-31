@@ -16,7 +16,7 @@ function updateCartBadge() {
 function addToCart(variant, quantity) {
   console.log('[cart] addToCart', variant, quantity);
   if (!productsData) {
-    //tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
+    tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
     return;
   }
 
@@ -81,7 +81,7 @@ window.updateCartItemPrice = function (index) {
   if (currentTab === 'cart') {
     showCartTab();
   }
-  //tg?.showAlert?.('Цена обновлена для выбранного товара');
+  tg?.showAlert?.('Цена обновлена для выбранного товара');
 };
 
 // обновить цены всех и удалить неактуальные
@@ -106,7 +106,7 @@ window.refreshCartPricesAndCleanup = async function () {
     }
 
     if (!productsData) {
-      //tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
+      tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
       return;
     }
 
@@ -150,7 +150,7 @@ window.refreshCartPricesAndCleanup = async function () {
     updateCartBadge();
 
     if (!removedCount && !changedCount) {
-      //tg?.showAlert?.('Все товары актуальны');
+      tg?.showAlert?.('Все товары актуальны');
       return;
     }
 
@@ -198,7 +198,7 @@ window.refreshCartPricesAndCleanup = async function () {
       msgLines.push('У этих товаров появилась кнопка «Обновить цену» в корзине.');
     }
 
-    //tg?.showAlert?.(msgLines.join('\n'));
+    tg?.showAlert?.(msgLines.join('\n'));
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -656,14 +656,14 @@ window.placeOrder = async function () {
   console.log('[placeOrder] start at', orderClickTs, 'items=', cartItems.length);
 
   if (cartItems.length === 0) {
-    //tg?.showAlert?.('Корзина пуста');
+    tg?.showAlert?.('Корзина пуста');
     return;
   }
 
   let address = '';
   if (pickupMode) {
     if (!pickupLocation) {
-      //tg?.showAlert?.('Выберите пункт самовывоза');
+      tg?.showAlert?.('Выберите пункт самовывоза');
       return;
     }
     address = 'Самовывоз: ' + pickupLocation;
@@ -675,7 +675,7 @@ window.placeOrder = async function () {
       address = select.value;
     }
     if (!address) {
-      //tg?.showAlert?.('Введите или выберите адрес доставки');
+      tg?.showAlert?.('Введите или выберите адрес доставки');
       return;
     }
   }
@@ -693,18 +693,18 @@ window.placeOrder = async function () {
   const contactConfirmed = contactConfirmedEl ? contactConfirmedEl.checked : false;
 
   if (!isValidName(rawName)) {
-    //tg?.showAlert?.('Введите корректное имя (только буквы, 1–50 символов)');
+    tg?.showAlert?.('Введите корректное имя (только буквы, 1–50 символов)');
     return;
   }
 
   const normalizedPhone = normalizePhone(rawPhone);
   if (!normalizedPhone) {
-    //tg?.showAlert?.('Введите корректный номер телефона в формате +7XXXXXXXXXX');
+    tg?.showAlert?.('Введите корректный номер телефона в формате +7XXXXXXXXXX');
     return;
   }
 
   if (!contactConfirmed) {
-    //tg?.showAlert?.('Подтвердите правильность введенных данных');
+    tg?.showAlert?.('Подтвердите правильность введенных данных');
     return;
   }
 
@@ -731,9 +731,9 @@ window.placeOrder = async function () {
     if (currentTab === 'cart') {
       showCartTab();
     }
-    //tg?.showAlert?.(
-      // 'Превышено время ожидания ответа сервера. Возможно большая нагрузка и заказ появится в профиле в течении 3 минут. Если не появился проверьте интернет и попробуйте ещё раз (либо сразу можете попробовать повторно оформить заказ)'
-    // );
+    tg?.showAlert?.(
+      'Превышено время ожидания ответа сервера. Возможно большая нагрузка и заказ появится в профиле в течении 3 минут. Если не появился проверьте интернет и попробуйте ещё раз (либо сразу можете попробовать повторно оформить заказ)'
+    );
 
     scheduleDelayedOrdersSync('timeout');
   }, 70000);
@@ -746,7 +746,7 @@ window.placeOrder = async function () {
     }
 
     if (!productsData) {
-      //tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
+      tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
       isPlacingOrder = false;
       setPlaceOrderLoading(false);
       return;
@@ -781,15 +781,15 @@ window.placeOrder = async function () {
       isPlacingOrder = false;
       setPlaceOrderLoading(false);
       if (hasUnavailable && hasPriceChanged) {
-        //tg?.showAlert?.(
-          // 'Некоторые товары недоступны, а у других обновилась цена. Проверьте корзину.'
-        // );
+        tg?.showAlert?.(
+          'Некоторые товары недоступны, а у других обновилась цена. Проверьте корзину.'
+        );
       } else if (hasUnavailable) {
-        //tg?.showAlert?.('Некоторые товары стали недоступны. Удалите их из корзины.');
+        tg?.showAlert?.('Некоторые товары стали недоступны. Удалите их из корзины.');
       } else {
-        //tg?.showAlert?.(
-          // 'У некоторых товаров обновилась цена. Нажмите "Обновить" возле позиции.'
-        // );
+        tg?.showAlert?.(
+          'У некоторых товаров обновилась цена. Нажмите "Обновить" возле позиции.'
+        );
       }
       if (currentTab === 'cart') {
         showCartTab();
@@ -849,7 +849,7 @@ window.placeOrder = async function () {
       console.log('[placeOrder] BACKEND_ORDER_URL body:', text);
     } catch (e) {
       console.error('[placeOrder] backend order network error', e);
-      //tg?.showAlert?.('Ошибка сети. Заказ не сохранён, попробуйте ещё раз.');
+      tg?.showAlert?.('Ошибка сети. Заказ не сохранён, попробуйте ещё раз.');
 
       scheduleDelayedOrdersSync('network-error');
 
@@ -867,7 +867,7 @@ window.placeOrder = async function () {
 
     if (!resp.ok || !json || json.ok !== true) {
       console.log('[placeOrder] backend responded with error status:', resp.status, json);
-      //tg?.showAlert?.('Заказ не сохранён, ошибка сервера, попробуйте ещё раз.');
+      tg?.showAlert?.('Заказ не сохранён, ошибка сервера, попробуйте ещё раз.');
 
       scheduleDelayedOrdersSync('server-error');
 
@@ -887,7 +887,7 @@ window.placeOrder = async function () {
     const durationMs = now - orderClickTs;
     console.log('[perf] placeOrder duration:', durationMs, 'ms');
 
-    //tg?.showAlert?.('✅ Заказ оформлен!');
+    tg?.showAlert?.('✅ Заказ оформлен!');
     cartItems = [];
     saveCartToStorage();
     updateCartBadge();

@@ -563,9 +563,6 @@ function showCartTab() {
       if (contactPhoneEl && savedProfile.phone) {
         contactPhoneEl.value = savedProfile.phone;
       }
-      if (contactConfirmedEl) {
-        contactConfirmedEl.checked = true;
-      }
     }
   
     // автоподстановка +7

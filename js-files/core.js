@@ -667,8 +667,11 @@ async function fetchUserOrders() {
 const LOAD_STEP = 10;
 let scrollObserver = null;
 
+let tabBarHideCounter = 0;
+
 function hideTabBar() {
-  if (!isMobileDevice) return; // на десктопе не трогаем таббар
+  if (!isMobileDevice) return;
+  tabBarHideCounter++;
   const tabBar = document.getElementById('tabBar');
   if (!tabBar) return;
   tabBar.style.opacity = '0';
@@ -676,7 +679,11 @@ function hideTabBar() {
 }
 
 function showTabBar() {
-  if (!isMobileDevice) return; // на десктопе всегда видим
+  if (!isMobileDevice) return;
+  if (tabBarHideCounter > 0) {
+    tabBarHideCounter--;
+  }
+  if (tabBarHideCounter > 0) return; // ещё есть активные поля
   const tabBar = document.getElementById('tabBar');
   if (!tabBar) return;
   tabBar.style.opacity = '1';

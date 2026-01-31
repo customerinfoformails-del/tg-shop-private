@@ -2,6 +2,38 @@
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' };
     return String(s).replace(/[&<>"']/g, m => map[m]);
   }
+
+  function normalizePhone(raw) {
+    if (!raw) return '';
+    // убираем пробелы, скобки, тире и т.п.
+    let v = raw.replace(/[^\d+]/g, '');
+  
+    // приводим к российскому формату +7XXXXXXXXXX [web:19]
+    if (v.startsWith('+7')) {
+      v = v.slice(2);
+    } else if (v.startsWith('8')) {
+      v = v.slice(1);
+    } else if (v.startsWith('+')) {
+      // другой код страны — считаем невалидным
+      return '';
+    }
+  
+    // должны остаться ровно 10 цифр
+    if (!/^\d{10}$/.test(v)) return '';
+  
+    return '+7' + v;
+  }
+  
+  function isValidName(name) {
+    const v = String(name).trim();
+    if (v.length < 1 || v.length > 50) return false;
+  
+    // только буквы (вкл. кириллицу), пробел, дефис, апостроф [web:21][web:24]
+    if (!/^[A-Za-zА-Яа-яЁё\s\-']+$/.test(v)) return false;
+  
+    // хотя бы одна буква
+    return /[A-Za-zА-Яа-яЁё]/.test(v);
+  }
   
   function showError(message) {
     root.innerHTML =

@@ -659,20 +659,31 @@ window.placeOrder = async function () {
 
   const contactNameEl = document.getElementById('contactName');
   const contactPhoneEl = document.getElementById('contactPhone');
-  const contactName = contactNameEl ? contactNameEl.value.trim() || '' : '';
-  const contactPhone = contactPhoneEl ? contactPhoneEl.value.trim() || '' : '';
+
+  const rawName = contactNameEl ? contactNameEl.value || '' : '';
+  const rawPhone = contactPhoneEl ? contactPhoneEl.value || '' : '';
 
   const contactConfirmedEl = document.getElementById('contactConfirmed');
   const contactConfirmed = contactConfirmedEl ? contactConfirmedEl.checked : false;
 
-  if (!contactName || !contactPhone) {
-    tg?.showAlert?.('Укажите имя и телефон для связи');
+  if (!isValidName(rawName)) {
+    tg?.showAlert?.('Введите корректное имя (только буквы, 1–50 символов)');
     return;
   }
+
+  const normalizedPhone = normalizePhone(rawPhone);
+  if (!normalizedPhone) {
+    tg?.showAlert?.('Введите корректный номер телефона в формате +7XXXXXXXXXX');
+    return;
+  }
+
   if (!contactConfirmed) {
     tg?.showAlert?.('Подтвердите правильность введенных данных');
     return;
   }
+
+  const contactName = rawName.trim();
+  const contactPhone = normalizedPhone;
 
   console.log('[placeOrder] address=', address, 'pickupMode=', pickupMode);
   console.log('[placeOrder] comment=', deliveryComment, 'contact=', contactName, contactPhone);

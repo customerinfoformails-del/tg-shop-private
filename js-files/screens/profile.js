@@ -24,7 +24,7 @@ function renderProfileSkeleton() {
           '<div class="bg-white border border-gray-200 rounded-2xl p-3 space-y-2">' +
             '<div class="h-3 w-1/2 bg-gray-200 rounded placeholder-shimmer"></div>' +
             '<div class="h-3 w-1/3 bg-gray-200 rounded placeholder-shimmer"></div>' +
-            '<div class="h-3 w-1/4 bg-gray-200 rounded.placeholder-shimmer"></div>' +
+            '<div class="h-3 w-1/4 bg-gray-200 rounded placeholder-shimmer"></div>' +
           '</div>'
         ).join('') +
       '</div>' +
@@ -287,16 +287,28 @@ window.saveProfileContacts = function () {
   const phoneEl = document.getElementById('profilePhone');
   if (!nameEl || !phoneEl) return;
 
-  const name = nameEl.value.trim();
-  const phone = phoneEl.value.trim();
+  const rawName = nameEl.value || '';
+  const rawPhone = phoneEl.value || '';
 
-  if (!name || !phone) {
-    tg?.showAlert?.('Укажите имя и телефон');
+  if (!isValidName(rawName)) {
+    tg?.showAlert?.('Введите корректное имя (только буквы, 1–50 символов)');
     return;
   }
 
-  savedProfile = { name, phone, confirmed: true };
+  const normalizedPhone = normalizePhone(rawPhone);
+  if (!normalizedPhone) {
+    tg?.showAlert?.('Введите корректный номер телефона в формате +7XXXXXXXXXX');
+    return;
+  }
+
+  const name = rawName.trim();
+
+  savedProfile = { name, phone: normalizedPhone, confirmed: true };
   saveProfileToStorage();
+
+  // сразу показать нормализованный телефон
+  phoneEl.value = normalizedPhone;
+
   tg?.showAlert?.('Контакты сохранены');
 };
 

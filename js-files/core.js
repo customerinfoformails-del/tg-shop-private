@@ -194,10 +194,8 @@ document.addEventListener(
 // ---------- Таббар ----------
 
 function setTabBarDisabled(disabled) {
-  isTabChanging = disabled;
-  document
-    .querySelectorAll('#tabBar .tab-item')
-    .forEach(t => t.classList.toggle('pointer-events-none', disabled));
+  const tabBarItems = document.querySelectorAll('#tabBar .tab-item');
+  tabBarItems.forEach(t => t.classList.toggle('pointer-events-none', disabled));
 }
 
 function initTabBar() {
@@ -206,17 +204,15 @@ function initTabBar() {
     tab.onclick = e => {
       e.preventDefault();
 
-      // защита от дабл-клика / быстрого переключения
-      if (isTabChanging) return;
+      if (isTabChanging) return; // защита
 
       const tabName = tab.dataset.tab;
       if (!tabName || tabName === currentTab) {
         return;
       }
 
-      // сразу блокируем таббар и ставим флаг
-      isTabChanging = true;
-      setTabBarDisabled(true);
+      isTabChanging = true;      // флаг только тут
+      setTabBarDisabled(true);   // только DOM
 
       switchTab(tabName);
     };
@@ -252,8 +248,8 @@ function restoreTabScroll(tabName) {
 function switchTab(tabName) {
   console.log('[core] switchTab from', currentTab, 'to', tabName);
 
-  // если зачем-то вызвали с тем же табом — аккуратно разблокируемся
   if (currentTab === tabName) {
+    // если вдруг вызвали с тем же табом — просто разблокируемся
     isTabChanging = false;
     setTabBarDisabled(false);
     return;
@@ -261,17 +257,14 @@ function switchTab(tabName) {
 
   const prevTab = currentTab;
 
-  // подсветка табов — только здесь
   document
     .querySelectorAll('#tabBar .tab-item')
     .forEach(t => t.classList.remove('active'));
   const newTabEl = document.querySelector('[data-tab="' + tabName + '"]');
   if (newTabEl) newTabEl.classList.add('active');
 
-  // сохраняем скролл текущего таба
   saveCurrentTabScroll();
 
-  // спец‑логика выхода из shop (модалка)
   if (currentTab === 'shop' && tabName !== 'shop') {
     if (modal && !modal.classList.contains('hidden')) {
       modalWasOpenOnShop = true;
@@ -326,7 +319,6 @@ function switchTab(tabName) {
       console.error('[core] switchTab error', err);
       currentTab = prevTab;
 
-      // откат подсветки
       document
         .querySelectorAll('#tabBar .tab-item')
         .forEach(t => t.classList.remove('active'));
@@ -334,8 +326,8 @@ function switchTab(tabName) {
       if (prevEl) prevEl.classList.add('active');
     })
     .finally(() => {
-      isTabChanging = false;
-      setTabBarDisabled(false);
+      isTabChanging = false;      // разблокируем
+      setTabBarDisabled(false);   // возвращаем pointer-events
     });
 }
 

@@ -62,6 +62,8 @@ let placeOrderTimeoutId = null;
 let modalWasOpenOnShop = false;
 let modalSavedScrollTop = 0;
 
+let shopScrollTop = 0;
+
 // сохранение состояния формы корзины между рендерами
 let cartFormState = {
   addressText: '',
@@ -224,6 +226,8 @@ function switchTab(tabName) {
 
   // Уходим с shop в другой таб
   if (currentTab === 'shop' && tabName !== 'shop') {
+    shopScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+    
     if (modal && !modal.classList.contains('hidden')) {
       // модалка была открыта — сохраняем состояние
       modalWasOpenOnShop = true;
@@ -249,20 +253,27 @@ function switchTab(tabName) {
   Promise.resolve()
     .then(() => {
       if (tabName === 'shop') {
-        // перерисовываем магазин
+        // восстановим скролл списка товаров
+        // (если до этого из shop уходили, в shopScrollTop уже лежит позиция)
         renderShop();
-
+      
+        // после рендера вернём scroll
+        if (typeof shopScrollTop === 'number' && shopScrollTop > 0) {
+          window.scrollTo(0, shopScrollTop);
+        }
+      
         // если ранее на shop модалка была открыта — восстанавливаем её
         if (modalWasOpenOnShop && currentProduct) {
           renderProductModal(currentProduct);
           modal.classList.remove('hidden');
           document.body.style.overflow = 'hidden';
           tg?.expand();
-
-          // восстанавливаем scroll внутри модалки
+      
           const scrollContainer = document.querySelector('#modalContent .flex-1');
           if (scrollContainer) scrollContainer.scrollTop = modalSavedScrollTop;
         }
+      } else if (tabName === 'cart') {
+        showCartTab();
       } else if (tabName === 'cart') {
         showCartTab();
       } else if (tabName === 'sale') {

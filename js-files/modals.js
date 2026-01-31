@@ -645,8 +645,10 @@ function showModal(product) {
 
   // мягкий сброс скролла после того, как браузер применил layout
   requestAnimationFrame(() => {
-    const scrollContainer = document.querySelector('#modalContent .flex-1');
-    if (scrollContainer) scrollContainer.scrollTop = 0;
+    requestAnimationFrame(() => {
+      const scrollContainer = document.querySelector('#modalContent .flex-1');
+      if (scrollContainer) scrollContainer.scrollTop = 0;
+    });
   });
 
   tg?.expand();

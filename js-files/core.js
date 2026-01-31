@@ -281,7 +281,7 @@ function switchTab(tabName) {
       } else if (tabName === 'profile') {
         showProfileTab();
       } else if (tabName === 'about') {
-        showAboutTab();
+        showAboutTab(); 
       }
 
       currentTab = tabName;

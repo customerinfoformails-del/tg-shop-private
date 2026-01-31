@@ -9,8 +9,7 @@ try {
 
 const API_URL =
   'https://script.google.com/macros/s/AKfycbxyKA2QcJBKim9ttOKHiJ_uTVYunBKhBnNFNf9BLGewzHpqqcY9ZY8smmvCwQZzOGs85Q/exec';
-const ORDERS_API_URL =
-  'https://tg-shop-test-backend.onrender.com/orders';
+const ORDERS_API_URL = 'https://tg-shop-test-backend.onrender.com/orders';
 const BACKEND_ORDER_URL = 'https://tg-shop-test-backend.onrender.com/order';
 
 const isMobileDevice =
@@ -19,50 +18,7 @@ const isMobileDevice =
     navigator.userAgent || ''
   );
 
-  let baseViewportHeight = null;
-  
-  function initKeyboardWatcher() {
-    if (!isMobileDevice) return;
-  
-    const vp = window.visualViewport || window;
-    baseViewportHeight = vp.height || window.innerHeight;
-  
-    const handler = () => {
-      const currentH =
-        (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-  
-      if (!baseViewportHeight) {
-        baseViewportHeight = currentH;
-        return;
-      }
-  
-      const delta = baseViewportHeight - currentH;
-  
-      // клавиатура показалась
-      if (delta > 120) {
-        keyboardVisible = true;
-        return;
-      }
-  
-      // клавиатура скрылась (вернулись почти к базовой высоте)
-      if (keyboardVisible && delta < 80) {
-        keyboardVisible = false;
-        // независимо от состояний фокуса/blur принудительно показываем таббар
-        tabBarHideCounter = 0;
-        const tabBar = document.getElementById('tabBar');
-        if (tabBar) {
-          tabBar.style.opacity = '1';
-          tabBar.style.pointerEvents = 'auto';
-        }
-      }
-    };
-  
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handler);
-    } else {
-      window.addEventListener('resize', handler);
-    }
-  }  
+// --------- Глобальный стейт ---------
 
 let CATEGORIES = ['Все'];
 let isOrdersLoading = false;
@@ -78,15 +34,15 @@ let selectedCategory = 'Все',
   searchTimeout = null,
   currentTab = 'shop';
 
-  let cartItems = [];
-  let savedAddresses = [];
-  let previousOrders = [];
-  
-  let savedProfile = {
-    name: '',
-    phone: '',
-    confirmed: false
-  };  
+let cartItems = [];
+let savedAddresses = [];
+let previousOrders = [];
+
+let savedProfile = {
+  name: '',
+  phone: '',
+  confirmed: false
+};
 
 let paymentType = 'cash';
 let pickupMode = false;
@@ -107,7 +63,6 @@ let placeOrderTimeoutId = null;
 let modalWasOpenOnShop = false;
 let modalSavedScrollTop = 0;
 
-
 // сохранение состояния формы корзины между рендерами
 let cartFormState = {
   addressText: '',
@@ -117,7 +72,7 @@ let cartFormState = {
   savedAddressValue: '',
   pickupLocationValue: '',
   contactConfirmed: false,
-  contactEditedManually: false // новый флаг
+  contactEditedManually: false
 };
 
 const root = document.getElementById('root');
@@ -135,7 +90,7 @@ window.onerror = function (message, source, lineno, colno, error) {
   return true;
 };
 
-// ---------- localStorage (корзина и адреса) ----------
+// ---------- localStorage (корзина, адреса, профиль) ----------
 
 function saveCartToStorage() {
   try {
@@ -144,16 +99,6 @@ function saveCartToStorage() {
     console.log('[core] saveCartToStorage error', e);
   }
 }
-
-function updateTabBarActive() {
-  document
-    .querySelectorAll('#tabBar .tab-item')
-    .forEach(t => t.classList.remove('active'));
-
-  const activeEl = document.querySelector('[data-tab="' + currentTab + '"]');
-  if (activeEl) activeEl.classList.add('active');
-}
-
 
 function loadCartFromStorage() {
   try {
@@ -188,7 +133,7 @@ function loadAddressesFromStorage() {
 
 function saveProfileToStorage() {
   try {
-    localStorage.setItem('profile', JSON.stringify(savedProfile)); // [web:16][web:20][web:22]
+    localStorage.setItem('profile', JSON.stringify(savedProfile));
   } catch (e) {
     console.log('[core] saveProfileToStorage error', e);
   }
@@ -196,7 +141,7 @@ function saveProfileToStorage() {
 
 function loadProfileFromStorage() {
   try {
-    const raw = localStorage.getItem('profile'); // [web:16][web:22][web:29]
+    const raw = localStorage.getItem('profile');
     if (!raw) {
       savedProfile = { name: '', phone: '', confirmed: false };
       return;
@@ -258,6 +203,31 @@ function setTabBarDisabled(disabled) {
   }
 }
 
+function hideTabBar() {
+  if (!isMobileDevice) return;
+  const tabBar = document.getElementById('tabBar');
+  if (!tabBar) return;
+  tabBar.style.opacity = '0';
+  tabBar.style.pointerEvents = 'none';
+}
+
+function showTabBar() {
+  if (!isMobileDevice) return;
+  const tabBar = document.getElementById('tabBar');
+  if (!tabBar) return;
+  tabBar.style.opacity = '1';
+  tabBar.style.pointerEvents = 'auto';
+}
+
+function updateTabBarActive() {
+  document
+    .querySelectorAll('#tabBar .tab-item')
+    .forEach(t => t.classList.remove('active'));
+
+  const activeEl = document.querySelector('[data-tab="' + currentTab + '"]');
+  if (activeEl) activeEl.classList.add('active');
+}
+
 function initTabBar() {
   console.log('[core] initTabBar');
 
@@ -269,12 +239,10 @@ function initTabBar() {
 
     if (isTabChanging) return;
 
-    // таб, по которому реально кликнули
     const tab = e.currentTarget;
     const tabName = tab.dataset.tab;
     if (!tabName || tabName === currentTab) return;
 
-    // ЖЁСТКО: один активный таб
     tabs.forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
 
@@ -292,7 +260,6 @@ function initTabBar() {
     });
   });
 
-  // стартовая подсветка
   updateTabBarActive();
 }
 
@@ -318,15 +285,12 @@ function restoreTabScroll(tabName) {
   window.scrollTo(0, y > 0 ? y : 0);
 }
 
-
 // ---------- Переключение табов ----------
 
-// Очередь запросов на переключение таба
 function switchTab(tabName) {
   console.log('[core] switchTab from', currentTab, 'to', tabName);
 
   if (currentTab === tabName) {
-    // мы уже в этом табе — просто снимаем блокировку
     isTabChanging = false;
     setTabBarDisabled(false);
     return;
@@ -363,19 +327,15 @@ function switchTab(tabName) {
           const scrollContainer = document.querySelector('#modalContent .flex-1');
           if (scrollContainer) scrollContainer.scrollTop = modalSavedScrollTop;
         }
-
       } else if (tabName === 'cart') {
         showCartTab();
         restoreTabScroll('cart');
-
       } else if (tabName === 'sale') {
         showSaleTab();
         restoreTabScroll('sale');
-
       } else if (tabName === 'profile') {
         showProfileTab();
         restoreTabScroll('profile');
-
       } else if (tabName === 'about') {
         showAboutTab();
         restoreTabScroll('about');
@@ -392,7 +352,8 @@ function switchTab(tabName) {
     .finally(() => {
       isTabChanging = false;
       setTabBarDisabled(false);
-      resetTabBarVisibility();
+      // при смене таба всегда гарантированно показываем таббар
+      showTabBar();
     });
 }
 
@@ -419,7 +380,7 @@ function syncProductsAndCart() {
 
 function logStage(label, startTime) {
   const now = performance.now();
-  console.log(`[perf] {label}: ${Math.round(now - startTime)} ms`);
+  console.log(`[perf] ${label}: ${Math.round(now - startTime)} ms`);
 }
 
 // ---------- Загрузка товаров с API ----------
@@ -509,10 +470,7 @@ async function fetchAndUpdateProducts(showLoader = false) {
 
 // ---------- Загрузка изображений с таймаутом ----------
 
-// URL, по которым хотя бы раз успешно загрузилась картинка
 let loadedImageUrls = new Set();
-
-// URL, по которым была ошибка или таймаут
 let failedImageUrls = new Set();
 
 function getPlainSvgPlaceholder() {
@@ -520,7 +478,7 @@ function getPlainSvgPlaceholder() {
     '<div class="placeholder-wrapper bg-gray-100 w-full h-full flex items-center justify-center">' +
       '<svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
         '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
-        ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>' +
+        ' d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2z"/>' +
         '</svg>' +
     '</div>'
   );
@@ -598,7 +556,7 @@ window.handleProductImageError = function (img, url) {
   } catch (e) {
     console.log('[images] handleProductImageError error', e);
   }
-}; 
+};
 
 window.handleProductImageLoad = function (img, url) {
   try {
@@ -617,7 +575,6 @@ window.handleProductImageLoad = function (img, url) {
 
     img.classList.remove('fade-in-once', 'no-fade');
     img.classList.add(alreadyLoaded ? 'no-fade' : 'fade-in-once');
-    // НЕ ставим img.style.opacity = '1'; — всё делает класс
 
     if (wrapper) {
       const phWrapper = wrapper.querySelector('.placeholder-wrapper');
@@ -651,7 +608,7 @@ window.refreshProducts = async function () {
             '<div class="h-32 mb-3 rounded-xl placeholder-shimmer"></div>' +
             '<div class="h-4 w-3/4 mb-2 rounded placeholder-shimmer"></div>' +
             '<div class="h-5 w-1/2 mb-2 rounded placeholder-shimmer"></div>' +
-            '<div class="h-3 w-1/3 rounded placeholder-shimmer"></div>' +
+            '<div class="h-3 w-1/3 mb-2 rounded placeholder-shimmer"></div>' +
           '</div>'
         ).join('') +
       '</div>' +
@@ -664,7 +621,7 @@ window.refreshProducts = async function () {
   }
 };
 
-// ---------- История заказов с Google Sheets ----------
+// ---------- История заказов с backend ----------
 
 async function fetchUserOrders() {
   try {
@@ -674,7 +631,6 @@ async function fetchUserOrders() {
 
     isOrdersLoading = true;
 
-    // если мы на профиле — перерисуем только секцию заказов
     if (currentTab === 'profile') {
       if (typeof renderOrdersSection === 'function') {
         renderOrdersSection();
@@ -708,79 +664,10 @@ async function fetchUserOrders() {
   }
 }
 
-// ---------- Скролл и infinite scroll ----------
+// ---------- Infinite scroll ----------
 
 const LOAD_STEP = 10;
 let scrollObserver = null;
-
-let tabBarHideCounter = 0;
-let keyboardVisible = false;
-
-function applyTabBarState() {
-  const tabBar = document.getElementById('tabBar');
-  if (!tabBar) return;
-  if (!isMobileDevice) {
-    tabBar.style.opacity = '1';
-    tabBar.style.pointerEvents = 'auto';
-    return;
-  }
-
-  // если клавиатура видна — всегда скрываем таббар
-  if (keyboardVisible) {
-    tabBar.style.opacity = '0';
-    tabBar.style.pointerEvents = 'none';
-    return;
-  }
-
-  // если есть активные поля, тоже скрываем
-  if (tabBarHideCounter > 0) {
-    tabBar.style.opacity = '0';
-    tabBar.style.pointerEvents = 'none';
-  } else {
-    tabBar.style.opacity = '1';
-    tabBar.style.pointerEvents = 'auto';
-  }
-}
-
-function hideTabBar() {
-  if (!isMobileDevice) return;
-  tabBarHideCounter++;
-  applyTabBarState();
-}
-
-function showTabBar() {
-  if (!isMobileDevice) return;
-  if (tabBarHideCounter > 0) tabBarHideCounter--;
-  applyTabBarState();
-}
-
-function initKeyboardWatcher() {
-  if (!isMobileDevice || !window.visualViewport) return;
-
-  const baseHeight = window.visualViewport.height || window.innerHeight;
-
-  window.visualViewport.addEventListener('resize', () => {
-    const h = window.visualViewport.height || window.innerHeight;
-    const delta = baseHeight - h;
-
-    // эвристика: >120px — явно открылась клавиатура [web:48][web:74]
-    const nowVisible = delta > 120;
-
-    if (nowVisible !== keyboardVisible) {
-      keyboardVisible = nowVisible;
-      // любое изменение — сразу применяем к таббару
-      applyTabBarState();
-    }
-  });
-}
-
-function resetTabBarVisibility() {
-  tabBarHideCounter = 0;
-  const tabBar = document.getElementById('tabBar');
-  if (!tabBar) return;
-  tabBar.style.opacity = '1';
-  tabBar.style.pointerEvents = 'auto';
-}
 
 function setupInfiniteScroll() {
   if (scrollObserver) {
@@ -813,16 +700,11 @@ function setupInfiniteScroll() {
 
       const showCount = loadedCount;
 
-      // добавляем только новые карточки
       const newSlice = all.slice(prevCount, showCount);
-      grid.insertAdjacentHTML(
-        'beforeend',
-        newSlice.map(productCard).join('')
-      );
+      grid.insertAdjacentHTML('beforeend', newSlice.map(productCard).join(''));
       preloadAllImages(newSlice);
       setupImageCarousels();
 
-      // навесить клики по новым карточкам
       document.querySelectorAll('[data-product-name]').forEach(card => {
         if (!card.dataset.clickBound) {
           card.dataset.clickBound = '1';
@@ -842,7 +724,6 @@ function setupInfiniteScroll() {
         }
       });
 
-      // обновить «Показано»
       const counterSpan = document.querySelector(
         '.mt-3.text-xs.text-gray-500 span.font-semibold'
       );
@@ -850,7 +731,6 @@ function setupInfiniteScroll() {
         counterSpan.textContent = String(showCount);
       }
 
-      // обновить shimmer внизу
       const sentinelEl = document.getElementById('scrollSentinel');
       if (sentinelEl) {
         sentinelEl.innerHTML =
@@ -876,15 +756,12 @@ function setupInfiniteScroll() {
   scrollObserver.observe(sentinel);
 }
 
-
 // ---------- localStorage (кэш картинок) ----------
 
 const IMAGE_CACHE_KEY = 'shopLoadedImages_v1';
-const IMAGE_CACHE_TTL_MS = 24 * 60 * 60 * 1000 * 7; // 7 дней
-// Ключи картинок: cacheKey => firstSeenAt (timestamp)
-let imageCacheMeta = {}; // { [cacheKey]: number }
+const IMAGE_CACHE_TTL_MS = 24 * 60 * 60 * 1000 * 7;
+let imageCacheMeta = {};
 let loadedImageCacheKeys = new Set();
-
 
 function loadPersistentImageCache() {
   try {
@@ -909,7 +786,6 @@ function loadPersistentImageCache() {
         imageCacheMeta[key] = ts;
         loadedImageCacheKeys.add(key);
       }
-      // если старше TTL — просто не копируем, т.е. очищаем
     });
   } catch (e) {
     console.log('[core] loadPersistentImageCache error', e);
@@ -932,7 +808,6 @@ function markImageAsLoaded(cacheKey) {
   if (!imageCacheMeta) imageCacheMeta = {};
   if (!loadedImageCacheKeys) loadedImageCacheKeys = new Set();
 
-  // если ключ уже есть, не трогаем firstSeenAt — TTL считается от первого показа
   if (!imageCacheMeta[cacheKey]) {
     imageCacheMeta[cacheKey] = now;
   }
@@ -944,7 +819,6 @@ function markImageAsLoaded(cacheKey) {
 // ---------- Инициализация ----------
 
 async function initApp() {
-  initKeyboardWatcher();
   const t0 = performance.now();
   try {
     console.log('[core] initApp start');
@@ -953,11 +827,10 @@ async function initApp() {
     console.log('initDataUnsafe object:', window.Telegram?.WebApp?.initDataUnsafe);
     console.log('initDataUnsafe.user:', window.Telegram?.WebApp?.initDataUnsafe?.user);
 
-    initKeyboardWatcher();
     initTabBar();
     logStage('after initTabBar', t0);
 
-    loadOrdersFromStorage(); // просто previousOrders = []
+    loadOrdersFromStorage();
     loadAddressesFromStorage();
     loadProfileFromStorage();
     loadCartFromStorage();
@@ -968,7 +841,6 @@ async function initApp() {
     await fetchAndUpdateProducts(true);
     logStage('after fetchAndUpdateProducts', t0);
 
-    // начальная серверная история
     fetchUserOrders().catch(e => console.error('[orders] init fetch error', e));
 
     if (currentTab === 'shop') {
@@ -986,7 +858,9 @@ async function initApp() {
 
     setInterval(() => {
       try {
-        fetchAndUpdateProducts(false).catch(err => console.error('[core] Auto-refresh error', err));
+        fetchAndUpdateProducts(false).catch(err =>
+          console.error('[core] Auto-refresh error', err)
+        );
       } catch (e) {
         console.error('[core] Auto-refresh exception', e);
       }

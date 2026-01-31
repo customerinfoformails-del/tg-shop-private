@@ -20,7 +20,6 @@ const isMobileDevice =
   );
 
   let baseViewportHeight = null;
-  let keyboardVisible = false;
   
   function initKeyboardWatcher() {
     if (!isMobileDevice) return;
@@ -715,36 +714,64 @@ const LOAD_STEP = 10;
 let scrollObserver = null;
 
 let tabBarHideCounter = 0;
+let keyboardVisible = false;
 
-function hideTabBar() {
-  if (!isMobileDevice) return;
-
+function applyTabBarState() {
   const tabBar = document.getElementById('tabBar');
   if (!tabBar) return;
-
-  // если уже скрыт — только увеличиваем счётчик
-  if (tabBar.style.opacity === '0') {
-    tabBarHideCounter++;
+  if (!isMobileDevice) {
+    tabBar.style.opacity = '1';
+    tabBar.style.pointerEvents = 'auto';
     return;
   }
 
+  // если клавиатура видна — всегда скрываем таббар
+  if (keyboardVisible) {
+    tabBar.style.opacity = '0';
+    tabBar.style.pointerEvents = 'none';
+    return;
+  }
+
+  // если есть активные поля, тоже скрываем
+  if (tabBarHideCounter > 0) {
+    tabBar.style.opacity = '0';
+    tabBar.style.pointerEvents = 'none';
+  } else {
+    tabBar.style.opacity = '1';
+    tabBar.style.pointerEvents = 'auto';
+  }
+}
+
+function hideTabBar() {
+  if (!isMobileDevice) return;
   tabBarHideCounter++;
-  tabBar.style.opacity = '0';
-  tabBar.style.pointerEvents = 'none';
+  applyTabBarState();
 }
 
 function showTabBar() {
   if (!isMobileDevice) return;
+  if (tabBarHideCounter > 0) tabBarHideCounter--;
+  applyTabBarState();
+}
 
-  if (tabBarHideCounter > 0) {
-    tabBarHideCounter--;
-  }
-  if (tabBarHideCounter > 0) return;
+function initKeyboardWatcher() {
+  if (!isMobileDevice || !window.visualViewport) return;
 
-  const tabBar = document.getElementById('tabBar');
-  if (!tabBar) return;
-  tabBar.style.opacity = '1';
-  tabBar.style.pointerEvents = 'auto';
+  const baseHeight = window.visualViewport.height || window.innerHeight;
+
+  window.visualViewport.addEventListener('resize', () => {
+    const h = window.visualViewport.height || window.innerHeight;
+    const delta = baseHeight - h;
+
+    // эвристика: >120px — явно открылась клавиатура [web:48][web:74]
+    const nowVisible = delta > 120;
+
+    if (nowVisible !== keyboardVisible) {
+      keyboardVisible = nowVisible;
+      // любое изменение — сразу применяем к таббару
+      applyTabBarState();
+    }
+  });
 }
 
 function resetTabBarVisibility() {
@@ -917,6 +944,7 @@ function markImageAsLoaded(cacheKey) {
 // ---------- Инициализация ----------
 
 async function initApp() {
+  initKeyboardWatcher();
   const t0 = performance.now();
   try {
     console.log('[core] initApp start');

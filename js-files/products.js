@@ -428,6 +428,34 @@ function renderShop() {
   const list = getVisibleProducts();
   const showCount = Math.min(loadedCount, list.length);
 
+  const activeEl = document.activeElement;
+  const isSearchFocused = activeEl && activeEl.id === 'search';
+
+  // если поиск в фокусе и каркас уже отрисован — не трогаем root.innerHTML
+  if (isSearchFocused && document.getElementById('productGrid')) {
+    const grid = document.getElementById('productGrid');
+    const sentinelEl = document.getElementById('scrollSentinel');
+
+    if (grid) {
+      grid.innerHTML = renderShopList(list, showCount);
+      preloadAllImages(list.slice(0, showCount));
+      setupImageCarousels();
+      setupInfiniteScroll();
+    }
+
+    if (sentinelEl) {
+      sentinelEl.innerHTML =
+        showCount < list.length
+          ? '<div class="w-full">' +
+              '<div class="h-4 w-3/4 mx-auto mb-2 rounded placeholder-shimmer"></div>' +
+              '<div class="h-4 w-1/2 mx-auto rounded placeholder-shimmer"></div>' +
+            '</div>'
+          : '';
+    }
+
+    return;
+  }
+
   root.innerHTML =
     '<div class="pb-[65px]">' +
       '<div class="mb-5">' +
@@ -469,18 +497,17 @@ function renderShop() {
       '</div>' +
     '</div>';
 
-  const grid = document.getElementById('productGrid');
-  if (grid) {
-    // рендерим только первые showCount, остальное подгрузит infinite scroll
-    grid.innerHTML = renderShopList(list, showCount);
-    preloadAllImages(list.slice(0, showCount));
-  }
-
-  setupHandlers();
-  setupImageCarousels();
-  setupInfiniteScroll();
-
-  isFirstShopRender = false;
+    const grid = document.getElementById('productGrid');
+    if (grid) {
+      grid.innerHTML = renderShopList(list, showCount);
+      preloadAllImages(list.slice(0, showCount));
+    }
+  
+    setupHandlers();
+    setupImageCarousels();
+    setupInfiniteScroll();
+  
+    isFirstShopRender = false;
 }
 
 

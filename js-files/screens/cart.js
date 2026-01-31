@@ -599,11 +599,13 @@ function showCartTab() {
       el.addEventListener('focus', hideTabBar);
       el.addEventListener('blur', showTabBar);
     });
-    
+
   const savedSelect = document.getElementById('savedAddress');
   if (savedSelect) {
     onSavedAddressChange();
   }
+
+  showTabBar();
 }
 
 // ---------- Оформление заказа ----------

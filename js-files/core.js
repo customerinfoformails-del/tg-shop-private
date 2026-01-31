@@ -671,19 +671,29 @@ let tabBarHideCounter = 0;
 
 function hideTabBar() {
   if (!isMobileDevice) return;
-  tabBarHideCounter++;
+
   const tabBar = document.getElementById('tabBar');
   if (!tabBar) return;
+
+  // если уже скрыт — только увеличиваем счётчик
+  if (tabBar.style.opacity === '0') {
+    tabBarHideCounter++;
+    return;
+  }
+
+  tabBarHideCounter++;
   tabBar.style.opacity = '0';
   tabBar.style.pointerEvents = 'none';
 }
 
 function showTabBar() {
   if (!isMobileDevice) return;
+
   if (tabBarHideCounter > 0) {
     tabBarHideCounter--;
   }
-  if (tabBarHideCounter > 0) return; // ещё есть активные поля
+  if (tabBarHideCounter > 0) return;
+
   const tabBar = document.getElementById('tabBar');
   if (!tabBar) return;
   tabBar.style.opacity = '1';

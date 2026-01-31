@@ -211,13 +211,15 @@ function initTabBar() {
       e.preventDefault();
       e.stopPropagation();
 
+      if (isTabChanging) return;
+
       const tabName = tab.dataset.tab;
       if (!tabName || tabName === currentTab) return;
 
-      // сразу визуально переключаем активный таб под этот тап
-      setActiveTab(tabName);
+      isTabChanging = true;
+      setTabBarDisabled(true);
 
-      requestTabSwitch(tabName);
+      switchTab(tabName);
     };
 
     tab.addEventListener('pointerdown', handler);
@@ -227,19 +229,7 @@ function initTabBar() {
     });
   });
 
-  // начальная подсветка
-  setActiveTab(currentTab);
-}
-
-function setActiveTab(tabName) {
-  currentTab = tabName;
-
-  document
-    .querySelectorAll('#tabBar .tab-item')
-    .forEach(t => t.classList.remove('active'));
-
-  const activeEl = document.querySelector('[data-tab="' + currentTab + '"]');
-  if (activeEl) activeEl.classList.add('active');
+  updateTabBarActive();
 }
 
 // ---------- Скролл по табам ----------
@@ -268,39 +258,14 @@ function restoreTabScroll(tabName) {
 // ---------- Переключение табов ----------
 
 // Очередь запросов на переключение таба
-let pendingTabSwitch = null;
-let isTabSwitchInProgress = false;
-
-function requestTabSwitch(tabName) {
-  // если уже выполняется — запоминаем последний запрос и выходим
-  if (isTabSwitchInProgress) {
-    pendingTabSwitch = tabName;
-    return;
-  }
-
-  isTabSwitchInProgress = true;
-  setTabBarDisabled(true);
-
-  // запускаем реальный switchTab
-  switchTab(tabName).finally(() => {
-    isTabSwitchInProgress = false;
-
-    if (pendingTabSwitch && pendingTabSwitch !== currentTab) {
-      const next = pendingTabSwitch;
-      pendingTabSwitch = null;
-      requestTabSwitch(next); // обработаем последнюю очередь
-    } else {
-      pendingTabSwitch = null;
-      setTabBarDisabled(false);
-    }
-  });
-}
-
 function switchTab(tabName) {
   console.log('[core] switchTab from', currentTab, 'to', tabName);
 
   if (currentTab === tabName) {
-    return Promise.resolve();
+    // мы уже в этом табе — просто снимаем блокировку
+    isTabChanging = false;
+    setTabBarDisabled(false);
+    return;
   }
 
   const prevTab = currentTab;
@@ -320,7 +285,7 @@ function switchTab(tabName) {
     }
   }
 
-  return Promise.resolve()
+  Promise.resolve()
     .then(() => {
       if (tabName === 'shop') {
         renderShop();
@@ -352,14 +317,17 @@ function switchTab(tabName) {
         restoreTabScroll('about');
       }
 
-      // здесь можно просто синхронизировать currentTab c выбранным табом
       currentTab = tabName;
+      updateTabBarActive();
     })
     .catch(err => {
       console.error('[core] switchTab error', err);
       currentTab = prevTab;
-      // если используешь setActiveTab, можно откатить подсветку:
-      // setActiveTab(prevTab);
+      updateTabBarActive();
+    })
+    .finally(() => {
+      isTabChanging = false;
+      setTabBarDisabled(false);
     });
 }
 
@@ -867,7 +835,6 @@ async function initApp() {
     console.log('initDataUnsafe.user:', window.Telegram?.WebApp?.initDataUnsafe?.user);
 
     initTabBar();
-    setActiveTab(currentTab); 
     logStage('after initTabBar', t0);
 
     loadOrdersFromStorage(); // просто previousOrders = []

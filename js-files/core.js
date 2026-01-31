@@ -193,27 +193,20 @@ document.addEventListener(
 
 // ---------- Таббар ----------
 
-function setTabBarDisabled(disabled) {
-  const tabBarItems = document.querySelectorAll('#tabBar .tab-item');
-  tabBarItems.forEach(t => t.classList.toggle('pointer-events-none', disabled));
-}
-
 function initTabBar() {
   console.log('[core] initTabBar');
   document.querySelectorAll('#tabBar .tab-item').forEach(tab => {
     tab.onclick = e => {
       e.preventDefault();
 
-      if (isTabChanging) return; // защита
+      if (isTabChanging) return;            // защита от дабл-клика
 
       const tabName = tab.dataset.tab;
       if (!tabName || tabName === currentTab) {
         return;
       }
 
-      isTabChanging = true;      // флаг только тут
-      setTabBarDisabled(true);   // только DOM
-
+      isTabChanging = true;                // только флаг, без pointer-events
       switchTab(tabName);
     };
   });
@@ -249,14 +242,13 @@ function switchTab(tabName) {
   console.log('[core] switchTab from', currentTab, 'to', tabName);
 
   if (currentTab === tabName) {
-    // если вдруг вызвали с тем же табом — просто разблокируемся
     isTabChanging = false;
-    setTabBarDisabled(false);
     return;
   }
 
   const prevTab = currentTab;
 
+  // подсветка табов — только здесь
   document
     .querySelectorAll('#tabBar .tab-item')
     .forEach(t => t.classList.remove('active'));
@@ -326,8 +318,7 @@ function switchTab(tabName) {
       if (prevEl) prevEl.classList.add('active');
     })
     .finally(() => {
-      isTabChanging = false;      // разблокируем
-      setTabBarDisabled(false);   // возвращаем pointer-events
+      isTabChanging = false;
     });
 }
 

@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Магазин Техники</title>
+
+  <!-- Глобальная версия приложения -->
   <script>
-    // Глобальная версия приложения
     const version = '36';
     window.APP_VERSIONS = {
-      app: version,      // общая версия
+      app: version,
       products: version,
       modals: version,
       cart: version,
@@ -17,17 +22,12 @@
     };
   </script>
 
-  <meta charset="UTF-8" />
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Магазин Техники</title>
-
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- CSS с версией -->
   <link id="mainStyles" rel="stylesheet" href="styles-all/styles.css" />
   <script>
-    // Подставляем версию к CSS
     (function () {
       const ve = window.APP_VERSIONS?.app || '1';
       const link = document.getElementById('mainStyles');
@@ -36,7 +36,7 @@
   </script>
 </head>
 
-<body class="bg-gray-100.min-h-screen">
+<body class="bg-gray-100 min-h-screen">
   <div id="root" class="main-content max-w-md mx-auto"></div>
 
   <!-- Таббар -->
@@ -98,38 +98,29 @@
          class="bg-white rounded-3xl shadow-2xl w-full max-w-md h-[85vh] flex flex-col overflow-hidden"></div>
   </div>
 
-  <!-- Динамическое подключение JS с версией -->
-  <script>
-    const v = window.APP_VERSIONS;
-
-    function addScript(path, key) {
-      const s = document.createElement('script');
-      const ver = v[key] || v.app || '1';
-      s.src = path + '?v=' + ver;
-      document.body.appendChild(s);
-    }
-
-    addScript('js-files/products.js', 'products');
-    addScript('js-files/modals.js', 'modals');
-    addScript('js-files/screens/cart.js', 'cart');
-    addScript('js-files/core.js', 'core');
-    addScript('js-files/ui_common.js', 'ui_common');
-    addScript('js-files/screens/sale.js', 'sale');
-    addScript('js-files/screens/profile.js', 'profile');
-    addScript('js-files/screens/about.js', 'about');
-  </script>
+  <!-- JS, как раньше, но с ?v=version -->
+  <script src="js-files/products.js?v=36"></script>
+  <script src="js-files/modals.js?v=36"></script>
+  <script src="js-files/screens/cart.js?v=36"></script>
+  <script src="js-files/core.js?v=36"></script>
+  <script src="js-files/ui_common.js?v=36"></script>
+  <script src="js-files/screens/sale.js?v=36"></script>
+  <script src="js-files/screens/profile.js?v=36"></script>
+  <script src="js-files/screens/about.js?v=36"></script>
 
   <!-- Подпись версий на табах + алерт при запуске -->
   <script>
     (function () {
       const appVer = window.APP_VERSIONS?.app || '1';
 
+      // если хочешь реально видеть версию в табах — раскомментируй:
+      /*
       document.querySelectorAll('.tab-label').forEach(label => {
         const base = label.textContent.trim();
-        label.textContent = `${base}`;
+        label.textContent = `?v=${appVer} ${base}`;
       });
+      */
 
-      // Алерт при запуске мини-аппы с версиями
       const tg = window.Telegram?.WebApp;
       if (tg && tg.showAlert) {
         const versions = window.APP_VERSIONS || {};
@@ -137,7 +128,6 @@
           .map(([name, ver]) => `${name}: v${ver}`)
           .join('\n') || 'Версии не определены';
 
-        // показываем один раз при загрузке
         tg.showAlert('Версии скриптов:\n' + msg);
       }
     })();

@@ -3,7 +3,7 @@
 <head>
   <script>
     // Глобальная версия приложения
-    const version = '35';
+    const version = '36';
     window.APP_VERSIONS = {
       app: version,      // общая версия
       products: version,
@@ -124,10 +124,9 @@
     (function () {
       const appVer = window.APP_VERSIONS?.app || '1';
 
-      // Подписать все табы: "?v=35 Магазин" и т.д.
       document.querySelectorAll('.tab-label').forEach(label => {
         const base = label.textContent.trim();
-        label.textContent = `?v=${appVer} ${base}`;
+        label.textContent = `${base}`;
       });
 
       // Алерт при запуске мини-аппы с версиями

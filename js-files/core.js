@@ -216,22 +216,30 @@ function setTabBarDisabled(disabled) {
 function initTabBar() {
   console.log('[core] initTabBar');
 
-  document.querySelectorAll('#tabBar .tab-item').forEach(tab => {
-    const handler = e => {
-      e.preventDefault();
-      e.stopPropagation();
+  const tabs = Array.from(document.querySelectorAll('#tabBar .tab-item'));
 
-      if (isTabChanging) return;
+  const handler = e => {
+    e.preventDefault();
+    e.stopPropagation();
 
-      const tabName = tab.dataset.tab;
-      if (!tabName || tabName === currentTab) return;
+    if (isTabChanging) return;
 
-      isTabChanging = true;
-      setTabBarDisabled(true);
+    // таб, по которому реально кликнули
+    const tab = e.currentTarget;
+    const tabName = tab.dataset.tab;
+    if (!tabName || tabName === currentTab) return;
 
-      switchTab(tabName);
-    };
+    // ЖЁСТКО: один активный таб
+    tabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
 
+    isTabChanging = true;
+    setTabBarDisabled(true);
+
+    switchTab(tabName);
+  };
+
+  tabs.forEach(tab => {
     tab.addEventListener('pointerdown', handler);
     tab.addEventListener('click', e => {
       e.preventDefault();
@@ -239,6 +247,7 @@ function initTabBar() {
     });
   });
 
+  // стартовая подсветка
   updateTabBarActive();
 }
 

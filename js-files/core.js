@@ -218,6 +218,8 @@ function initTabBar() {
   updateCartBadge();
 }
 
+// ---------- Скролл по табам ----------
+
 const tabScrollTops = {
   shop: 0,
   cart: 0,
@@ -237,6 +239,9 @@ function restoreTabScroll(tabName) {
   const y = tabScrollTops.hasOwnProperty(tabName) ? tabScrollTops[tabName] : 0;
   window.scrollTo(0, y > 0 ? y : 0);
 }
+
+
+// ---------- Переключение табов ----------
 
 function switchTab(tabName) {
   console.log('[core] switchTab from', currentTab, 'to', tabName);
@@ -281,15 +286,19 @@ function switchTab(tabName) {
           const scrollContainer = document.querySelector('#modalContent .flex-1');
           if (scrollContainer) scrollContainer.scrollTop = modalSavedScrollTop;
         }
+
       } else if (tabName === 'cart') {
         showCartTab();
         restoreTabScroll('cart');
+
       } else if (tabName === 'sale') {
         showSaleTab();
         restoreTabScroll('sale');
+
       } else if (tabName === 'profile') {
         showProfileTab();
         restoreTabScroll('profile');
+
       } else if (tabName === 'about') {
         showAboutTab();
         restoreTabScroll('about');
@@ -311,7 +320,6 @@ function switchTab(tabName) {
       setTabBarDisabled(false);
     });
 }
-
 
 // ---------- Синхронизация корзины и товаров ----------
 

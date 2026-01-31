@@ -199,18 +199,25 @@ function initTabBar() {
     tab.onclick = e => {
       e.preventDefault();
 
-      if (isTabChanging) return;            // защита от дабл-клика
+      if (isTabChanging) return;
 
       const tabName = tab.dataset.tab;
-      if (!tabName || tabName === currentTab) {
-        return;
-      }
+      if (!tabName || tabName === currentTab) return;
 
-      isTabChanging = true;                // только флаг, без pointer-events
+      isTabChanging = true;
       switchTab(tabName);
     };
   });
   updateCartBadge();
+}
+
+function updateTabBarActive() {
+  document
+    .querySelectorAll('#tabBar .tab-item')
+    .forEach(t => t.classList.remove('active'));
+
+  const activeEl = document.querySelector('[data-tab="' + currentTab + '"]');
+  if (activeEl) activeEl.classList.add('active');
 }
 
 // ---------- Скролл по табам ----------
@@ -247,13 +254,6 @@ function switchTab(tabName) {
   }
 
   const prevTab = currentTab;
-
-  // подсветка табов — только здесь
-  document
-    .querySelectorAll('#tabBar .tab-item')
-    .forEach(t => t.classList.remove('active'));
-  const newTabEl = document.querySelector('[data-tab="' + tabName + '"]');
-  if (newTabEl) newTabEl.classList.add('active');
 
   saveCurrentTabScroll();
 
@@ -305,17 +305,15 @@ function switchTab(tabName) {
         restoreTabScroll('about');
       }
 
+      // ВАЖНО: сначала обновляем currentTab...
       currentTab = tabName;
+      // ...затем один раз синхронизируем подсветку
+      updateTabBarActive();
     })
     .catch(err => {
       console.error('[core] switchTab error', err);
       currentTab = prevTab;
-
-      document
-        .querySelectorAll('#tabBar .tab-item')
-        .forEach(t => t.classList.remove('active'));
-      const prevEl = document.querySelector('[data-tab="' + prevTab + '"]');
-      if (prevEl) prevEl.classList.add('active');
+      updateTabBarActive();
     })
     .finally(() => {
       isTabChanging = false;
@@ -826,6 +824,7 @@ async function initApp() {
     console.log('initDataUnsafe.user:', window.Telegram?.WebApp?.initDataUnsafe?.user);
 
     initTabBar();
+    updateTabBarActive();    
     logStage('after initTabBar', t0);
 
     loadOrdersFromStorage(); // просто previousOrders = []

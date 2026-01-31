@@ -507,25 +507,19 @@ function showCartTab() {
           '</label>' +
         '</div>' +
         '<div class="space-y-1 text-sm text-gray-700">' +
-          '<div class="flex items-center justify-between">' +
+          '<div class="flex items-center justify_between">' +
             '<span>Сумма товаров</span>' +
-            '<span>RUB ' +
-              subtotal +
-            '</span>' +
+            '<span>RUB ' + subtotal + '</span>' +
           '</div>' +
           (paymentType === 'card'
             ? '<div class="flex items-center justify-between">' +
                 '<span>Сервисный сбор (карта)</span>' +
-                '<span>+RUB ' +
-                  commission +
-                '</span>' +
+                '<span>+RUB ' + commission + '</span>' +
               '</div>'
             : '') +
           '<div class="flex items-center justify-between font-semibold mt-1">' +
             '<span>Итого к оплате</span>' +
-            '<span>RUB ' +
-              total +
-            '</span>' +
+            '<span>RUB ' + total + '</span>' +
           '</div>' +
         '</div>' +
         '<div class="pt-3">' +
@@ -548,66 +542,65 @@ function showCartTab() {
       '</div>' +
     '</div>';
 
-    const contactNameEl = document.getElementById('contactName');
-    const contactPhoneEl = document.getElementById('contactPhone');
-    const contactConfirmedEl = document.getElementById('contactConfirmed');
-  
-    // сначала восстановить, что было
-    restoreCartFormState();
-  
-    // если профиль подтверждён и корзинные контакты ещё НЕ редактировали — синхронизируем из профиля
-    if (savedProfile && savedProfile.confirmed && !cartFormState.contactEditedManually) {
-      if (contactNameEl && savedProfile.name) {
-        contactNameEl.value = savedProfile.name;
+  const contactNameEl = document.getElementById('contactName');
+  const contactPhoneEl = document.getElementById('contactPhone');
+  const contactConfirmedEl = document.getElementById('contactConfirmed');
+
+  // сначала восстановить, что было
+  restoreCartFormState();
+
+  // если профиль подтверждён и корзинные контакты ещё НЕ редактировали — синхронизируем из профиля
+  if (savedProfile && savedProfile.confirmed && !cartFormState.contactEditedManually) {
+    if (contactNameEl && savedProfile.name) {
+      contactNameEl.value = savedProfile.name;
+    }
+    if (contactPhoneEl && savedProfile.phone) {
+      contactPhoneEl.value = savedProfile.phone;
+    }
+  }
+
+  if (contactConfirmedEl) {
+    contactConfirmedEl.checked = !!cartFormState.contactConfirmed;
+  }
+
+  // автоподстановка +7
+  if (contactPhoneEl) {
+    contactPhoneEl.addEventListener('focus', () => {
+      hideTabBar();
+      if (!contactPhoneEl.value.trim()) {
+        contactPhoneEl.value = '+7 ';
       }
-      if (contactPhoneEl && savedProfile.phone) {
-        contactPhoneEl.value = savedProfile.phone;
-      }
-    }
+    });
+    contactPhoneEl.addEventListener('blur', showTabBar);
 
-    if (contactConfirmedEl) {
-      contactConfirmedEl.checked = !!cartFormState.contactConfirmed;
-    }
-  
-    // автоподстановка +7
-    if (contactPhoneEl) {
-      contactPhoneEl.addEventListener('focus', () => {
-        hideTabBar();
-        if (!contactPhoneEl.value.trim()) {
-          contactPhoneEl.value = '+7 ';
-        }
-      });
-      contactPhoneEl.addEventListener('blur', showTabBar);
-  
-      // любое изменение телефона в корзине — считаем ручной правкой
-      contactPhoneEl.addEventListener('input', () => {
-        cartFormState.contactEditedManually = true;
-      });
-    }
-  
-    if (contactNameEl) {
-      contactNameEl.addEventListener('focus', hideTabBar);
-      contactNameEl.addEventListener('blur', showTabBar);
-      contactNameEl.addEventListener('input', () => {
-        cartFormState.contactEditedManually = true;
-      });
-    }
+    // любое изменение телефона в корзине — считаем ручной правкой
+    contactPhoneEl.addEventListener('input', () => {
+      cartFormState.contactEditedManually = true;
+    });
+  }
 
-    // поля с клавиатурой — можем прятать таббар
-['deliveryAddress', 'deliveryComment'].forEach(id => {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.addEventListener('focus', hideTabBar);
-  el.addEventListener('blur', showTabBar);
-});
+  if (contactNameEl) {
+    contactNameEl.addEventListener('focus', hideTabBar);
+    contactNameEl.addEventListener('blur', showTabBar);
+    contactNameEl.addEventListener('input', () => {
+      cartFormState.contactEditedManually = true;
+    });
+  }
 
-// select самовывоза таббар не трогает
-const pickupSelect = document.getElementById('pickupLocation');
-if (pickupSelect) {
-  pickupSelect.addEventListener('focus', () => {});
-  pickupSelect.addEventListener('blur', showTabBar);
-}
+  // поля с клавиатурой — можем прятать таббар
+  ['deliveryAddress', 'deliveryComment'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('focus', hideTabBar);
+    el.addEventListener('blur', showTabBar);
+  });
 
+  // select самовывоза таббар не трогает
+  const pickupSelect = document.getElementById('pickupLocation');
+  if (pickupSelect) {
+    pickupSelect.addEventListener('focus', () => {});
+    pickupSelect.addEventListener('blur', showTabBar);
+  }
 
   const savedSelect = document.getElementById('savedAddress');
   if (savedSelect) {
@@ -615,6 +608,28 @@ if (pickupSelect) {
   }
 
   showTabBar();
+}
+
+function setPlaceOrderLoading(loading) {
+  const btn = document.getElementById('placeOrderButton');
+  if (!btn) return;
+
+  if (loading) {
+    btn.disabled = true;
+    btn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+    btn.classList.add('bg-gray-400', 'cursor-not-allowed');
+    btn.innerHTML =
+      '<span class="loader-circle"></span><span>Проверяю наличие (до 70 сек)...</span>';
+  } else {
+    btn.disabled = cartItems.some(i => !i.available);
+    btn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+    if (!btn.disabled) {
+      btn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+      btn.innerHTML = 'Оформить заказ';
+    } else {
+      btn.innerHTML = 'Удалите недоступные товары или обновите цены';
+    }
+  }
 }
 
 // ---------- Оформление заказа ----------
@@ -700,9 +715,8 @@ window.placeOrder = async function () {
   console.log('[placeOrder] comment=', deliveryComment, 'contact=', contactName, contactPhone);
 
   isPlacingOrder = true;
-  if (currentTab === 'cart') {
-    showCartTab();
-  }
+  setPlaceOrderLoading(true);
+
   placeOrderTimeoutId = setTimeout(async () => {
     if (!isPlacingOrder) return;
     console.log('[placeOrder] client-side timeout 70s');
@@ -734,9 +748,7 @@ window.placeOrder = async function () {
     if (!productsData) {
       tg?.showAlert?.('Товары ещё не загружены, попробуйте позже');
       isPlacingOrder = false;
-      if (currentTab === 'cart') {
-        showCartTab();
-      }
+      setPlaceOrderLoading(false);
       return;
     }
 
@@ -755,6 +767,7 @@ window.placeOrder = async function () {
       }
       return { ...item, available: true, newPrice: undefined };
     });
+
     console.log(
       '[placeOrder] after sync products: hasUnavailable=',
       hasUnavailable,
@@ -766,15 +779,20 @@ window.placeOrder = async function () {
 
     if (hasUnavailable || hasPriceChanged) {
       isPlacingOrder = false;
-      if (currentTab === 'cart') {
-        showCartTab();
-      }
+      setPlaceOrderLoading(false);
       if (hasUnavailable && hasPriceChanged) {
-        tg?.showAlert?.('Некоторые товары недоступны, а у других обновилась цена. Проверьте корзину.');
+        tg?.showAlert?.(
+          'Некоторые товары недоступны, а у других обновилась цена. Проверьте корзину.'
+        );
       } else if (hasUnavailable) {
         tg?.showAlert?.('Некоторые товары стали недоступны. Удалите их из корзины.');
       } else {
-        tg?.showAlert?.('У некоторых товаров обновилась цена. Нажмите "Обновить" возле позиции.');
+        tg?.showAlert?.(
+          'У некоторых товаров обновилась цена. Нажмите "Обновить" возле позиции.'
+        );
+      }
+      if (currentTab === 'cart') {
+        showCartTab();
       }
       return;
     }
@@ -783,18 +801,17 @@ window.placeOrder = async function () {
     const commission = paymentType === 'card' ? Math.round(subtotal * 0.15) : 0;
     const total = subtotal + commission;
 
-        // сохраняем контакты в состояние и профиль
-        cartFormState.contactName = contactName;
-        cartFormState.contactPhone = contactPhone;
-        cartFormState.contactConfirmed = contactConfirmed;
-    
-        savedProfile = {
-          name: contactName,
-          phone: contactPhone,
-          confirmed: contactConfirmed
-        };
-        saveProfileToStorage();
-    
+    // сохраняем контакты в состояние и профиль
+    cartFormState.contactName = contactName;
+    cartFormState.contactPhone = contactPhone;
+    cartFormState.contactConfirmed = contactConfirmed;
+
+    savedProfile = {
+      name: contactName,
+      phone: contactPhone,
+      confirmed: contactConfirmed
+    };
+    saveProfileToStorage();
 
     const order = {
       id: Date.now(),
@@ -834,13 +851,10 @@ window.placeOrder = async function () {
       console.error('[placeOrder] backend order network error', e);
       tg?.showAlert?.('Ошибка сети. Заказ не сохранён, попробуйте ещё раз.');
 
-      // 2‑минутная фоновая проверка после сетевой ошибки
       scheduleDelayedOrdersSync('network-error');
 
       isPlacingOrder = false;
-      if (currentTab === 'cart') {
-        showCartTab();
-      }
+      setPlaceOrderLoading(false);
       return;
     }
 
@@ -855,13 +869,10 @@ window.placeOrder = async function () {
       console.log('[placeOrder] backend responded with error status:', resp.status, json);
       tg?.showAlert?.('Заказ не сохранён, ошибка сервера, попробуйте ещё раз.');
 
-      // 2‑минутная фоновая проверка после плохого ответа сервера
       scheduleDelayedOrdersSync('server-error');
 
       isPlacingOrder = false;
-      if (currentTab === 'cart') {
-        showCartTab();
-      }
+      setPlaceOrderLoading(false);
       return;
     }
 

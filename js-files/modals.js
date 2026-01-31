@@ -661,7 +661,7 @@ window.closeModal = function () {
 
   // сброс флагов восстановления при табах
   modalWasOpenOnShop = false;
-  modalSavedScrollTop = 0;
+  modalSavedScrollTop = 0; 
 
   const scrollContainer = document.querySelector('#modalContent .flex-1');
   if (scrollContainer) scrollContainer.scrollTop = 0;

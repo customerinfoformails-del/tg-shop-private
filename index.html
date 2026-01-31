@@ -1,13 +1,31 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+  <script>
+    const version = '34'
+    window.APP_VERSIONS = {
+      app: version,      // общая версия
+      products: version,
+      modals: version,
+      cart: version,
+      core: version,
+      ui_common: version,
+      sale: version,
+      profile: version,
+      about: version
+    };
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Магазин Техники</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles-all/styles.css?v=34" />
+  <link id="mainStyles" rel="stylesheet" href="styles-all/styles.css" />
+  <script>
+    const ve = window.APP_VERSIONS?.app || '1';
+    document.getElementById('mainStyles').href += '?v=' + ve;
+  </script>  
 </head>
   
 <body class="bg-gray-100.min-h-screen">
@@ -76,16 +94,24 @@
          class="bg-white rounded-3xl shadow-2xl w-full max-w-md h-[85vh] flex flex-col overflow-hidden"></div>
   </div>
 
-  <script src="js-files/products.js?v=34"></script>
-  <script src="js-files/modals.js?v=34"></script>
-
-  <script src="js-files/screens/cart.js?v=34"></script>
-
-  <script src="js-files/core.js?v=34"></script>
-  <script src="js-files/ui_common.js?v=34"></script>
-
-  <script src="js-files/screens/sale.js?v=34"></script>
-  <script src="js-files/screens/profile.js?v=34"></script>
-  <script src="js-files/screens/about.js?v=34"></script>
+  <script>
+    const v = window.APP_VERSIONS;
+  
+    function addScript(path, key) {
+      const s = document.createElement('script');
+      const ver = v[key] || v.app || '1';
+      s.src = path + '?v=' + ver;
+      document.body.appendChild(s);
+    }
+  
+    addScript('js-files/products.js', 'products');
+    addScript('js-files/modals.js', 'modals');
+    addScript('js-files/screens/cart.js', 'cart');
+    addScript('js-files/core.js', 'core');
+    addScript('js-files/ui_common.js', 'ui_common');
+    addScript('js-files/screens/sale.js', 'sale');
+    addScript('js-files/screens/profile.js', 'profile');
+    addScript('js-files/screens/about.js', 'about');
+  </script>  
 </body>
 </html>

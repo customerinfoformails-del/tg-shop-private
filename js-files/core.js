@@ -214,6 +214,9 @@ function initTabBar() {
       const tabName = tab.dataset.tab;
       if (!tabName || tabName === currentTab) return;
 
+      // сразу визуально переключаем активный таб под этот тап
+      setActiveTab(tabName);
+
       requestTabSwitch(tabName);
     };
 
@@ -224,10 +227,13 @@ function initTabBar() {
     });
   });
 
-  updateCartBadge();
+  // начальная подсветка
+  setActiveTab(currentTab);
 }
 
-function updateTabBarActive() {
+function setActiveTab(tabName) {
+  currentTab = tabName;
+
   document
     .querySelectorAll('#tabBar .tab-item')
     .forEach(t => t.classList.remove('active'));
@@ -300,6 +306,7 @@ function switchTab(tabName) {
   const prevTab = currentTab;
   saveCurrentTabScroll();
 
+  // спец‑логика выхода из shop (модалка)
   if (currentTab === 'shop' && tabName !== 'shop') {
     if (modal && !modal.classList.contains('hidden')) {
       modalWasOpenOnShop = true;
@@ -345,13 +352,14 @@ function switchTab(tabName) {
         restoreTabScroll('about');
       }
 
+      // здесь можно просто синхронизировать currentTab c выбранным табом
       currentTab = tabName;
-      updateTabBarActive();
     })
     .catch(err => {
       console.error('[core] switchTab error', err);
       currentTab = prevTab;
-      updateTabBarActive();
+      // если используешь setActiveTab, можно откатить подсветку:
+      // setActiveTab(prevTab);
     });
 }
 
@@ -859,7 +867,7 @@ async function initApp() {
     console.log('initDataUnsafe.user:', window.Telegram?.WebApp?.initDataUnsafe?.user);
 
     initTabBar();
-    updateTabBarActive();    
+    setActiveTab(currentTab); 
     logStage('after initTabBar', t0);
 
     loadOrdersFromStorage(); // просто previousOrders = []

@@ -592,13 +592,22 @@ function showCartTab() {
         cartFormState.contactEditedManually = true;
       });
     }
-  
-    ['deliveryAddress', 'deliveryComment', 'pickupLocation'].forEach(id => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.addEventListener('focus', hideTabBar);
-      el.addEventListener('blur', showTabBar);
-    });
+
+    // поля с клавиатурой — можем прятать таббар
+['deliveryAddress', 'deliveryComment'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('focus', hideTabBar);
+  el.addEventListener('blur', showTabBar);
+});
+
+// select самовывоза таббар не трогает
+const pickupSelect = document.getElementById('pickupLocation');
+if (pickupSelect) {
+  pickupSelect.addEventListener('focus', () => {});
+  pickupSelect.addEventListener('blur', showTabBar);
+}
+
 
   const savedSelect = document.getElementById('savedAddress');
   if (savedSelect) {

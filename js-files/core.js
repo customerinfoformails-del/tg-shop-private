@@ -347,6 +347,7 @@ function switchTab(tabName) {
     .finally(() => {
       isTabChanging = false;
       setTabBarDisabled(false);
+      resetTabBarVisibility();
     });
 }
 
@@ -694,6 +695,14 @@ function showTabBar() {
   }
   if (tabBarHideCounter > 0) return;
 
+  const tabBar = document.getElementById('tabBar');
+  if (!tabBar) return;
+  tabBar.style.opacity = '1';
+  tabBar.style.pointerEvents = 'auto';
+}
+
+function resetTabBarVisibility() {
+  tabBarHideCounter = 0;
   const tabBar = document.getElementById('tabBar');
   if (!tabBar) return;
   tabBar.style.opacity = '1';

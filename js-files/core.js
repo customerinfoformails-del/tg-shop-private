@@ -19,6 +19,52 @@ const isMobileDevice =
     navigator.userAgent || ''
   );
 
+  let baseViewportHeight = null;
+  let keyboardVisible = false;
+  
+  function initKeyboardWatcher() {
+    if (!isMobileDevice) return;
+  
+    const vp = window.visualViewport || window;
+    baseViewportHeight = vp.height || window.innerHeight;
+  
+    const handler = () => {
+      const currentH =
+        (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+  
+      if (!baseViewportHeight) {
+        baseViewportHeight = currentH;
+        return;
+      }
+  
+      const delta = baseViewportHeight - currentH;
+  
+      // клавиатура показалась
+      if (delta > 120) {
+        keyboardVisible = true;
+        return;
+      }
+  
+      // клавиатура скрылась (вернулись почти к базовой высоте)
+      if (keyboardVisible && delta < 80) {
+        keyboardVisible = false;
+        // независимо от состояний фокуса/blur принудительно показываем таббар
+        tabBarHideCounter = 0;
+        const tabBar = document.getElementById('tabBar');
+        if (tabBar) {
+          tabBar.style.opacity = '1';
+          tabBar.style.pointerEvents = 'auto';
+        }
+      }
+    };
+  
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handler);
+    } else {
+      window.addEventListener('resize', handler);
+    }
+  }  
+
 let CATEGORIES = ['Все'];
 let isOrdersLoading = false;
 
@@ -879,6 +925,7 @@ async function initApp() {
     console.log('initDataUnsafe object:', window.Telegram?.WebApp?.initDataUnsafe);
     console.log('initDataUnsafe.user:', window.Telegram?.WebApp?.initDataUnsafe?.user);
 
+    initKeyboardWatcher();
     initTabBar();
     logStage('after initTabBar', t0);
 

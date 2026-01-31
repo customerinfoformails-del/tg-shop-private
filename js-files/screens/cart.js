@@ -631,6 +631,10 @@ function showCartTab() {
   if (savedSelect) {
     onSavedAddressChange();
   }
+
+  if (currentTab === 'cart') {
+    showTabBar();
+  }
 }
 
 function setPlaceOrderLoading(loading) {

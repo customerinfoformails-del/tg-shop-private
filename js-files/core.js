@@ -205,14 +205,20 @@ function initTabBar() {
   document.querySelectorAll('#tabBar .tab-item').forEach(tab => {
     tab.onclick = e => {
       e.preventDefault();
-      if (isTabChanging) return;               // защита от дабл-клика
+
+      // защита от дабл-клика / быстрого переключения
+      if (isTabChanging) return;
 
       const tabName = tab.dataset.tab;
       if (!tabName || tabName === currentTab) {
-        return;                                // клики по текущему игнорим
+        return;
       }
 
-      switchTab(tabName);                      // только через switchTab
+      // сразу блокируем таббар и ставим флаг
+      isTabChanging = true;
+      setTabBarDisabled(true);
+
+      switchTab(tabName);
     };
   });
   updateCartBadge();
@@ -245,13 +251,17 @@ function restoreTabScroll(tabName) {
 
 function switchTab(tabName) {
   console.log('[core] switchTab from', currentTab, 'to', tabName);
-  if (isTabChanging) return;
-  if (currentTab === tabName) return;
 
-  isTabChanging = true;           // сразу блокируем
-  setTabBarDisabled(true);        // и визуально/кликабельно
+  // если зачем-то вызвали с тем же табом — аккуратно разблокируемся
+  if (currentTab === tabName) {
+    isTabChanging = false;
+    setTabBarDisabled(false);
+    return;
+  }
 
-  // сразу подсветим нужный таб
+  const prevTab = currentTab;
+
+  // подсветка табов — только здесь
   document
     .querySelectorAll('#tabBar .tab-item')
     .forEach(t => t.classList.remove('active'));
@@ -276,8 +286,6 @@ function switchTab(tabName) {
       modalSavedScrollTop = 0;
     }
   }
-
-  const prevTab = currentTab;
 
   Promise.resolve()
     .then(() => {
@@ -318,7 +326,7 @@ function switchTab(tabName) {
       console.error('[core] switchTab error', err);
       currentTab = prevTab;
 
-      // восстанавливаем подсветку предыдущего таба
+      // откат подсветки
       document
         .querySelectorAll('#tabBar .tab-item')
         .forEach(t => t.classList.remove('active'));

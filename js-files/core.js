@@ -100,6 +100,16 @@ function saveCartToStorage() {
   }
 }
 
+function updateTabBarActive() {
+  document
+    .querySelectorAll('#tabBar .tab-item')
+    .forEach(t => t.classList.remove('active'));
+
+  const activeEl = document.querySelector('[data-tab="' + currentTab + '"]');
+  if (activeEl) activeEl.classList.add('active');
+}
+
+
 function loadCartFromStorage() {
   try {
     const raw = localStorage.getItem('cartItems');

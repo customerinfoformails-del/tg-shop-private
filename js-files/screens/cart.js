@@ -593,12 +593,24 @@ function showCartTab() {
       });
     }
   
-    ['deliveryAddress', 'deliveryComment'].forEach(id => {
+    // адрес доставки / пункт самовывоза — можем прятать таббар
+    ['deliveryAddress', 'pickupLocation'].forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
       el.addEventListener('focus', hideTabBar);
       el.addEventListener('blur', showTabBar);
-    });  
+    });
+  
+    // комментарий — таббар не прячем, только гарантированно показываем при blur
+    const commentEl = document.getElementById('deliveryComment');
+    if (commentEl) {
+      commentEl.addEventListener('focus', () => {
+        // ничего не делаем, таббар остаётся как есть
+      });
+      commentEl.addEventListener('blur', () => {
+        showTabBar();
+      });
+    }  
 
   const savedSelect = document.getElementById('savedAddress');
   if (savedSelect) {

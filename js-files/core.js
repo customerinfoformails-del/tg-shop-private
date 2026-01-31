@@ -193,6 +193,16 @@ document.addEventListener(
 
 // ---------- Таббар ----------
 
+function setTabBarDisabled(disabled) {
+  const tabBar = document.getElementById('tabBar');
+  if (!tabBar) return;
+  if (disabled) {
+    tabBar.classList.add('pointer-events-none');
+  } else {
+    tabBar.classList.remove('pointer-events-none');
+  }
+}
+
 function initTabBar() {
   console.log('[core] initTabBar');
 
@@ -206,13 +216,15 @@ function initTabBar() {
       const tabName = tab.dataset.tab;
       if (!tabName || tabName === currentTab) return;
 
+      // сразу глобально блокируем таббар
       isTabChanging = true;
+      setTabBarDisabled(true);
+
       switchTab(tabName);
     };
 
     tab.addEventListener('pointerdown', handler);
     tab.addEventListener('click', e => {
-      // на всякий случай гасим click, чтобы не было дубля после pointerdown
       e.preventDefault();
       e.stopPropagation();
     });
@@ -255,11 +267,22 @@ function restoreTabScroll(tabName) {
 
 // ---------- Переключение табов ----------
 
+function setTabBarDisabled(disabled) {
+  const tabBar = document.getElementById('tabBar');
+  if (!tabBar) return;
+  if (disabled) {
+    tabBar.classList.add('pointer-events-none');
+  } else {
+    tabBar.classList.remove('pointer-events-none');
+  }
+}
+
 function switchTab(tabName) {
   console.log('[core] switchTab from', currentTab, 'to', tabName);
 
   if (currentTab === tabName) {
     isTabChanging = false;
+    setTabBarDisabled(false);
     return;
   }
 
@@ -267,6 +290,7 @@ function switchTab(tabName) {
 
   saveCurrentTabScroll();
 
+  // спец‑логика выхода из shop (модалка)
   if (currentTab === 'shop' && tabName !== 'shop') {
     if (modal && !modal.classList.contains('hidden')) {
       modalWasOpenOnShop = true;
@@ -315,9 +339,8 @@ function switchTab(tabName) {
         restoreTabScroll('about');
       }
 
-      // ВАЖНО: сначала обновляем currentTab...
+      // сначала обновляем currentTab, потом подсветку
       currentTab = tabName;
-      // ...затем один раз синхронизируем подсветку
       updateTabBarActive();
     })
     .catch(err => {
@@ -327,6 +350,7 @@ function switchTab(tabName) {
     })
     .finally(() => {
       isTabChanging = false;
+      setTabBarDisabled(false);
     });
 }
 

@@ -919,5 +919,3 @@ async function initApp() {
     showError(e.message || 'Ошибка инициализации приложения');
   }
 }
-
-initApp();

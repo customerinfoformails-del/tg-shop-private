@@ -564,6 +564,10 @@ function showCartTab() {
         contactPhoneEl.value = savedProfile.phone;
       }
     }
+
+    if (contactConfirmedEl) {
+      contactConfirmedEl.checked = !!cartFormState.contactConfirmed;
+    }
   
     // автоподстановка +7
     if (contactPhoneEl) {

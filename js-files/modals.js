@@ -647,9 +647,19 @@ function showModal(product) {
 window.closeModal = function () {
   modal.classList.add('hidden');
   document.body.style.overflow = '';
+
+  // при явном закрытии — полный сброс состояния модалки
   selectedOption = {};
   currentProduct = null;
   selectedQuantity = 1;
   modalCurrentImageKey = null;
+
+  // сброс флагов восстановления при табах
+  modalWasOpenOnShop = false;
+  modalSavedScrollTop = 0;
+
+  const scrollContainer = document.querySelector('#modalContent .flex-1');
+  if (scrollContainer) scrollContainer.scrollTop = 0;
+
   tg?.HapticFeedback?.impactOccurred('light');
 };

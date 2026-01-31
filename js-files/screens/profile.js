@@ -37,92 +37,109 @@ window.toggleOrderDetails = function (index) {
   block.classList.toggle('hidden');
 };
 
-function showProfileTab() {
-  console.log('isOrdersLoading on renderProfile', isOrdersLoading);
-  if (isOrdersLoading) {
-    renderProfileSkeleton();
+// --- НОВАЯ ФУНКЦИЯ ДЛЯ СЕКЦИИ ЗАКАЗОВ ---
+
+function renderOrdersSection() {
+  const container = document.getElementById('ordersSectionContent');
+  if (!container) return;
+
+  if (isOrdersLoading && previousOrders.length === 0) {
+    container.innerHTML =
+      '<p class="text-xs text-gray-400">Загружаем историю заказов...</p>';
     return;
   }
+
+  if (!previousOrders.length) {
+    container.innerHTML =
+      '<p class="text-sm text-gray-500">Заказов пока нет</p>';
+    return;
+  }
+
+  const ordersHtml = previousOrders
+    .map(
+      (o, idx) =>
+        '<div class="mb-3 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">' +
+          '<button type="button" class="w-full text-left px-3 py-2 flex items-center justify-between" onclick="toggleOrderDetails(' +
+            idx +
+          ')">' +
+            '<div class="flex flex-col min-w-0 mr-2">' +
+              '<span class="text-sm font-semibold text-gray-800 truncate">Заказ #' +
+                o.id +
+              '</span>' +
+              '<span class="text-[11px] text-gray-500">' +
+                new Date(o.date).toLocaleString() +
+              '</span>' +
+            '</div>' +
+            '<span class="text-sm font-bold text-blue-600 whitespace-nowrap">RUB ' +
+              o.total +
+            '</span>' +
+          '</button>' +
+          '<div class="px-3 pb-2 border-t border-gray-100 text-xs text-gray-600">' +
+            '<div class="mt-1 break-words">Адрес: ' +
+              escapeHtml(o.address) +
+            '</div>' +
+            (o.comment
+              ? '<div class="mt-1 break-words text-gray-500">Комментарий: ' +
+                  escapeHtml(o.comment) +
+                '</div>'
+              : '') +
+            (o.contact && (o.contact.name || o.contact.phone)
+              ? '<div class="mt-1 break-words">Контакт: ' +
+                  (o.contact.name ? escapeHtml(o.contact.name) : '') +
+                  (o.contact.name && o.contact.phone ? ', ' : '') +
+                  (o.contact.phone ? escapeHtml(o.contact.phone) : '') +
+                '</div>'
+              : '') +
+            '<div class="mt-1 text-gray-500">Товаров: ' +
+              o.items.reduce((sum, item) => sum + (item.quantity || 0), 0) +
+            '</div>' +
+            '<div id="orderDetails_' +
+              idx +
+            '" class="hidden mt-2 pt-2 border-t border-dashed border-gray-200">' +
+              o.items
+                .map(
+                  item =>
+                    '<div class="flex items-center justify-between mb-1 gap-2">' +
+                      '<div class="flex-1 min-w-0">' +
+                        '<div class="font-semibold text-[11px] break-words">' +
+                          escapeHtml(item.name) +
+                        '</div>' +
+                        '<div class="text-[10px] text-gray-500">' +
+                          escapeHtml(item.storage) +
+                          ' | ' +
+                          escapeHtml(item.color) +
+                          ' | ' +
+                          escapeHtml(item.region) +
+                        '</div>' +
+                      '</div>' +
+                      '<div class="text-right text-[10px] whitespace-nowrap">' +
+                        '<div>' +
+                          item.quantity +
+                          ' шт.</div>' +
+                        '<div>RUB ' +
+                          item.price * item.quantity +
+                        '</div>' +
+                      '</div>' +
+                    '</div>'
+                )
+                .join('') +
+            '</div>' +
+          '</div>' +
+        '</div>'
+    )
+    .join('');
+
+  container.innerHTML = ordersHtml;
+}
+
+// --- ОБНОВЛЁННЫЙ showProfileTab ---
+
+function showProfileTab() {
+  console.log('isOrdersLoading on renderProfile', isOrdersLoading);
 
   const user = tg?.initDataUnsafe?.user;
   const username = user?.username || 'неизвестно';
   const displayId = '@' + username;
-
-  const ordersHtml = previousOrders.length
-    ? previousOrders
-        .map(
-          (o, idx) =>
-            '<div class="mb-3 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">' +
-              '<button type="button" class="w-full text-left px-3 py-2 flex items-center justify-between" onclick="toggleOrderDetails(' +
-                idx +
-              ')">' +
-                '<div class="flex flex-col min-w-0 mr-2">' +
-                  '<span class="text-sm font-semibold text-gray-800 truncate">Заказ #' +
-                    o.id +
-                  '</span>' +
-                  '<span class="text-[11px] text-gray-500">' +
-                    new Date(o.date).toLocaleString() +
-                  '</span>' +
-                '</div>' +
-                '<span class="text-sm font-bold text-blue-600 whitespace-nowrap">RUB ' +
-                  o.total +
-                '</span>' +
-              '</button>' +
-              '<div class="px-3 pb-2 border-t border-gray-100 text-xs text-gray-600">' +
-                '<div class="mt-1 break-words">Адрес: ' +
-                  escapeHtml(o.address) +
-                '</div>' +
-                (o.comment
-                  ? '<div class="mt-1 break-words text-gray-500">Комментарий: ' +
-                      escapeHtml(o.comment) +
-                    '</div>'
-                  : '') +
-                (o.contact && (o.contact.name || o.contact.phone)
-                  ? '<div class="mt-1 break-words">Контакт: ' +
-                      (o.contact.name ? escapeHtml(o.contact.name) : '') +
-                      (o.contact.name && o.contact.phone ? ', ' : '') +
-                      (o.contact.phone ? escapeHtml(o.contact.phone) : '') +
-                    '</div>'
-                  : '') +
-                '<div class="mt-1 text-gray-500">Товаров: ' +
-                  o.items.reduce((sum, item) => sum + (item.quantity || 0), 0) +
-                '</div>' +
-                '<div id="orderDetails_' +
-                  idx +
-                '" class="hidden mt-2 pt-2 border-t border-dashed border-gray-200">' +
-                  o.items
-                    .map(
-                      item =>
-                        '<div class="flex items-center justify-between mb-1 gap-2">' +
-                          '<div class="flex-1 min-w-0">' +
-                            '<div class="font-semibold text-[11px] break-words">' +
-                              escapeHtml(item.name) +
-                            '</div>' +
-                            '<div class="text-[10px] text-gray-500">' +
-                              escapeHtml(item.storage) +
-                              ' | ' +
-                              escapeHtml(item.color) +
-                              ' | ' +
-                              escapeHtml(item.region) +
-                            '</div>' +
-                          '</div>' +
-                          '<div class="text-right text-[10px] whitespace-nowrap">' +
-                            '<div>' +
-                              item.quantity +
-                              ' шт.</div>' +
-                            '<div>RUB ' +
-                              item.price * item.quantity +
-                            '</div>' +
-                          '</div>' +
-                        '</div>'
-                    )
-                    .join('') +
-                '</div>' +
-              '</div>' +
-            '</div>'
-        )
-        .join('')
-    : '<p class="text-sm text-gray-500">Заказов пока нет</p>';
 
   const addressesHtml = savedAddresses.length
     ? savedAddresses
@@ -152,17 +169,17 @@ function showProfileTab() {
         '</div>' +
         '<div class="flex flex-col min-w-0 flex-1">' +
           '<div class="flex items-start justify-between gap-2">' +
-          '<div class="min-w-0">' +
-          '<h2 class="text-xl font-bold leading-tight text-gray-900">Профиль</h2>' +
-          '<p class="text-gray-500 text-sm mt-1 break-all">ID: ' +
-            escapeHtml(displayId) +
-          '</p>' +
-        '</div>' +
-        '<button type="button"' +
-          ' class="text-[11px] font-semibold text-blue-600 px-2 py-1 rounded-full bg-blue-50 border border-blue-100 shrink-0"' +
-          ' onclick="scrollToOrdersSection()">' +
-          'Заказы' +
-        '</button>' +
+            '<div class="min-w-0">' +
+              '<h2 class="text-xl font-bold leading-tight text-gray-900">Профиль</h2>' +
+              '<p class="text-gray-500 text-sm mt-1 break-all">ID: ' +
+                escapeHtml(displayId) +
+              '</p>' +
+            '</div>' +
+            '<button type="button"' +
+              ' class="text-[11px] font-semibold text-blue-600 px-2 py-1 rounded-full bg-blue-50 border border-blue-100 shrink-0"' +
+              ' onclick="scrollToOrdersSection()">' +
+              'Заказы' +
+            '</button>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -201,14 +218,14 @@ function showProfileTab() {
       '</div>' +
 
       // заказы
-            // заказы
-            '<div class="space-y-3" id="ordersSection">' +
-            '<h3 class="text-lg font-semibold text-gray-800">История заказов</h3>' +
-            '<div>' +
-              ordersHtml +
-            '</div>' +
-          '</div>' +    
+      '<div class="space-y-3" id="ordersSection">' +
+        '<h3 class="text-lg font-semibold text-gray-800">История заказов</h3>' +
+        '<div id="ordersSectionContent"></div>' +
+      '</div>' +
     '</div>';
+
+  // сразу отрисуем секцию заказов (либо "грузим", либо список/пусто)
+  renderOrdersSection();
 
   // заполнение полей контактов из savedProfile
   const profileNameEl = document.getElementById('profileName');
@@ -224,7 +241,6 @@ function showProfileTab() {
   if (profilePhoneEl) {
     profilePhoneEl.addEventListener('focus', () => {
       hideTabBar();
-      // если пусто или только пробелы — подставляем +7
       if (!profilePhoneEl.value.trim()) {
         profilePhoneEl.value = '+7 ';
       }
@@ -232,9 +248,6 @@ function showProfileTab() {
 
     profilePhoneEl.addEventListener('blur', () => {
       showTabBar();
-      // НЕ трогаем значение, даже если там только "+7 "
-      // если хочешь, можно при блюре чистить "голый" +7, но тогда не подставляй повторно
-      // if (profilePhoneEl.value.trim() === '+7') profilePhoneEl.value = '';
     });
   }
 

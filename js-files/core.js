@@ -58,6 +58,10 @@ let isRefreshingProducts = false;
 let isTabChanging = false;
 let placeOrderTimeoutId = null;
 
+// модалка при переключении табов
+let modalWasOpenOnShop = false;
+let modalSavedScrollTop = 0;
+
 // сохранение состояния формы корзины между рендерами
 let cartFormState = {
   addressText: '',
@@ -218,8 +222,24 @@ function switchTab(tabName) {
   if (isTabChanging) return;
   if (currentTab === tabName) return;
 
-  if (typeof closeModal === 'function' && modal && !modal.classList.contains('hidden')) {
-    closeModal();
+  // Уходим с shop в другой таб
+  if (currentTab === 'shop' && tabName !== 'shop') {
+    if (modal && !modal.classList.contains('hidden')) {
+      // модалка была открыта — сохраняем состояние
+      modalWasOpenOnShop = true;
+
+      // сохраняем текущий scroll внутри модалки
+      const scrollContainer = document.querySelector('#modalContent .flex-1');
+      modalSavedScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+
+      // мягко прячем модалку, но НЕ сбрасываем currentProduct/selectedOption/selectedQuantity
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    } else {
+      // модалки не было — ничего не восстанавливаем при возврате
+      modalWasOpenOnShop = false;
+      modalSavedScrollTop = 0;
+    }
   }
 
   const prevTab = currentTab;
@@ -229,7 +249,20 @@ function switchTab(tabName) {
   Promise.resolve()
     .then(() => {
       if (tabName === 'shop') {
+        // перерисовываем магазин
         renderShop();
+
+        // если ранее на shop модалка была открыта — восстанавливаем её
+        if (modalWasOpenOnShop && currentProduct) {
+          renderProductModal(currentProduct);
+          modal.classList.remove('hidden');
+          document.body.style.overflow = 'hidden';
+          tg?.expand();
+
+          // восстанавливаем scroll внутри модалки
+          const scrollContainer = document.querySelector('#modalContent .flex-1');
+          if (scrollContainer) scrollContainer.scrollTop = modalSavedScrollTop;
+        }
       } else if (tabName === 'cart') {
         showCartTab();
       } else if (tabName === 'sale') {
@@ -239,12 +272,13 @@ function switchTab(tabName) {
       } else if (tabName === 'about') {
         showAboutTab();
       }
+
       currentTab = tabName;
       document
-      .querySelectorAll('#tabBar .tab-item')
-      .forEach(t => t.classList.remove('active'));
-    const currentEl = document.querySelector('[data-tab="' + tabName + '"]');
-    if (currentEl) currentEl.classList.add('active');    
+        .querySelectorAll('#tabBar .tab-item')
+        .forEach(t => t.classList.remove('active'));
+      const currentEl = document.querySelector('[data-tab="' + tabName + '"]');
+      if (currentEl) currentEl.classList.add('active');
     })
     .catch(err => {
       console.error('[core] switchTab error', err);
@@ -533,8 +567,12 @@ async function fetchUserOrders() {
     if (!userId) return;
 
     isOrdersLoading = true;
+
+    // если мы на профиле — перерисуем только секцию заказов
     if (currentTab === 'profile') {
-      renderProfileSkeleton();
+      if (typeof renderOrdersSection === 'function') {
+        renderOrdersSection();
+      }
     }
 
     const url = ORDERS_API_URL + '?userId=' + encodeURIComponent(userId);
@@ -554,16 +592,13 @@ async function fetchUserOrders() {
 
     previousOrders = data.orders;
     console.log('[orders] previousOrders updated', previousOrders.length);
-
-    isOrdersLoading = false;
-
-    if (currentTab === 'profile') {
-      showProfileTab();
-    }
   } catch (e) {
     console.error('[orders] fetchUserOrders error', e);
   } finally {
     isOrdersLoading = false;
+    if (currentTab === 'profile' && typeof renderOrdersSection === 'function') {
+      renderOrdersSection();
+    }
   }
 }
 

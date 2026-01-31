@@ -639,12 +639,11 @@ function initModalSwipe() {
 
 function showModal(product) {
   renderProductModal(product);
-  modal.classList.remove('hidden');
-
   // при любом новом открытии — скролл модалки с нуля
   const scrollContainer = document.querySelector('#modalContent .flex-1');
   if (scrollContainer) scrollContainer.scrollTop = 0;
 
+  modal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 
   tg?.expand();

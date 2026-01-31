@@ -343,7 +343,7 @@ function showCartTab() {
 
   if (!cartItems.length) {
     root.innerHTML =
-      '<div class="flex flex-col items-center justify-center min-h-[70vh] text-center p-8 pb-[65px]">' +
+      '<div class="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 pb-[65px]">' +
         '<div class="w-28 h-28 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center mb-6">' +
           '<svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
           '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"' +
@@ -630,10 +630,6 @@ function showCartTab() {
   const savedSelect = document.getElementById('savedAddress');
   if (savedSelect) {
     onSavedAddressChange();
-  }
-
-  if (currentTab === 'cart') {
-    showCartTab();
   }
 }
 

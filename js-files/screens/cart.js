@@ -611,7 +611,7 @@ function showCartTab() {
 function scheduleDelayedOrdersSync(reason) {
   console.log('[placeOrder] scheduleDelayedOrdersSync reason=', reason);
   setTimeout(async () => {
-    try {
+    try { 
       console.log('[placeOrder] delayed sync 2min after', reason);
       await fetchUserOrders();
       if (currentTab === 'profile') {

@@ -123,12 +123,9 @@
 
       const tg = window.Telegram?.WebApp;
       if (tg && tg.showAlert) {
-        const versions = window.APP_VERSIONS || {};
-        const msg = Object.entries(versions)
-          .map(([name, ver]) => `${name}: v${ver}`)
-          .join('\n') || 'Версии не определены';
+        const version = window.APP_VERSIONS.app || {};
 
-        tg.showAlert('Версии скриптов:\n' + msg);
+        tg.showAlert('Версия:\n' + version);
       }
     })();
   </script>

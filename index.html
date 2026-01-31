@@ -8,7 +8,7 @@
 
   <!-- Глобальная версия приложения -->
   <script>
-    const version = '40';
+    const version = '41';
     window.APP_VERSIONS = {
       app: version,
       products: version,
@@ -99,14 +99,14 @@
   </div>
 
   <!-- JS, как раньше, но с ?v=version -->
-  <script src="js-files/products.js?v=40"></script>
-  <script src="js-files/modals.js?v=40"></script>
-  <script src="js-files/screens/cart.js?v=40"></script>
-  <script src="js-files/core.js?v=40"></script>
-  <script src="js-files/ui_common.js?v=40"></script>
-  <script src="js-files/screens/sale.js?v=40"></script>
-  <script src="js-files/screens/profile.js?v=40"></script>
-  <script src="js-files/screens/about.js?v=40"></script>
+  <script src="js-files/products.js?v=41"></script>
+  <script src="js-files/modals.js?v=41"></script>
+  <script src="js-files/screens/cart.js?v=41"></script>
+  <script src="js-files/core.js?v=41"></script>
+  <script src="js-files/ui_common.js?v=41"></script>
+  <script src="js-files/screens/sale.js?v=41"></script>
+  <script src="js-files/screens/profile.js?v=41"></script>
+  <script src="js-files/screens/about.js?v=41"></script>
 
   <!-- Подпись версий на табах + алерт при запуске -->
   <script>
@@ -123,12 +123,9 @@
 
       const tg = window.Telegram?.WebApp;
       if (tg && tg.showAlert) {
-        const versions = window.APP_VERSIONS || {};
-        const msg = Object.entries(versions)
-          .map(([name, ver]) => `${name}: v${ver}`)
-          .join('\n') || 'Версии не определены';
+        const version = window.APP_VERSIONS.app || {};
 
-        tg.showAlert('Версии скриптов:\n' + msg);
+        tg.showAlert('Версия:\n' + version);
       }
     })();
   </script>

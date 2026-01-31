@@ -211,16 +211,10 @@ function initTabBar() {
       e.preventDefault();
       e.stopPropagation();
 
-      if (isTabChanging) return;
-
       const tabName = tab.dataset.tab;
       if (!tabName || tabName === currentTab) return;
 
-      // сразу глобально блокируем таббар
-      isTabChanging = true;
-      setTabBarDisabled(true);
-
-      switchTab(tabName);
+      requestTabSwitch(tabName);
     };
 
     tab.addEventListener('pointerdown', handler);
@@ -267,14 +261,99 @@ function restoreTabScroll(tabName) {
 
 // ---------- Переключение табов ----------
 
-function setTabBarDisabled(disabled) {
-  const tabBar = document.getElementById('tabBar');
-  if (!tabBar) return;
-  if (disabled) {
-    tabBar.classList.add('pointer-events-none');
-  } else {
-    tabBar.classList.remove('pointer-events-none');
+// Очередь запросов на переключение таба
+let pendingTabSwitch = null;
+let isTabSwitchInProgress = false;
+
+function requestTabSwitch(tabName) {
+  // если уже выполняется — запоминаем последний запрос и выходим
+  if (isTabSwitchInProgress) {
+    pendingTabSwitch = tabName;
+    return;
   }
+
+  isTabSwitchInProgress = true;
+  setTabBarDisabled(true);
+
+  // запускаем реальный switchTab
+  switchTab(tabName).finally(() => {
+    isTabSwitchInProgress = false;
+
+    if (pendingTabSwitch && pendingTabSwitch !== currentTab) {
+      const next = pendingTabSwitch;
+      pendingTabSwitch = null;
+      requestTabSwitch(next); // обработаем последнюю очередь
+    } else {
+      pendingTabSwitch = null;
+      setTabBarDisabled(false);
+    }
+  });
+}
+
+
+function switchTab(tabName) {
+  console.log('[core] switchTab from', currentTab, 'to', tabName);
+
+  if (currentTab === tabName) {
+    return Promise.resolve();
+  }
+
+  const prevTab = currentTab;
+  saveCurrentTabScroll();
+
+  if (currentTab === 'shop' && tabName !== 'shop') {
+    if (modal && !modal.classList.contains('hidden')) {
+      modalWasOpenOnShop = true;
+      const scrollContainer = document.querySelector('#modalContent .flex-1');
+      modalSavedScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    } else {
+      modalWasOpenOnShop = false;
+      modalSavedScrollTop = 0;
+    }
+  }
+
+  return Promise.resolve()
+    .then(() => {
+      if (tabName === 'shop') {
+        renderShop();
+        restoreTabScroll('shop');
+
+        if (modalWasOpenOnShop && currentProduct) {
+          renderProductModal(currentProduct);
+          modal.classList.remove('hidden');
+          document.body.style.overflow = 'hidden';
+          tg?.expand();
+          const scrollContainer = document.querySelector('#modalContent .flex-1');
+          if (scrollContainer) scrollContainer.scrollTop = modalSavedScrollTop;
+        }
+
+      } else if (tabName === 'cart') {
+        showCartTab();
+        restoreTabScroll('cart');
+
+      } else if (tabName === 'sale') {
+        showSaleTab();
+        restoreTabScroll('sale');
+
+      } else if (tabName === 'profile') {
+        showProfileTab();
+        restoreTabScroll('profile');
+
+      } else if (tabName === 'about') {
+        showAboutTab();
+        restoreTabScroll('about');
+      }
+
+      currentTab = tabName;
+      updateTabBarActive();
+    })
+    .catch(err => {
+      console.error('[core] switchTab error', err);
+      currentTab = prevTab;
+      updateTabBarActive();
+    });
 }
 
 function switchTab(tabName) {

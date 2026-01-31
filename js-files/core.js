@@ -374,11 +374,9 @@ function syncProductsAndCart() {
   syncCartWithProducts();
   if (currentTab === 'shop') {
     renderShop();
-    showTabBar()
   }
   if (currentTab === 'cart') {
     showCartTab();
-    showTabBar()
   }
 }
 

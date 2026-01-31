@@ -63,6 +63,7 @@ let modalWasOpenOnShop = false;
 let modalSavedScrollTop = 0;
 
 let shopScrollTop = 0;
+let cartScrollTop = 0;
 
 // сохранение состояния формы корзины между рендерами
 let cartFormState = {
@@ -224,10 +225,18 @@ function switchTab(tabName) {
   if (isTabChanging) return;
   if (currentTab === tabName) return;
 
-  // Уходим с shop в другой таб
+  // сохраняем текущий scrollY для активного таба
+  const currentScroll = window.scrollY || document.documentElement.scrollTop || 0;
+  if (currentTab === 'shop') {
+    shopScrollTop = currentScroll;
+  } else if (currentTab === 'cart') {
+    cartScrollTop = currentScroll;
+  }
+
+  // спец‑логика выхода из shop (скролл + модалка)
   if (currentTab === 'shop' && tabName !== 'shop') {
-    shopScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
-    
+    // shopScrollTop уже сохранён выше, не нужно ещё раз брать scrollY
+
     if (modal && !modal.classList.contains('hidden')) {
       // модалка была открыта — сохраняем состояние
       modalWasOpenOnShop = true;
@@ -253,35 +262,35 @@ function switchTab(tabName) {
   Promise.resolve()
     .then(() => {
       if (tabName === 'shop') {
-        // восстановим скролл списка товаров
-        // (если до этого из shop уходили, в shopScrollTop уже лежит позиция)
+        // рендерим и восстанавливаем скролл списка товаров
         renderShop();
-      
-        // после рендера вернём scroll
+
         if (typeof shopScrollTop === 'number' && shopScrollTop > 0) {
           window.scrollTo(0, shopScrollTop);
         }
-      
+
         // если ранее на shop модалка была открыта — восстанавливаем её
         if (modalWasOpenOnShop && currentProduct) {
           renderProductModal(currentProduct);
           modal.classList.remove('hidden');
           document.body.style.overflow = 'hidden';
           tg?.expand();
-      
+
           const scrollContainer = document.querySelector('#modalContent .flex-1');
           if (scrollContainer) scrollContainer.scrollTop = modalSavedScrollTop;
         }
       } else if (tabName === 'cart') {
         showCartTab();
-      } else if (tabName === 'cart') {
-        showCartTab();
+
+        if (typeof cartScrollTop === 'number' && cartScrollTop > 0) {
+          window.scrollTo(0, cartScrollTop);
+        }
       } else if (tabName === 'sale') {
         showSaleTab();
       } else if (tabName === 'profile') {
         showProfileTab();
       } else if (tabName === 'about') {
-        showAboutTab(); 
+        showAboutTab();
       }
 
       currentTab = tabName;
@@ -300,6 +309,8 @@ function switchTab(tabName) {
       setTabBarDisabled(false);
     });
 }
+
+
 
 // ---------- Синхронизация корзины и товаров ----------
 

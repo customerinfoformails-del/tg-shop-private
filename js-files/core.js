@@ -81,12 +81,22 @@ const modal = document.getElementById('productModal');
 // ---------- Глобальная обработка ошибок ----------
 
 window.onerror = function (message, source, lineno, colno, error) {
-  console.error('Global error:', message, source, lineno, colno, error);
   try {
-    showError('Произошла ошибка в приложении. Попробуйте обновить Mini App.');
-  } catch (e) {
-    tg?.showAlert?.('Произошла ошибка в приложении. Попробуйте обновить Mini App.');
+    console.error('Global error:', message, source, lineno, colno, error);
+  } catch (_) {
+    // на всякий случай
   }
+
+  try {
+    // без несуществующего showError
+    tg?.showAlert?.(
+      'Произошла ошибка в приложении. Попробуйте обновить Mini App.'
+    );
+  } catch (_) {
+    // глушим любые падения внутри onerror
+  }
+
+  // true = не пускать ошибку дальше
   return true;
 };
 

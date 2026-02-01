@@ -80,15 +80,15 @@ const modal = document.getElementById('productModal');
 
 // ---------- Глобальная обработка ошибок ----------
 
-// window.onerror = function (message, source, lineno, colno, error) {
-//   console.error('Global error:', message, source, lineno, colno, error);
-//   try {
-//     showError('Произошла ошибка в приложении. Попробуйте обновить Mini App.');
-//   } catch (e) {
-//     tg?.showAlert?.('Произошла ошибка в приложении. Попробуйте обновить Mini App.');
-//   }
-//   return true;
-// };
+window.onerror = function (message, source, lineno, colno, error) {
+  console.error('Global error:', message, source, lineno, colno, error);
+  try {
+    showError('Произошла ошибка в приложении. Попробуйте обновить Mini App.');
+  } catch (e) {
+    tg?.showAlert?.('Произошла ошибка в приложении. Попробуйте обновить Mini App.');
+  }
+  return true;
+};
 
 // ---------- localStorage (корзина, адреса, профиль) ----------
 

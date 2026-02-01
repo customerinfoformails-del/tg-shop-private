@@ -35,10 +35,12 @@ function selectOptionNoFocus(type, option) {
   const typeIndex = order.indexOf(type);
 
   if (selectedOption[type] === option) {
+    // снимаем выбор и чистим всё дальше
     for (let i = typeIndex; i < order.length; i++) {
       delete selectedOption[order[i]];
     }
   } else {
+    // ставим новое значение и чистим всё дальше
     for (let i = typeIndex + 1; i < order.length; i++) {
       delete selectedOption[order[i]];
     }

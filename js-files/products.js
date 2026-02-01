@@ -46,6 +46,18 @@ function normalizeProducts(products) {
   }));
 }
 
+function getFilteredProductImages(variants) {
+  const images = new Set();
+  variants.forEach(variant => {
+    if (variant.images && Array.isArray(variant.images)) {
+      variant.images.forEach(img => {
+        if (img && img.trim()) images.add(img);
+      });
+    }
+  });
+  return Array.from(images);
+}
+
 // все варианты по имени товара
 function getProductVariants(productName) {
   return productsData ? productsData.filter(p => p.name === productName) : [];

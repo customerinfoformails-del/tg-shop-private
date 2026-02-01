@@ -1,4 +1,5 @@
 // порядок выбора опций в модалке
+// порядок выбора опций в модалке
 const FILTER_ORDER_BY_CAT = {
   'iPhone': ['simType', 'storage', 'color', 'region'],
   'Apple Watch': ['diameter', 'caseColor', 'bandType', 'bandColor', 'bandSize'],
@@ -8,7 +9,6 @@ const FILTER_ORDER_BY_CAT = {
 function getFilterOrderForProduct(productCat) {
   return FILTER_ORDER_BY_CAT[productCat] || ['storage', 'color', 'region'];
 }
-
 
 // нормализация ответа из Google Apps Script (плоский массив вариантов)
 function normalizeProducts(products) {
@@ -22,22 +22,23 @@ function normalizeProducts(products) {
     code: row.id,
 
     // iPhone
-    storage: row.memory || '',
-    region: row.region || '',
-    simType: row.sim || '',
-    color: row.color || '',
+    storage: (row.memory || '').trim(),
+    region: (row.region || '').trim(),
+    simType: (row.sim || '').trim(),
+    color: (row.color || '').trim(),
 
     // Apple Watch
-    diameter: row.diameter || '',
-    caseColor: row.caseColor || '',
-    bandColor: row.bandColor || '',
-    bandType: row.bandType || '',
-    bandSize: row.bandSize || '',
+    // приводим к строкам, чтобы фильтр работал корректно
+    diameter: row.diameter != null ? String(row.diameter).trim() : '',
+    caseColor: (row.caseColor || '').trim(),
+    bandColor: (row.bandColor || '').trim(),
+    bandType: (row.bandType || '').trim(),
+    bandSize: (row.bandSize || '').trim(),
 
     // MacBook
-    diagonal: row.diagonal || '',
-    ram: row.ram || '',
-    ssd: row.ssd || '',
+    diagonal: row.diagonal != null ? String(row.diagonal).trim() : '',
+    ram: (row.ram || '').trim(),
+    ssd: (row.ssd || '').trim(),
 
     inStock: !!row.inStock,
     commonImage: row.commonImage || '',
@@ -50,21 +51,6 @@ function getProductVariants(productName) {
   return productsData ? productsData.filter(p => p.name === productName) : [];
 }
 
-
-// все картинки по вариантам
-function getFilteredProductImages(variants) {
-  const images = new Set();
-  variants.forEach(variant => {
-    if (variant.images && Array.isArray(variant.images)) {
-      variant.images.forEach(img => {
-        if (img && img.trim()) images.add(img);
-      });
-    }
-  });
-  return Array.from(images);
-}
-
-
 // текущие варианты по выбранным опциям
 function getFilteredVariants(variants) {
   if (!variants.length) return [];
@@ -72,7 +58,9 @@ function getFilteredVariants(variants) {
   return variants.filter(variant =>
     order.every(type => {
       const selectedValue = selectedOption[type];
-      return !selectedValue || variant[type] === selectedValue;
+      if (!selectedValue) return true;
+      const v = variant[type];
+      return String(v) === String(selectedValue);
     })
   );
 }

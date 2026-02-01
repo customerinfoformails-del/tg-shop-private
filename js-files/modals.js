@@ -470,7 +470,7 @@ requiredTypes.forEach(type => {
 
   // === ТЕЛО МОДАЛКИ (опции, количество) ===
   const body = document.getElementById('modalBodyDynamic');
-  const order = orderWithValues;
+  const order = requiredTypes;
 
   body.innerHTML =
   order.map((type, index) => {

@@ -89,8 +89,23 @@ function getAvailableOptions(type, variants) {
 // все ли опции выбраны
 function isCompleteSelection() {
   if (!currentProduct) return false;
-  const requiredTypes = getRequiredTypesForProduct(currentProduct);
-  return requiredTypes.every(type => selectedOption[type]);
+
+  const allVariants = getProductVariants(currentProduct.name).filter(v => v.inStock);
+  if (!allVariants.length) return false;
+
+  const filtered = getFilteredVariants(allVariants);
+  if (filtered.length !== 1) return false; // должен остаться ровно один вариант
+
+  const v = filtered[0];
+  const order = getFilterOrderForProduct(currentProduct.cat);
+
+  // Для финального варианта: если в нём поле заполнено,
+  // то для него должна быть выбрана опция
+  return order.every(type => {
+    const value = v[type];
+    if (value === undefined || value === null || value === '') return true;
+    return !!selectedOption[type];
+  });
 }
 
 function getRequiredTypesForProduct(product) {
@@ -113,11 +128,11 @@ function getRequiredTypesForProduct(product) {
 // индекс секции, до которой выбор сделан
 function getCurrentSectionIndex() {
   if (!currentProduct) return 0;
-  const requiredTypes = getRequiredTypesForProduct(currentProduct);
-  for (let i = 0; i < requiredTypes.length; i++) {
-    if (!selectedOption[requiredTypes[i]]) return i;
+  const order = getFilterOrderForProduct(currentProduct.cat);
+  for (let i = 0; i < order.length; i++) {
+    if (!selectedOption[order[i]]) return i;
   }
-  return requiredTypes.length;
+  return order.length;
 }
 
 

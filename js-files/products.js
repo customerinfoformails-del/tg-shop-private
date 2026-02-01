@@ -89,30 +89,31 @@ function getAvailableOptions(type, variants) {
 // все ли опции выбраны
 function isCompleteSelection() {
   if (!currentProduct) return false;
-  const variants = getProductVariants(currentProduct.name).filter(v => v.inStock);
-  if (!variants.length) return false;
-
-  const order = getFilterOrderForProduct(currentProduct.cat);
-
-  // Опции, по которым вообще есть хоть одно значение у вариантов
-  const requiredTypes = order.filter(type =>
-    variants.some(v => v[type])
-  );
-
+  const requiredTypes = getRequiredTypesForProduct(currentProduct);
   return requiredTypes.every(type => selectedOption[type]);
 }
+
+function getRequiredTypesForProduct(product) {
+  const variants = getProductVariants(product.name).filter(v => v.inStock);
+  if (!variants.length) return [];
+
+  const order = getFilterOrderForProduct(product.cat);
+
+  return order.filter(type => {
+    const values = variants.map(v => v[type]).filter(v => v !== undefined && v !== null && v !== '');
+    if (!values.length) return false; // вообще нет значения ни у одного варианта
+
+    const unique = Array.from(new Set(values.map(String)));
+    // Обязательно, только если реально различает варианты (есть больше одного значения)
+    return unique.length > 1;
+  });
+}
+
 
 // индекс секции, до которой выбор сделан
 function getCurrentSectionIndex() {
   if (!currentProduct) return 0;
-  const variants = getProductVariants(currentProduct.name).filter(v => v.inStock);
-  if (!variants.length) return 0;
-
-  const order = getFilterOrderForProduct(currentProduct.cat);
-  const requiredTypes = order.filter(type =>
-    variants.some(v => v[type])
-  );
-
+  const requiredTypes = getRequiredTypesForProduct(currentProduct);
   for (let i = 0; i < requiredTypes.length; i++) {
     if (!selectedOption[requiredTypes[i]]) return i;
   }

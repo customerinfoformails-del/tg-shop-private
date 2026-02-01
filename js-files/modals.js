@@ -160,6 +160,7 @@ closeModal();
 
 function renderProductModal(product) {
   const filterOrder = getFilterOrderForProduct(product.cat);
+  const requiredTypes = getRequiredTypesForProduct(product);
   currentProduct = product;
 
   const allVariants = getProductVariants(product.name);
@@ -187,12 +188,9 @@ function renderProductModal(product) {
   const filteredVariants = getFilteredVariants(variants);
   const availableVariants = filteredVariants;
   const availableOptions = {};
-  const orderWithValues = filterOrder.filter(type =>
-    variants.some(v => v[type])
-  );
-  orderWithValues.forEach(type => {
-    availableOptions[type] = getAvailableOptions(type, variants);
-  });  
+requiredTypes.forEach(type => {
+  availableOptions[type] = getAvailableOptions(type, variants);
+});
 
   const complete = isCompleteSelection();
 

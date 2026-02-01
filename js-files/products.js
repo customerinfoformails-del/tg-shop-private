@@ -1,5 +1,13 @@
 // порядок выбора опций в модалке
-const FILTER_ORDER = ['simType', 'storage', 'color', 'region'];
+const FILTER_ORDER_BY_CAT = {
+  'iPhone': ['simType', 'storage', 'color', 'region'],
+  'Apple Watch': ['diameter', 'caseColor', 'bandType', 'bandColor', 'bandSize'],
+  'MacBook': ['diagonal', 'ram', 'ssd', 'color']
+};
+
+function getFilterOrderForProduct(productCat) {
+  return FILTER_ORDER_BY_CAT[productCat] || ['storage', 'color', 'region'];
+}
 
 
 // нормализация ответа из Google Apps Script (плоский массив вариантов)
@@ -9,17 +17,33 @@ function normalizeProducts(products) {
     name: row.name,
     price: parseFloat(row.price) || 0,
     cat: row.cat,
+
+    // универсальный код
     code: row.id,
+
+    // iPhone
     storage: row.memory || '',
     region: row.region || '',
     simType: row.sim || '',
     color: row.color || '',
+
+    // Apple Watch
+    diameter: row.diameter || '',
+    caseColor: row.caseColor || '',
+    bandColor: row.bandColor || '',
+    bandType: row.bandType || '',
+    bandSize: row.bandSize || '',
+
+    // MacBook
+    diagonal: row.diagonal || '',
+    ram: row.ram || '',
+    ssd: row.ssd || '',
+
     inStock: !!row.inStock,
     commonImage: row.commonImage || '',
     images: Array.isArray(row.images) ? row.images : []
   }));
 }
-
 
 // все варианты по имени товара
 function getProductVariants(productName) {
@@ -43,8 +67,10 @@ function getFilteredProductImages(variants) {
 
 // текущие варианты по выбранным опциям
 function getFilteredVariants(variants) {
+  if (!variants.length) return [];
+  const order = getFilterOrderForProduct(variants[0].cat);
   return variants.filter(variant =>
-    FILTER_ORDER.every(type => {
+    order.every(type => {
       const selectedValue = selectedOption[type];
       return !selectedValue || variant[type] === selectedValue;
     })
@@ -62,16 +88,20 @@ function getAvailableOptions(type, variants) {
 
 // все ли опции выбраны
 function isCompleteSelection() {
-  return FILTER_ORDER.every(type => selectedOption[type]);
+  if (!currentProduct) return false;
+  const order = getFilterOrderForProduct(currentProduct.cat);
+  return order.every(type => selectedOption[type]);
 }
 
 
 // индекс секции, до которой выбор сделан
 function getCurrentSectionIndex() {
-  for (let i = 0; i < FILTER_ORDER.length; i++) {
-    if (!selectedOption[FILTER_ORDER[i]]) return i;
+  if (!currentProduct) return 0;
+  const order = getFilterOrderForProduct(currentProduct.cat);
+  for (let i = 0; i < order.length; i++) {
+    if (!selectedOption[order[i]]) return i;
   }
-  return FILTER_ORDER.length;
+  return order.length;
 }
 
 
@@ -159,7 +189,22 @@ function preloadAllImages(products) {
 
 // подписи к опциям
 function getLabel(type) {
-  const labels = { simType: 'SIM/eSIM', storage: 'Память', color: 'Цвет', region: 'Регион' };
+  const labels = {
+    simType: 'SIM/eSIM',
+    storage: 'Память',
+    color: 'Цвет',
+    region: 'Регион',
+
+    diameter: 'Диаметр',
+    caseColor: 'Цвет корпуса',
+    bandColor: 'Цвет ремешка',
+    bandType: 'Тип ремешка',
+    bandSize: 'Размер ремешка',
+
+    diagonal: 'Диагональ',
+    ram: 'ОЗУ',
+    ssd: 'SSD'
+  };
   return labels[type] || type;
 }
 

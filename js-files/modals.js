@@ -31,15 +31,16 @@ function selectOptionNoFocus(type, option) {
   const scrollContainer = document.querySelector('#modalContent .flex-1');
   const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
 
+  const order = getFilterOrderForProduct(currentProduct?.cat);
+  const typeIndex = order.indexOf(type);
+
   if (selectedOption[type] === option) {
-    const typeIndex = FILTER_ORDER.indexOf(type);
-    for (let i = typeIndex; i < FILTER_ORDER.length; i++) {
-      delete selectedOption[FILTER_ORDER[i]];
+    for (let i = typeIndex; i < order.length; i++) {
+      delete selectedOption[order[i]];
     }
   } else {
-    const typeIndex = FILTER_ORDER.indexOf(type);
-    for (let i = typeIndex + 1; i < FILTER_ORDER.length; i++) {
-      delete selectedOption[FILTER_ORDER[i]];
+    for (let i = typeIndex + 1; i < order.length; i++) {
+      delete selectedOption[order[i]];
     }
     selectedOption[type] = option;
   }
@@ -60,10 +61,11 @@ function clearOptionNoFocus(type) {
   const scrollContainer = document.querySelector('#modalContent .flex-1');
   const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
 
-  const typeIndex = FILTER_ORDER.indexOf(type);
-  for (let i = typeIndex; i < FILTER_ORDER.length; i++) {
-    delete selectedOption[FILTER_ORDER[i]];
-  }
+  const order = getFilterOrderForProduct(currentProduct?.cat);
+const typeIndex = order.indexOf(type);
+for (let i = typeIndex; i < order.length; i++) {
+  delete selectedOption[order[i]];
+}
 
   renderProductModal(currentProduct);
 
@@ -110,7 +112,7 @@ window.addToCartFromModal = async function () {
     if (sc2) sc2.scrollTop = prevScrollTop;
 
     if (!isCompleteSelection()) {
-      tg?.showAlert?.('❌ Выберите все опции: SIM → Память → Цвет → Регион');
+      tg?.showAlert?.('❌ Выберите все опции');
       return;
     }
 
@@ -129,23 +131,19 @@ window.addToCartFromModal = async function () {
     }
 
     const selectedVariant = variants[0];
-    addToCart(selectedVariant, selectedQuantity);
-    tg?.showAlert?.(
-      '✅ ' +
-        selectedVariant.name +
-        '\n' +
-        selectedVariant.storage +
-        ' | ' +
-        selectedVariant.color +
-        ' | ' +
-        selectedVariant.region +
-        '\n' +
-        'Количество: ' +
-        selectedQuantity +
-        '\nRUB ' +
-        selectedVariant.price * selectedQuantity
-    );
-    closeModal();
+addToCart(selectedVariant, selectedQuantity);
+
+const subtitle = getCartItemSubtitle(selectedVariant);
+tg?.showAlert?.(
+  '✅ ' +
+    selectedVariant.name +
+    (subtitle ? '\n' + subtitle : '') +
+    '\nКоличество: ' +
+    selectedQuantity +
+    '\nRUB ' +
+    selectedVariant.price * selectedQuantity
+);
+closeModal();
   } finally {
     isAddingToCart = false;
     const scA = document.querySelector('#modalContent .flex-1');
@@ -159,6 +157,7 @@ window.addToCartFromModal = async function () {
 };
 
 function renderProductModal(product) {
+  const filterOrder = getFilterOrderForProduct(product.cat);
   currentProduct = product;
 
   const allVariants = getProductVariants(product.name);
@@ -186,10 +185,9 @@ function renderProductModal(product) {
   const filteredVariants = getFilteredVariants(variants);
   const availableVariants = filteredVariants;
   const availableOptions = {};
-
-  FILTER_ORDER.forEach(type => {
+  filterOrder.forEach(type => {
     availableOptions[type] = getAvailableOptions(type, variants);
-  });
+  });  
 
   const complete = isCompleteSelection();
 
@@ -469,10 +467,11 @@ function renderProductModal(product) {
 
   // === ТЕЛО МОДАЛКИ (опции, количество) ===
   const body = document.getElementById('modalBodyDynamic');
+  const order = filterOrder;
 
   body.innerHTML =
-    FILTER_ORDER.map((type, index) => {
-      const isLocked = index > getCurrentSectionIndex();
+  order.map((type, index) => {
+    const isLocked = index > getCurrentSectionIndex();
       return (
         '<div class="option-section ' +
           (isLocked ? 'locked' : 'unlocked') +
@@ -530,15 +529,10 @@ function renderProductModal(product) {
           getVariantCountText(availableVariants.length) +
         '</span>' +
         (complete && availableVariants.length === 1
-          ? '<div class="text-xs mt-1 bg-blue-50 border border-blue-200 rounded-xl п-2">' +
-            '✅ Выбран: ' +
-            availableVariants[0].storage +
-            ' | ' +
-            availableVariants[0].color +
-            ' | ' +
-            availableVariants[0].region +
+          ? '<div class="text-xs mt-1 bg-blue-50 border border-blue-200 rounded-xl p-2">' +
+              '✅ Спецификация выбрана' +
             '</div>'
-          : '') +
+          : '') +        
       '</div>' +
     '</div>';
 

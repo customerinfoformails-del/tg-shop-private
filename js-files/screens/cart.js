@@ -48,16 +48,35 @@ function addToCart(variant, quantity) {
   if (existing) {
     existing.quantity = Math.min(existing.quantity + quantity, 100);
   } else {
-    cartItems.push({
+    const base = {
       id: freshVariant.id,
       name: freshVariant.name,
       price: freshVariant.price,
-      storage: freshVariant.storage,
-      color: freshVariant.color,
-      region: freshVariant.region,
+      cat: freshVariant.cat,
       quantity,
       available: true
-    });
+    };
+    
+    if (freshVariant.cat === 'iPhone') {
+      base.storage = freshVariant.storage;
+      base.color = freshVariant.color;
+      base.region = freshVariant.region;
+      base.simType = freshVariant.simType;
+    } else if (freshVariant.cat === 'Apple Watch') {
+      base.diameter = freshVariant.diameter;
+      base.caseColor = freshVariant.caseColor;
+      base.bandType = freshVariant.bandType;
+      base.bandColor = freshVariant.bandColor;
+      base.bandSize = freshVariant.bandSize;
+      base.region = freshVariant.region;
+    } else if (freshVariant.cat === 'MacBook') {
+      base.diagonal = freshVariant.diagonal;
+      base.color = freshVariant.color;
+      base.ram = freshVariant.ram;
+      base.ssd = freshVariant.ssd;
+    }
+    
+    cartItems.push(base);    
   }
 
   saveCartToStorage();
@@ -141,25 +160,12 @@ window.refreshCartPricesAndCleanup = async function () {
       const fresh = productsData.find(p => p.id === item.id && p.inStock);
       if (!fresh) {
         removedCount++;
-        removedItems.push({
-          name: item.name,
-          price: item.price,
-          storage: item.storage,
-          color: item.color,
-          region: item.region
-        });
+        removedItems.push({ ...item });
         return { ...item, available: false, deleted: true };
       }
       if (fresh.price !== item.price) {
         changedCount++;
-        changedItems.push({
-          name: item.name,
-          oldPrice: item.price,
-          newPrice: fresh.price,
-          storage: item.storage,
-          color: item.color,
-          region: item.region
-        });
+        changedItems.push({ ...item });
         return { ...item, available: false, newPrice: fresh.price };
       }
       return { ...item, available: true, newPrice: undefined };
@@ -181,16 +187,12 @@ window.refreshCartPricesAndCleanup = async function () {
     if (removedItems.length) {
       msgLines.push('❌ Удалены недоступные:');
       removedItems.forEach(i => {
+        const subtitle = getCartItemSubtitle(i);
         msgLines.push(
           '- ' +
             i.name +
-            ' (' +
-            i.storage +
-            ', ' +
-            i.color +
-            ', ' +
-            i.region +
-            '), цена была RUB ' +
+            (subtitle ? ' (' + subtitle + ')' : '') +
+            ', цена была RUB ' +
             i.price
         );
       });
@@ -200,18 +202,13 @@ window.refreshCartPricesAndCleanup = async function () {
       if (msgLines.length) msgLines.push('');
       msgLines.push('💲 Обновилась цена:');
       changedItems.forEach(i => {
+        const subtitle = getCartItemSubtitle(i);
         msgLines.push(
           '- ' +
             i.name +
-            ' (' +
-            i.storage +
-            ', ' +
-            i.color +
-            ', ' +
-            i.region +
-            '): ' +
-            'RUB ' +
-            i.oldPrice +
+            (subtitle ? ' (' + subtitle + ')' : '') +
+            ': RUB ' +
+            i.price + // старая
             ' → RUB ' +
             i.newPrice
         );
@@ -219,7 +216,7 @@ window.refreshCartPricesAndCleanup = async function () {
       msgLines.push('');
       msgLines.push('У этих товаров появилась кнопка «Обновить цену» в корзине.');
     }
-
+    
     tg?.showAlert?.(msgLines.join('\n'));
   } finally {
     if (btn) {
@@ -337,6 +334,30 @@ window.onSavedAddressChange = function () {
   console.log('[cart] onSavedAddressChange value=', select.value);
 };
 
+function getCartItemSubtitle(item) {
+  if (item.cat === 'iPhone') {
+    return [item.storage, item.color, item.region].filter(Boolean).join(' | ');
+  }
+  if (item.cat === 'Apple Watch') {
+    return [
+      item.diameter,
+      item.caseColor,
+      item.bandType,
+      item.bandColor,
+      item.bandSize
+    ].filter(Boolean).join(' | ');
+  }
+  if (item.cat === 'MacBook') {
+    return [
+      item.diagonal,
+      item.ram,
+      item.ssd,
+      item.color
+    ].filter(Boolean).join(' | ');
+  }
+  return [item.storage, item.color, item.region].filter(Boolean).join(' | ');
+}
+
 function showCartTab() {
   console.log('[cart] showCartTab, items=', cartItems.length, 'isPlacingOrder=', isPlacingOrder);
   saveCartFormState();
@@ -391,13 +412,9 @@ function showCartTab() {
                   '<div class="font-semibold text-sm break-words">' +
                     escapeHtml(item.name) +
                   '</div>' +
-                  '<div class="text-xs text-gray-500">' +
-                    escapeHtml(item.storage) +
-                    ' | ' +
-                    escapeHtml(item.color) +
-                    ' | ' +
-                    escapeHtml(item.region) +
-                  '</div>' +
+                 '<div class="text-xs text-gray-500">' +
+  escapeHtml(getCartItemSubtitle(item)) +
+'</div>' +
                   '<div class="text-xs mt-1 ' +
                     (item.available
                       ? 'text-green-600'

@@ -105,12 +105,7 @@ function renderOrdersSection() {
                           escapeHtml(item.name) +
                         '</div>' +
                         '<div class="text-[10px] text-gray-500">' +
-                          escapeHtml(item.storage) +
-                          ' | ' +
-                          escapeHtml(item.color) +
-                          ' | ' +
-                          escapeHtml(item.region) +
-                        '</div>' +
+  escapeHtml(getCartItemSubtitle(item)) +
                       '</div>' +
                       '<div class="text-right text-[10px] whitespace-nowrap">' +
                         '<div>' +

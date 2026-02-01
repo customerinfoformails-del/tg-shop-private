@@ -187,7 +187,10 @@ function renderProductModal(product) {
   const filteredVariants = getFilteredVariants(variants);
   const availableVariants = filteredVariants;
   const availableOptions = {};
-  filterOrder.forEach(type => {
+  const orderWithValues = filterOrder.filter(type =>
+    variants.some(v => v[type])
+  );
+  orderWithValues.forEach(type => {
     availableOptions[type] = getAvailableOptions(type, variants);
   });  
 
@@ -469,7 +472,7 @@ function renderProductModal(product) {
 
   // === ТЕЛО МОДАЛКИ (опции, количество) ===
   const body = document.getElementById('modalBodyDynamic');
-  const order = filterOrder;
+  const order = orderWithValues;
 
   body.innerHTML =
   order.map((type, index) => {

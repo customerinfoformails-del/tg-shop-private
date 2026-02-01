@@ -24,7 +24,7 @@
     return '+7' + v;
   }
   
-  function isValidName(name) {
+  function isValidName(name) { 
     const v = String(name).trim();
     if (v.length < 1 || v.length > 50) return false;
   
